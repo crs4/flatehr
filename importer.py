@@ -1,35 +1,30 @@
 import os
 from collections import defaultdict
-from dataclasses import dataclass
-from typing import Dict, TextIO
+from typing import Dict
+import logging
 
-from lxml import etree
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO)
 
 
-def map_aqlpath_to_id(web_template: Dict) -> Dict:
-    mapping = {}
-
-    def _recursive_map_aqlpath_to_id(node, parent_mapping):
-        mapping_value = os.path.join(parent_mapping, node['id'])
-        mapping[node['aqlPath']] = mapping_value
-        children = node.get('children', [])
+def get_annotations(web_template: Dict) -> Dict:
+    def _get_annotations(_node, _annotations, parent_path=""):
+        node_annotations = _node.get("annotations", {})
+        path = os.path.join(parent_path, _node['id'])
+        try:
+            _annotations[node_annotations["XSD label"]] = path
+            logger.info('added _annotations for node %s', path)
+        except KeyError:
+            logger.debug('node %s has annotations %s, skipping...', path,
+                         _annotations)
+        children = _node.get("children", [])
         for child in children:
-            _recursive_map_aqlpath_to_id(child, mapping_value)
+            _get_annotations(child, _annotations, path)
 
-    node = web_template['webTemplate']['tree']
-    _recursive_map_aqlpath_to_id(node, "")
-    return mapping
-
-
-def get_annotations(opt: TextIO) -> Dict:
-    tree = etree.parse(opt)
-    annotation_items = tree.xpath(
-        "n:annotations/n:items[@id='XSD label']",
-        namespaces={'n': "http://schemas.openehr.org/v1"})
-    mapping = {}
-    for item in annotation_items:
-        mapping[item.getparent().get('path')] = item.text
-    return mapping
+    annotations = {}
+    node = web_template['tree']
+    _get_annotations(node, annotations)
+    return annotations
 
 
 def get_tree(web_template: Dict) -> Dict:
@@ -43,7 +38,7 @@ def get_tree(web_template: Dict) -> Dict:
             _recursive_get_tree(child, _tree[node['id']]['children'])
         return _tree
 
-    node = web_template['webTemplate']['tree']
+    node = web_template['tree']
     return _recursive_get_tree(node, {})
 
 
@@ -61,14 +56,14 @@ class Node:
         res = ''
         tree = self._tree
         splitted_path = path.split('/')
-        print(splitted_path)
         for idx, el in enumerate(splitted_path):
             if not tree[el]['multiple_values']:
                 res = os.path.join(res, el)
             else:
                 subpath = '/'.join(splitted_path[:idx])
 
-                res = os.path.join(res, f'{el}:{self._counter[subpath]}')
+                #  res = os.path.join(res, f'{el}:{self._counter[subpath]}')
+                res = os.path.join(res, f'{el}:0')
                 self._counter[subpath] += 1
             tree = tree[el]['children']
         return res, tree
@@ -103,10 +98,8 @@ def traverse(el, root, mapping, schema):
                     attr = list(mapping[tag].keys())[0]
                     attr_value = _el.get(attr)
                     path = mapping[tag][attr].get(attr_value)
-                    print('path', path)
                     if path:
                         node = _root.add_node(path)
-                        print(node._tree)
                         _root = node
 
         for child in _el.getchildren():
