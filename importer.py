@@ -3,7 +3,7 @@ import logging
 import os
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from lxml.etree import _Element
 
@@ -63,6 +63,10 @@ class CompositionNode:
         self._counter = defaultdict(int)
 
     @property
+    def web_template(self):
+        return self._web_template
+
+    @property
     def path(self):
         return self._path
 
@@ -107,10 +111,27 @@ class CompositionFactory(abc.ABC):
         ...
 
 
+class Composition:
+    def __init__(self, value_converter: Dict[str, Callable]):
+        self._dict = {}
+        self._converter = value_converter
+
+    def add_node(self, node: CompositionNode, value):
+        self._dict[node.path] = self._converter.get(node.web_template.rm_type,
+                                                    lambda x: x)(value)
+
+    def as_dict(self):
+        return self._dict
+
+
 class XmlToCompositionFactory(CompositionFactory):
-    def __init__(self, web_template: WebTemplateNode, defaults: Dict = None):
+    def __init__(self,
+                 web_template: WebTemplateNode,
+                 defaults: Dict[str, str] = None,
+                 value_converter: Dict[str, Callable] = None):
         self.web_template = web_template
         self.defaults = defaults or {}
+        self.value_converter = value_converter or {}
         self._mapping = self._get_mapping(web_template)
 
     @staticmethod
@@ -130,11 +151,11 @@ class XmlToCompositionFactory(CompositionFactory):
         _recursive_get_mapping(web_template, mapping)
         return mapping
 
-    def get_composition(self, source: _Element) -> Dict:
+    def get_composition(self, source: _Element) -> Composition:
         namespace = source.getroottree().getroot().nsmap[None]
 
         def _traverse(xml_el, composition_node: CompositionNode,
-                      _composition: Dict):
+                      _composition: Composition):
             if isinstance(xml_el.tag, str):
                 tag = xml_el.tag.replace(f'{{{namespace}}}', "")
                 if tag in self._mapping:
@@ -142,7 +163,7 @@ class XmlToCompositionFactory(CompositionFactory):
                     if isinstance(self._mapping[tag], str):
                         path = self._mapping[tag]
                         node = composition_node.add_node(path)
-                        _composition[node.path] = xml_el.text
+                        _composition.add_node(node, xml_el.text)
                     else:
                         attr = list(self._mapping[tag].keys())[0]
                         attr_value = xml_el.get(attr)
@@ -154,7 +175,7 @@ class XmlToCompositionFactory(CompositionFactory):
             for child in xml_el.getchildren():
                 _traverse(child, composition_node, _composition)
 
-        composition = {}
+        composition = Composition(self.value_converter)
         _traverse(source,
                   CompositionNode(self.web_template.path, self.web_template),
                   composition)
@@ -185,16 +206,28 @@ def _get_required(web_template: Dict) -> Dict:
 
 if __name__ == '__main__':
     import json
-
+    import requests
     from lxml import etree
+    from requests.auth import HTTPBasicAuth
+
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format=' {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s')
+
+    value_converter = {
+        'DV_DURATION': lambda x: f'P0Y{x}W0DT0H0M0S',
+        'DV_BOOLEAN': lambda x: str(bool(x))
+    }
+
     xtree = etree.parse(open('import_example.xml', 'r'))
     webt = WebTemplateNode.create(json.load(open('crc_cohort.json', 'r')))
-    factory = XmlToCompositionFactory(webt)
+    factory = XmlToCompositionFactory(webt, value_converter=value_converter)
     patient = xtree.xpath(
         '//n:BHPatient',
         namespaces={'n': "http://registry.samply.de/schemata/import_v1"})[0]
     comp = factory.get_composition(patient)
-    print(comp)
+    resp = requests.post(
+        'http://localhost:8080/ehrbase/rest/ecis/v1/composition/?format=FLAT&ehrId=1d62ef84-54f7-49ee-bfe6-c6675b46d960&templateId=crc_cohort',
+        json=comp.as_dict(),
+        auth=HTTPBasicAuth('ehrbase-user', 'SuperSecretPassword'))
+    print(resp.json())
