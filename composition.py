@@ -1,6 +1,5 @@
-import os
 import re
-from typing import Dict, Tuple, Union
+from typing import Dict, Union
 
 import anytree
 
@@ -42,41 +41,30 @@ class Node:
         return self._node.separator + self._node.separator.join(
             [n.name for n in self._node.path]) + self._node.separator
 
-
-class WebTemplate:
-    def __init__(self, dct: Dict):
-        self.root, self._mapping = WebTemplateNode.create(dct)
+    def get_descendant(self, path: str):
+        resolver = anytree.Resolver('name')
+        return type(self)(resolver.get(self._node, path))
 
 
 class WebTemplateNode(Node):
     @staticmethod
-    def create(dct: Dict) -> Tuple["WebTemplateNode", Dict]:
-        def _recursive_create(web_template_el: Dict, mapping: Dict):
-            annotations = web_template_el.get('annotations', {})
+    def create(dct: Dict) -> "WebTemplateNode":
+        def _recursive_create(web_template_el):
             _node = anytree.Node(web_template_el['id'],
                                  rm_type=web_template_el['rmType'],
                                  required=web_template_el['min'] == 1,
                                  inf_cardinality=web_template_el['max'] == -1)
 
             children = []
-            try:
-                mapping[annotations["XSD label"]] = _node
-            except KeyError:
-                pass
             for child in web_template_el.get('children', []):
-                children.append(_recursive_create(child, mapping)._node)
+                children.append(_recursive_create(child)._node)
             _node.children = children
 
             return WebTemplateNode(_node)
 
-        mapping = {}
         tree = dct['tree']
-        node = _recursive_create(tree, mapping)
-        return node, mapping
-
-    @property
-    def path(self):
-        return self._node.name
+        node = _recursive_create(tree)
+        return node
 
     @property
     def rm_type(self):
@@ -103,10 +91,10 @@ class WebTemplateNode(Node):
 
 
 class Composition:
-    def __init__(self, web_template: WebTemplate):
+    def __init__(self, web_template: WebTemplateNode):
         self._web_template = web_template
-        self._root = CompositionNode(anytree.Node(web_template.root.path),
-                                     web_template.root)
+        self._root = CompositionNode(anytree.Node(web_template.path),
+                                     web_template)
 
     @property
     def web_template(self):
@@ -185,7 +173,7 @@ class CompositionNode(Node):
 if __name__ == '__main__':
     import json
     webt = json.load(open("crc_cohort.json", 'r'))
-    web_template = WebTemplate(webt)
+    web_template = WebTemplateNode.create(webt)
     comp = Composition(web_template)
     event0 = comp.root.add_descendant(
         'molecular_markers/result_group/oncogenic_mutations_test/any_event')
