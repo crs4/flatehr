@@ -1,10 +1,8 @@
 import os
 import re
-from pathlib import Path
 from typing import Dict, Tuple, Union
 
 import anytree
-from lxml.etree import _Element
 
 
 class Node:
@@ -14,6 +12,10 @@ class Node:
     def get_descendant(self, path: str):
         resolver = anytree.Resolver('name')
         return type(self)(resolver.get(self._node, path))
+
+    @property
+    def is_leaf(self):
+        return self._node.is_leaf
 
 
 class WebTemplate:
@@ -89,6 +91,13 @@ class Composition:
     def root(self):
         return self._root
 
+    def as_flat(self):
+        flat = {}
+        for leaf in self._root.leaves:
+            if leaf.web_template.is_leaf:
+                flat[leaf.path.rstrip(leaf.separator)] = leaf.value
+        return flat
+
 
 class CompositionNode:
     def __init__(self, node: anytree.Node, web_template_node: WebTemplateNode):
@@ -103,10 +112,39 @@ class CompositionNode:
     def __str__(self):
         return self._node
 
+    def _set_value(self, value):
+        self._node.value = value
+
+    def _get_value(self):
+        return self._node.value
+
+    value = property(_get_value, _set_value)
+
+    @property
+    def web_template(self):
+        return self._web_template_node
+
+    @property
+    def is_leaf(self):
+        return self._node.is_leaf
+
+    @property
+    def separator(self):
+        return self._node.separator
+
+    @property
+    def name(self):
+        return self._node.name
+
+    @property
+    def leaves(self):
+        for leaf in self._node.leaves:
+            yield CompositionNode(leaf, leaf.web_template)
+
     @property
     def path(self):
-        return '/' + self._node.separator.join(
-            [n.name for n in self._node.path]) + '/'
+        return self._node.separator + self._node.separator.join(
+            [n.name for n in self._node.path]) + self._node.separator
 
     def add_child(self, name):
         path = os.path.join(self.path, name)
@@ -125,7 +163,6 @@ class CompositionNode:
     def add_descendant(self, path):
         def _add_descendant(root, path_):
             try:
-                print('--------')
                 node = self._resolver.get(root, path_)
             except anytree.ChildResolverError as ex:
                 last_node = ex.node
@@ -133,11 +170,12 @@ class CompositionNode:
                 web_template_node = last_node.web_template
                 node = CompositionNode(
                     last_node, web_template_node).add_child(missing_child)
-                path_ = path_.replace(f'{missing_child}',
-                                      '').lstrip(root.separator)
 
-                print(node._node)
-                print(path_)
+                for el in [n.name for n in last_node.path] + [missing_child]:
+                    path_ = path_.replace(el, '')
+
+                path_ = path_.lstrip(root.separator)
+
                 return _add_descendant(node._node, path_)
             else:
                 web_template_node = node.web_template
@@ -158,8 +196,14 @@ if __name__ == '__main__':
     webt = json.load(open("crc_cohort.json", 'r'))
     web_template = WebTemplate(webt)
     comp = Composition(web_template)
+    event0 = comp.root.add_descendant(
+        'molecular_markers/result_group/oncogenic_mutations_test/any_event')
+    event0.add_descendant('braf_pic3ca_her2_mutation_status').value = 1
     comp.root.add_descendant(
         'molecular_markers/result_group/oncogenic_mutations_test/any_event/braf_pic3ca_her2_mutation_status'
-    )
-    print('------------')
-    print(comp.root._node.descendants)
+    ).value = 2
+    #  print('------------')
+    #  comp.root.add_descendant(
+    #      'molecular_markers/result_group/oncogenic_mutations_test/any_event/braf_pic3ca_her2_mutation_status'
+    #  )
+    print(comp.as_flat())
