@@ -9,13 +9,38 @@ class Node:
     def __init__(self, node: anytree.Node):
         self._node = node
 
-    def get_descendant(self, path: str):
-        resolver = anytree.Resolver('name')
-        return type(self)(resolver.get(self._node, path))
+    def __str__(self):
+        return self._node
+
+    def _set_value(self, value):
+        self._node.value = value
+
+    def _get_value(self):
+        return self._node.value
+
+    value = property(_get_value, _set_value)
 
     @property
     def is_leaf(self):
         return self._node.is_leaf
+
+    @property
+    def separator(self):
+        return self._node.separator
+
+    @property
+    def name(self):
+        return self._node.name
+
+    @property
+    def leaves(self):
+        for leaf in self._node.leaves:
+            yield CompositionNode(leaf, leaf.web_template)
+
+    @property
+    def path(self):
+        return self._node.separator + self._node.separator.join(
+            [n.name for n in self._node.path]) + self._node.separator
 
 
 class WebTemplate:
@@ -99,9 +124,9 @@ class Composition:
         return flat
 
 
-class CompositionNode:
+class CompositionNode(Node):
     def __init__(self, node: anytree.Node, web_template_node: WebTemplateNode):
-        self._node = node
+        super().__init__(node)
         self._node.web_template = web_template_node
         self._web_template_node = web_template_node
         self._resolver = anytree.Resolver('name')
@@ -109,45 +134,11 @@ class CompositionNode:
     def __repr__(self):
         return '<CompositionNode %s>' % self._node
 
-    def __str__(self):
-        return self._node
-
-    def _set_value(self, value):
-        self._node.value = value
-
-    def _get_value(self):
-        return self._node.value
-
-    value = property(_get_value, _set_value)
-
     @property
     def web_template(self):
         return self._web_template_node
 
-    @property
-    def is_leaf(self):
-        return self._node.is_leaf
-
-    @property
-    def separator(self):
-        return self._node.separator
-
-    @property
-    def name(self):
-        return self._node.name
-
-    @property
-    def leaves(self):
-        for leaf in self._node.leaves:
-            yield CompositionNode(leaf, leaf.web_template)
-
-    @property
-    def path(self):
-        return self._node.separator + self._node.separator.join(
-            [n.name for n in self._node.path]) + self._node.separator
-
     def add_child(self, name):
-        path = os.path.join(self.path, name)
         web_template_node = self._web_template_node.get_descendant(name)
         if web_template_node.inf_cardinality:
             n_siblings = len(self._resolver.glob(self._node, f'{name}[*]'))
