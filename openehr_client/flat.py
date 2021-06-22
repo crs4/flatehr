@@ -99,8 +99,9 @@ class WebTemplateNode(Node):
 class Composition:
     def __init__(self, web_template: WebTemplateNode):
         self._web_template = web_template
-        self._root = CompositionNode(anytree.Node(web_template.path),
-                                     web_template)
+        self._root = CompositionNode(
+            anytree.Node(web_template.path.strip(web_template.separator)),
+            web_template)
 
     @property
     def web_template(self):
