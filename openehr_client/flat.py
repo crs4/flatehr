@@ -53,7 +53,9 @@ class WebTemplateNode(Node):
             _node = anytree.Node(web_template_el['id'],
                                  rm_type=web_template_el['rmType'],
                                  required=web_template_el['min'] == 1,
-                                 inf_cardinality=web_template_el['max'] == -1)
+                                 inf_cardinality=web_template_el['max'] == -1,
+                                 annotations=web_template_el.get(
+                                     'annotations', {}))
 
             children = []
             for child in web_template_el.get('children', []):
@@ -77,6 +79,10 @@ class WebTemplateNode(Node):
     @property
     def inf_cardinality(self):
         return self._node.inf_cardinality
+
+    @property
+    def annotations(self):
+        return self._node.annotations
 
     @property
     def children(self):
