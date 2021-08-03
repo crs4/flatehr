@@ -120,12 +120,13 @@ class Composition:
     def root(self):
         return self._root
 
-    def set(self, path, *args, **kwargs) -> "CompositionNode":
+    def create(self, path, *args, **kwargs) -> "CompositionNode":
         if not os.path.isabs(path):
             path = '/' + path
         composition_node = self.root.add_descendant(path)
-        value = factory(composition_node.web_template, *args, **kwargs)
-        composition_node.value = value
+        if args or kwargs:
+            value = factory(composition_node.web_template, *args, **kwargs)
+            composition_node.value = value
         return composition_node
 
     def get(self, path) -> "CompositionNode":
@@ -195,8 +196,7 @@ class CompositionNode(Node):
         web_template_node = self._web_template_node.get_descendant(name)
         if web_template_node.inf_cardinality:
             n_siblings = len(self._resolver.glob(self._node, f'{name}:*'))
-            #  name = f'{name}:{n_siblings}'
-            name = f'{name}:0'
+            name = f'{name}:{n_siblings}'
             node = anytree.Node(name, parent=self._node)
         else:
             try:
