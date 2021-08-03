@@ -120,10 +120,10 @@ class Composition:
     def root(self):
         return self._root
 
-    def create(self, path, *args, **kwargs) -> "CompositionNode":
+    def create_node(self, path, *args, **kwargs) -> "CompositionNode":
         if not os.path.isabs(path):
             path = '/' + path
-        composition_node = self.root.add_descendant(path)
+        composition_node = self.root.create_node(path)
         if args or kwargs:
             value = factory(composition_node.web_template, *args, **kwargs)
             composition_node.value = value
@@ -146,16 +146,14 @@ class Composition:
 
             try:
                 if not path:
-                    self._root.add_descendant(
-                        descendants[0].name).value = value
+                    self._root.create_node(descendants[0].name).value = value
                 else:
                     for node in resolver.glob(self._root._node, path):
                         descendant_path = node.separator.join([
                             CompositionNode(node, node.web_template).path, name
                         ])
 
-                        self._root.add_descendant(
-                            descendant_path).value = value
+                        self._root.create_node(descendant_path).value = value
             except anytree.ChildResolverError as ex:
                 ...
                 #  self._root.add_descendant(target.path).value = value
@@ -205,10 +203,8 @@ class CompositionNode(Node):
                 node = anytree.Node(name, parent=self._node)
         return CompositionNode(node, web_template_node, value)
 
-    def add_descendant(self,
-                       path: str,
-                       value: DataValue = None) -> "CompositionNode":
-        def _add_descendant(root, path_, value):
+    def create_node(self, path: str, *args, **kwargs) -> "CompositionNode":
+        def _add_descendant(root, path_, *args, **kwargs):
             try:
                 node = self._resolver.get(root, path_)
             except anytree.ChildResolverError as ex:
@@ -227,12 +223,16 @@ class CompositionNode(Node):
 
                 path_ = path_.lstrip(root.separator)
 
-                return _add_descendant(node._node, path_, value)
+                return _add_descendant(node._node, path_, *args, **kwargs)
             else:
                 web_template_node = node.web_template
+                if args or kwargs:
+                    value = factory(node.web_template, *args, **kwargs)
+                else:
+                    value = None
                 return CompositionNode(node, web_template_node, value)
 
-        return _add_descendant(self._node, path, value)
+        return _add_descendant(self._node, path, *args, **kwargs)
 
     def _get_web_template(self):
         path = re.sub(r'\[\d+\]', '', self.path)
@@ -249,11 +249,11 @@ if __name__ == '__main__':
     webt = json.load(open("tests/resources/web_template.json", 'r'))
     web_template = WebTemplateNode.create(webt)
     comp = Composition(web_template)
-    event0 = comp.root.add_descendant(
+    event0 = comp.root.create_node(
         '/test/molecular_markers/result_group/oncogenic_mutations_test/any_event'
     )
-    event0.add_descendant('braf_pic3ca_her2_mutation_status').value = 1
-    comp.root.add_descendant(
+    event0.create_node('braf_pic3ca_her2_mutation_status').value = 1
+    comp.root.create_node(
         '/test/molecular_markers/result_group/oncogenic_mutations_test/any_event/braf_pic3ca_her2_mutation_status'
     ).value = 2
 
