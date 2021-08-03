@@ -3,6 +3,8 @@ from typing import Dict, Tuple, Union
 
 import anytree
 
+from openehr_client.data_types import DataValue, factory
+
 
 class Node:
     def __init__(self, node: anytree.Node):
@@ -117,6 +119,15 @@ class Composition:
     def root(self):
         return self._root
 
+    def set(self, path, *args, **kwargs) -> "CompositionNode":
+        composition_node = self.root.add_descendant(path)
+        value = factory(composition_node.web_template.rm_type, *args, **kwargs)
+        composition_node.value = value
+        return composition_node
+
+    def get(self, path) -> "CompositionNode":
+        raise NotImplementedError()
+
     def set_default(self, name: str, value: Union[int, str]):
         resolver = anytree.resolver.Resolver('name')
         leaves = [
@@ -138,6 +149,7 @@ class Composition:
                         descendant_path = node.separator.join([
                             CompositionNode(node, node.web_template).path, name
                         ])
+
                         self._root.add_descendant(
                             descendant_path).value = value
             except anytree.ChildResolverError as ex:
@@ -148,16 +160,26 @@ class Composition:
         flat = {}
         for leaf in self._root.leaves:
             if leaf.web_template.is_leaf:
-                flat[leaf.path.strip(leaf.separator)] = leaf.value
+                value = leaf.value.value
+                if isinstance(value, dict):
+                    for key, value in value.items():
+                        flat[
+                            f'{leaf.path.strip(leaf.separator)}|{key}'] = value
+                else:
+                    flat[leaf.path.strip(leaf.separator)] = value
         return flat
 
 
 class CompositionNode(Node):
-    def __init__(self, node: anytree.Node, web_template_node: WebTemplateNode):
+    def __init__(self,
+                 node: anytree.Node,
+                 web_template_node: WebTemplateNode,
+                 value: DataValue = None):
         super().__init__(node)
         self._node.web_template = web_template_node
         self._web_template_node = web_template_node
         self._resolver = anytree.Resolver('name')
+        self.value = value
 
     def __repr__(self):
         return '<CompositionNode %s>' % self._node
@@ -166,7 +188,7 @@ class CompositionNode(Node):
     def web_template(self):
         return self._web_template_node
 
-    def add_child(self, name):
+    def add_child(self, name: str, value: DataValue = None):
         web_template_node = self._web_template_node.get_descendant(name)
         if web_template_node.inf_cardinality:
             n_siblings = len(self._resolver.glob(self._node, f'{name}:*'))
@@ -178,10 +200,12 @@ class CompositionNode(Node):
                 node = self._resolver.get(self._node, name)
             except anytree.ChildResolverError:
                 node = anytree.Node(name, parent=self._node)
-        return CompositionNode(node, web_template_node)
+        return CompositionNode(node, web_template_node, value)
 
-    def add_descendant(self, path):
-        def _add_descendant(root, path_):
+    def add_descendant(self,
+                       path: str,
+                       value: DataValue = None) -> "CompositionNode":
+        def _add_descendant(root, path_, value):
             try:
                 node = self._resolver.get(root, path_)
             except anytree.ChildResolverError as ex:
@@ -200,12 +224,12 @@ class CompositionNode(Node):
 
                 path_ = path_.lstrip(root.separator)
 
-                return _add_descendant(node._node, path_)
+                return _add_descendant(node._node, path_, value)
             else:
                 web_template_node = node.web_template
-                return CompositionNode(node, web_template_node)
+                return CompositionNode(node, web_template_node, value)
 
-        return _add_descendant(self._node, path)
+        return _add_descendant(self._node, path, value)
 
     def _get_web_template(self):
         path = re.sub(r'\[\d+\]', '', self.path)
