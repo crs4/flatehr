@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Dict, Tuple, Union
 
@@ -11,7 +12,7 @@ class Node:
         self._node = node
 
     def __str__(self):
-        return self._node
+        return str(self._node)
 
     def _set_value(self, value):
         self._node.value = value
@@ -120,6 +121,8 @@ class Composition:
         return self._root
 
     def set(self, path, *args, **kwargs) -> "CompositionNode":
+        if not os.path.isabs(path):
+            path = '/' + path
         composition_node = self.root.add_descendant(path)
         value = factory(composition_node.web_template, *args, **kwargs)
         composition_node.value = value
@@ -160,7 +163,7 @@ class Composition:
         flat = {}
         for leaf in self._root.leaves:
             if leaf.web_template.is_leaf:
-                value = leaf.value.value
+                value = leaf.value.to_json()
                 if isinstance(value, dict):
                     for key, value in value.items():
                         flat[
@@ -179,7 +182,7 @@ class CompositionNode(Node):
         self._node.web_template = web_template_node
         self._web_template_node = web_template_node
         self._resolver = anytree.Resolver('name')
-        self.value = value
+        self._node.value = value
 
     def __repr__(self):
         return '<CompositionNode %s>' % self._node
@@ -238,7 +241,7 @@ class CompositionNode(Node):
     @property
     def leaves(self):
         for leaf in self._node.leaves:
-            yield CompositionNode(leaf, leaf.web_template)
+            yield CompositionNode(leaf, leaf.web_template, leaf.value)
 
 
 if __name__ == '__main__':
