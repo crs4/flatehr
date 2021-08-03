@@ -3,7 +3,7 @@
 import pytest
 
 import openehr_client.data_types as data_types
-from openehr_client.flat import Composition, WebTemplateNode
+from openehr_client.flat import Composition, CompositionNode, WebTemplateNode
 
 
 def test_web_template_node(web_template_json):
@@ -25,9 +25,14 @@ def test_composition_set_path_dv_text(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = 'ok'
-    node = composition.set('/test/context/status', text)
+    path = 'test/context/status'
+    node = composition.set(path, text)
+    assert isinstance(node, CompositionNode)
     assert isinstance(node.value, data_types.Text)
     assert node.value.value == text
+
+    flat = composition.as_flat()
+    assert flat == {path: text}
 
 
 def test_composition_set_path_code_phrase(web_template_json):
@@ -35,12 +40,15 @@ def test_composition_set_path_code_phrase(web_template_json):
     composition = Composition(web_template)
     terminology = 'ISO_639-1'
     code = 'en'
-    node = composition.set('/test/language',
-                           terminology=terminology,
-                           code=code)
+    path = 'test/language'
+
+    node = composition.set(path, terminology=terminology, code=code)
     assert isinstance(node.value, data_types.CodePhrase)
     assert node.value.terminology == terminology
     assert node.value.code == code
+
+    flat = composition.as_flat()
+    assert flat == {f'{path}|code': code, f'{path}|terminology': terminology}
 
 
 def test_composition_set_path_dv_coded_text(web_template_json):
@@ -49,29 +57,43 @@ def test_composition_set_path_dv_coded_text(web_template_json):
     text = 'ok'
     terminology = 'ISO_639-1'
     code = 'en'
-    node = composition.set('/test/context/setting',
-                           text,
-                           terminology=terminology,
-                           code=code)
+    path = 'test/context/setting'
+    node = composition.set(path, text, terminology=terminology, code=code)
     assert isinstance(node.value, data_types.CodedText)
+
     assert node.value.value == text
     assert node.value.terminology == terminology
     assert node.value.code == code
+
+    flat = composition.as_flat()
+    assert flat == {
+        f'{path}|code': code,
+        f'{path}|terminology': terminology,
+        f'{path}|value': text
+    }
 
 
 def test_composition_set_path_dv_datetime(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = '2021-04-22T10:19:49.915Z'
-    node = composition.set('/test/context/start_time', text)
+    path = 'test/context/start_time'
+    node = composition.set(path, text)
     assert isinstance(node.value, data_types.DateTime)
     assert node.value.value == text
+
+    flat = composition.as_flat()
+    assert flat == {path: text}
 
 
 def test_composition_set_path_party_proxy(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     name = 'composer'
-    node = composition.set('/test/composer', name)
+    path = 'test/composer'
+    node = composition.set(path, name)
     assert isinstance(node.value, data_types.PartyProxy)
     assert node.value.name == name
+
+    flat = composition.as_flat()
+    assert flat == {f'{path}|name': name}

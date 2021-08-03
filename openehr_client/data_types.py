@@ -77,4 +77,4 @@ class PartyProxy(DataValue):
     name: str
 
     def to_json(self):
-        raise NotImplementedError()
+        return {'name': self.name}
