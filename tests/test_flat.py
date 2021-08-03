@@ -11,7 +11,7 @@ def test_web_template_node(web_template_json):
 
 
 @pytest.mark.skip("Composition.get TBD")
-def test_composition_set_path(web_template_json):
+def test_composition_get_path(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = 'ok'
@@ -97,3 +97,25 @@ def test_composition_set_path_party_proxy(web_template_json):
 
     flat = composition.as_flat()
     assert flat == {f'{path}|name': name}
+
+
+def test_composition_to_flat(web_template_json):
+    web_template = WebTemplateNode.create(web_template_json)
+    composition = Composition(web_template)
+    composition = Composition(web_template)
+    text = 'ok'
+    path_status = 'test/context/status'
+    composition.set(path_status, text)
+
+    terminology = 'ISO_639-1'
+    code = 'en'
+    path_lang = 'test/language'
+
+    composition.set(path_lang, terminology=terminology, code=code)
+
+    flat = composition.as_flat()
+    assert flat == {
+        path_status: text,
+        f'{path_lang}|code': code,
+        f'{path_lang}|terminology': terminology
+    }
