@@ -10,8 +10,8 @@ def _camel(snake_str):
     return ''.join([*map(str.title, words)])
 
 
-def factory(rm_type: str, *args, **kwargs):
-    dv_stripped = rm_type.replace('DV_', '', 1)
+def factory(web_template_node, *args, **kwargs):
+    dv_stripped = web_template_node.rm_type.replace('DV_', '', 1)
     class_name = _camel(dv_stripped)
     return getattr(sys.modules[__name__], class_name)(*args, **kwargs)
 
@@ -69,3 +69,12 @@ class CodedText(DataValue):
         dct = self._code_phrase.to_json()
         dct['value'] = self.value
         return dct
+
+
+@dataclass
+class PartyProxy(DataValue):
+    #TODO: check if it is the right representation
+    name: str
+
+    def to_json(self):
+        raise NotImplementedError()

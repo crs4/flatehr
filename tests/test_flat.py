@@ -66,3 +66,12 @@ def test_composition_set_path_dv_datetime(web_template_json):
     node = composition.set('/test/context/start_time', text)
     assert isinstance(node.value, data_types.DateTime)
     assert node.value.value == text
+
+
+def test_composition_set_path_party_proxy(web_template_json):
+    web_template = WebTemplateNode.create(web_template_json)
+    composition = Composition(web_template)
+    name = 'composer'
+    node = composition.set('/test/composer', name)
+    assert isinstance(node.value, data_types.PartyProxy)
+    assert node.value.name == name

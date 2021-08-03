@@ -121,7 +121,7 @@ class Composition:
 
     def set(self, path, *args, **kwargs) -> "CompositionNode":
         composition_node = self.root.add_descendant(path)
-        value = factory(composition_node.web_template.rm_type, *args, **kwargs)
+        value = factory(composition_node.web_template, *args, **kwargs)
         composition_node.value = value
         return composition_node
 
