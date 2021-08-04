@@ -6,7 +6,7 @@ import openehr_client.data_types as data_types
 from openehr_client.flat import Composition, CompositionNode, WebTemplateNode
 
 
-def test_composition_set_path_dv_text(web_template_json):
+def test_composition_create_dv_text(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = 'ok'
@@ -20,7 +20,7 @@ def test_composition_set_path_dv_text(web_template_json):
     assert flat == {path: text}
 
 
-def test_composition_set_path_code_phrase(web_template_json):
+def test_composition_create_code_phrase(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     terminology = 'ISO_639-1'
@@ -36,7 +36,7 @@ def test_composition_set_path_code_phrase(web_template_json):
     assert flat == {f'{path}|code': code, f'{path}|terminology': terminology}
 
 
-def test_composition_set_path_dv_coded_text(web_template_json):
+def test_composition_create_dv_coded_text(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = 'ok'
@@ -61,7 +61,7 @@ def test_composition_set_path_dv_coded_text(web_template_json):
     }
 
 
-def test_composition_set_path_dv_datetime(web_template_json):
+def test_composition_create_dv_datetime(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = '2021-04-22T10:19:49.915Z'
@@ -74,7 +74,7 @@ def test_composition_set_path_dv_datetime(web_template_json):
     assert flat == {path: text}
 
 
-def test_composition_set_path_party_proxy(web_template_json):
+def test_composition_create_party_proxy(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     name = 'composer'
