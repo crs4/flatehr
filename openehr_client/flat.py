@@ -138,25 +138,23 @@ class Composition:
             node for node in self._web_template.leaves if node.name == name
         ]
         for target in leaves:
-            descendants = self._web_template.walk_to(target)
-            path = self._root.separator.join([
-                descendant.name if descendant.inf_cardinality is False else
-                f'{descendant.name}:*' for descendant in descendants
-            ][:-1])
-
-            try:
-                if not path:
-                    self._root.create_node(name, *args, **kwargs)
-                else:
+            descendants = self._web_template.walk_to(target)[:-1]
+            if not descendants:
+                self._root.create_node(name, *args, **kwargs)
+            else:
+                path = self._root.separator.join([
+                    descendant.name if descendant.inf_cardinality is False else
+                    f'{descendant.name}:*' for descendant in descendants
+                ])
+                try:
                     for node in resolver.glob(self._root._node, path):
                         descendant_path = node.separator.join([
                             CompositionNode(node, node.web_template).path, name
                         ])
 
-                        self._root.create_node(descendant_path, *args,
-                                               **kwargs)
-            except anytree.ChildResolverError:
-                ...
+                    self._root.create_node(descendant_path, *args, **kwargs)
+                except anytree.ChildResolverError:
+                    ...
 
     def as_flat(self):
         flat = {}
