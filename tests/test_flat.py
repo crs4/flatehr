@@ -135,3 +135,28 @@ def test_composition_add_multiple_instances(composition):
         'test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name':
         'test-1',
     }
+
+
+def test_composition_set_default(composition):
+    terminology = 'ISO_639-1'
+    code = 'en'
+    composition.set_default('language', code=code, terminology=terminology)
+
+    path_lang = 'test/language'
+    flat = composition.as_flat()
+    assert flat == {
+        f'{path_lang}|code': code,
+        f'{path_lang}|terminology': terminology
+    }
+
+    path_lab_test_result = 'test/lab_result_details/result_group/laboratory_test_result'
+    composition.create_node(path_lab_test_result)
+    composition.set_default('language', code=code, terminology=terminology)
+    flat = composition.as_flat()
+    print(flat)
+    assert flat == {
+        f'{path_lang}|code': code,
+        f'{path_lang}|terminology': terminology,
+        f'{path_lab_test_result}/language|code': code,
+        f'{path_lab_test_result}/language|terminology': terminology,
+    }

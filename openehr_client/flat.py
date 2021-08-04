@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
 import anytree
 
@@ -132,7 +132,7 @@ class Composition:
     def get(self, path) -> "CompositionNode":
         raise NotImplementedError()
 
-    def set_default(self, name: str, value: Union[int, str]):
+    def set_default(self, name: str, *args, **kwargs) -> "CompositionNode":
         resolver = anytree.resolver.Resolver('name')
         leaves = [
             node for node in self._web_template.leaves if node.name == name
@@ -146,17 +146,17 @@ class Composition:
 
             try:
                 if not path:
-                    self._root.create_node(descendants[0].name).value = value
+                    self._root.create_node(name, *args, **kwargs)
                 else:
                     for node in resolver.glob(self._root._node, path):
                         descendant_path = node.separator.join([
                             CompositionNode(node, node.web_template).path, name
                         ])
 
-                        self._root.create_node(descendant_path).value = value
-            except anytree.ChildResolverError as ex:
+                        self._root.create_node(descendant_path, *args,
+                                               **kwargs)
+            except anytree.ChildResolverError:
                 ...
-                #  self._root.add_descendant(target.path).value = value
 
     def as_flat(self):
         flat = {}
