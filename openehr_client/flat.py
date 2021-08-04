@@ -240,25 +240,3 @@ class CompositionNode(Node):
     def leaves(self):
         for leaf in self._node.leaves:
             yield CompositionNode(leaf, leaf.web_template, leaf.value)
-
-
-if __name__ == '__main__':
-    import json
-    webt = json.load(open("tests/resources/web_template.json", 'r'))
-    web_template = WebTemplateNode.create(webt)
-    comp = Composition(web_template)
-    event0 = comp.root.create_node(
-        '/test/molecular_markers/result_group/oncogenic_mutations_test/any_event'
-    )
-    event0.create_node('braf_pic3ca_her2_mutation_status').value = 1
-    comp.root.create_node(
-        '/test/molecular_markers/result_group/oncogenic_mutations_test/any_event/braf_pic3ca_her2_mutation_status'
-    ).value = 2
-
-    #  print('------------')
-    #  comp.root.add_descendant(
-    #      'molecular_markers/result_group/oncogenic_mutations_test/any_event/braf_pic3ca_her2_mutation_status'
-    #  )
-    print(comp.as_flat())
-
-    print(web_template.get_descendant('*/language'))
