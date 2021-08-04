@@ -6,21 +6,6 @@ import openehr_client.data_types as data_types
 from openehr_client.flat import Composition, CompositionNode, WebTemplateNode
 
 
-def test_web_template_node(web_template_json):
-    WebTemplateNode.create(web_template_json)
-
-
-@pytest.mark.skip("Composition.get TBD")
-def test_composition_get_path(web_template_json):
-    web_template = WebTemplateNode.create(web_template_json)
-    composition = Composition(web_template)
-    text = 'ok'
-    path = '/test/context/status'
-    composition.create_node(path, text)
-    node = composition.get(path)
-    assert isinstance(node.value, data_types.Text)
-
-
 def test_composition_set_path_dv_text(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
@@ -161,8 +146,8 @@ def test_composition_set_default(composition):
         f'{path_lab_test_result}/language|terminology': terminology,
     }
 
-    for i in range(2):
-        event = composition.create_node(
+    for _ in range(2):
+        composition.create_node(
             'test/lab_result_details/result_group/laboratory_test_result/any_event'
         )
         composition.set_default('test_name', 'test_name')
@@ -180,3 +165,19 @@ def test_composition_set_default(composition):
         'test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name':
         'test_name',
     }
+
+
+@pytest.mark.skip("TBD")
+def test_web_template_node(web_template_json):
+    WebTemplateNode.create(web_template_json)
+
+
+@pytest.mark.skip("Composition.get TBD")
+def test_composition_get_path(web_template_json):
+    web_template = WebTemplateNode.create(web_template_json)
+    composition = Composition(web_template)
+    text = 'ok'
+    path = '/test/context/status'
+    composition.create_node(path, text)
+    node = composition.get(path)
+    assert isinstance(node.value, data_types.Text)
