@@ -160,3 +160,23 @@ def test_composition_set_default(composition):
         f'{path_lab_test_result}/language|code': code,
         f'{path_lab_test_result}/language|terminology': terminology,
     }
+
+    for i in range(2):
+        event = composition.create_node(
+            'test/lab_result_details/result_group/laboratory_test_result/any_event'
+        )
+        composition.set_default('test_name', 'test_name')
+    assert composition.as_flat() == {
+        f'{path_lang}|code':
+        code,
+        f'{path_lang}|terminology':
+        terminology,
+        f'{path_lab_test_result}/language|code':
+        code,
+        f'{path_lab_test_result}/language|terminology':
+        terminology,
+        'test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name':
+        'test_name',
+        'test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name':
+        'test_name',
+    }
