@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from openehr_client.flat import Composition, WebTemplateNode
+from flatehr.flat import Composition, WebTemplateNode
 
 
 @pytest.fixture

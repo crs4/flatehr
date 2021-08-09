@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 
 import anytree
 
-from openehr_client.data_types import DataValue, factory
+from flatehr.data_types import DataValue, factory
 
 
 class Node:

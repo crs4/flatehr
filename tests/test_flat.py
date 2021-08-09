@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-import openehr_client.data_types as data_types
-from openehr_client.flat import Composition, CompositionNode, WebTemplateNode
+import flatehr.data_types as data_types
+from flatehr.flat import Composition, CompositionNode, WebTemplateNode
 
 
 def test_composition_create_dv_text(web_template_json):
