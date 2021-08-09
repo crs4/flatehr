@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "openehr_client"
+name = "flatehr"
 version = "0.1.0"
 description = ""
 authors = ["Mauro Del Rio <mauro@crs4.it>"]
