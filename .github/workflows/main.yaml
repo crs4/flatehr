@@ -36,6 +36,6 @@
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: false
-          RELEASE_BRANCHES: master
+          # RELEASE_BRANCHES: master
 
 
