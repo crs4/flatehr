@@ -64,7 +64,8 @@ class WebTemplateNode(Node):
                                  required=web_template_el['min'] == 1,
                                  inf_cardinality=web_template_el['max'] == -1,
                                  annotations=web_template_el.get(
-                                     'annotations', {}))
+                                     'annotations', {}),
+                                 inputs=web_template_el.get('inputs'))
 
             children = []
             for child in web_template_el.get('children', []):
@@ -96,6 +97,10 @@ class WebTemplateNode(Node):
     @property
     def children(self):
         return [WebTemplateNode(child) for child in self._node.children]
+
+    @property
+    def inputs(self):
+        return self._node.inputs
 
     def __str__(self):
         return f'{self.path}, rm_type={self.rm_type},'\
