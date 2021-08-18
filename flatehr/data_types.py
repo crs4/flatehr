@@ -13,7 +13,16 @@ def _camel(snake_str):
 def factory(web_template_node, *args, **kwargs):
     dv_stripped = web_template_node.rm_type.replace('DV_', '', 1)
     class_name = _camel(dv_stripped)
-    return getattr(sys.modules[__name__], class_name)(*args, **kwargs)
+    try:
+        return getattr(sys.modules[__name__], class_name)(*args, **kwargs)
+    except TypeError as ex:
+        raise FactoryWrongArguments(
+            f'failed building {class_name}, {web_template_node.path}. Given args: {args},\
+            kwargs {kwargs}') from ex
+
+
+class FactoryWrongArguments(Exception):
+    pass
 
 
 class DataValue(abc.ABC):
