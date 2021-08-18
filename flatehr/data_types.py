@@ -45,6 +45,21 @@ class DateTime(Text):
 
 
 @dataclass
+class Date(Text):
+    ...
+
+
+@dataclass
+class Duration(Text):
+    ...
+
+
+@dataclass
+class Boolean(Text):
+    ...
+
+
+@dataclass
 class CodePhrase(DataValue):
     terminology: str
     code: str
@@ -81,8 +96,24 @@ class CodedText(DataValue):
 
 
 @dataclass
+class Identifier(DataValue):
+    id_: str
+    issuer: str = None
+    assigner: str = None
+    type_: str = None
+
+    def to_json(self) -> Dict:
+        dct = {'id': self.id_}
+        for attr in ('issuer', 'assigner', 'type_'):
+            value = getattr(self, attr)
+            if value is not None:
+                dct[attr.strip('_')] = value
+        return dct
+
+
+@dataclass
 class PartyProxy(DataValue):
-    #TODO: check if it is the right representation
+    # TODO: check if it is the right representation
     name: str
 
     def to_json(self):
