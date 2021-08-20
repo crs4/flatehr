@@ -126,8 +126,7 @@ class Composition:
         return self._root
 
     def create_node(self, path, *args, **kwargs) -> "CompositionNode":
-        if not os.path.isabs(path):
-            path = '/' + path
+        path = path.replace(f'{self.root.path}', '')
         composition_node = self.root.create_node(path)
         if args or kwargs:
             value = factory(composition_node.web_template, *args, **kwargs)
@@ -153,11 +152,8 @@ class Composition:
                 ])
                 try:
                     for node in resolver.glob(self._root._node, path):
-                        descendant_path = node.separator.join([
-                            CompositionNode(node, node.web_template).path, name
-                        ])
-
-                    self._root.create_node(descendant_path, *args, **kwargs)
+                        CompositionNode(node, node.web_template).create_node(
+                            name, *args, **kwargs)
                 except anytree.ChildResolverError:
                     ...
 
@@ -165,13 +161,8 @@ class Composition:
         flat = {}
         for leaf in self._root.leaves:
             if leaf.web_template.is_leaf:
-                value = leaf.value.to_json()
-                if isinstance(value, dict):
-                    for key, value in value.items():
-                        flat[
-                            f'{leaf.path.strip(leaf.separator)}|{key}'] = value
-                else:
-                    flat[leaf.path.strip(leaf.separator)] = value
+                flat.update(
+                    leaf.value.to_flat(f'{leaf.path.strip(leaf.separator)}'))
         return flat
 
 
@@ -207,6 +198,8 @@ class CompositionNode(Node):
         return CompositionNode(node, web_template_node, value)
 
     def create_node(self, path: str, *args, **kwargs) -> "CompositionNode":
+        print(self.path, 'add', path)
+
         def _add_descendant(root, path_, *args, **kwargs):
             try:
                 node = self._resolver.get(root, path_)
@@ -219,10 +212,13 @@ class CompositionNode(Node):
 
                 path_to_remove = [n.name for n in last_node.path] + [
                     missing_child
-                ] if path_.startswith('/') else [missing_child]
+                ]  # if path_.startswith('/') else [missing_child]
 
+                #  print('****', path_, path_to_remove)
                 for el in path_to_remove:
-                    path_ = path_.replace(f'{el}', '', 1)
+                    #  path_ = path_.replace(f'{el}/', '', 1)
+                    path_ = re.sub(r'^' + el + '(/|$)', '', path_, 1)
+                    #  print(path_)
 
                 path_ = path_.lstrip(root.separator)
 
