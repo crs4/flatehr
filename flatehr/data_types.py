@@ -2,6 +2,7 @@ import abc
 import os
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, Union
 
 
@@ -46,8 +47,18 @@ class Text(DataValue):
 
 
 @dataclass
-class DateTime(Text):
-    ...
+class DateTime(DataValue):
+    year: int
+    month: int = 1
+    day: int = 1
+
+    @property
+    def value(self):
+        return datetime(year=self.year, month=self.month,
+                        day=self.day).isoformat()
+
+    def to_flat(self, path: str) -> Dict:
+        return {path: self.value}
 
 
 @dataclass
