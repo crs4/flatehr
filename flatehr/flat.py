@@ -1,10 +1,12 @@
-import os
+import logging
 import re
 from typing import Dict, Tuple
 
 import anytree
 
 from flatehr.data_types import DataValue, factory
+
+logger = logging.getLogger('flatehr')
 
 
 class Node:
@@ -103,8 +105,8 @@ class WebTemplateNode(Node):
         return self._node.inputs
 
     def __str__(self):
-        return f'{self.path}, rm_type={self.rm_type},'\
-            f'required={self.required}, inf_cardinality={self.inf_cardinality}'
+        return f'{self.path}, rm_type={self.rm_type},'
+        f'required={self.required}, inf_cardinality={self.inf_cardinality}'
 
     def __repr__(self):
         return f'{self.__class__.__name__}({str(self)})'
@@ -188,6 +190,8 @@ class CompositionNode(Node):
         web_template_node = self._web_template_node.get_descendant(name)
         if web_template_node.inf_cardinality:
             n_siblings = len(self._resolver.glob(self._node, f'{name}:*'))
+            logger.debug('create new sibling %s for path %s/%s', n_siblings,
+                         self.path, name)
             name = f'{name}:{n_siblings}'
             node = anytree.Node(name, parent=self._node)
         else:
@@ -198,7 +202,7 @@ class CompositionNode(Node):
         return CompositionNode(node, web_template_node, value)
 
     def create_node(self, path: str, *args, **kwargs) -> "CompositionNode":
-        print(self.path, 'add', path)
+        logger.debug('create node: parent %s, path %s', self.path, path)
 
         def _add_descendant(root, path_, *args, **kwargs):
             try:
