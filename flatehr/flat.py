@@ -4,6 +4,7 @@ from typing import Dict, Tuple
 
 import anytree
 
+import flatehr.http as http
 from flatehr.data_types import DataValue, factory
 
 logger = logging.getLogger('flatehr')
@@ -166,6 +167,20 @@ class Composition:
                 flat.update(
                     leaf.value.to_flat(f'{leaf.path.strip(leaf.separator)}'))
         return flat
+
+    def post(self,
+             address: str,
+             ehr_id: str,
+             template_id,
+             auth: http.Auth = None) -> http.Response:
+        composition_base_path = 'ehrbase/rest/ecis/v1/composition'
+        resp = http.post(
+            f'{address}/{composition_base_path}?format=FLAT&ehrId={ehr_id}&templateId={template_id}',
+            self.as_flat(),
+            auth,
+            headers={'Prefer': 'return=representation'})
+        resp.raise_for_status()
+        return resp
 
 
 class CompositionNode(Node):
