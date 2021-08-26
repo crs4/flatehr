@@ -143,6 +143,11 @@ class Composition:
         raise NotImplementedError()
 
     def set_default(self, name: str, **kwargs) -> "CompositionNode":
+        """
+        if kwargs is not provided, defaultValue on inputs fields
+        will be retrieved
+
+        """
         resolver = anytree.resolver.Resolver('name')
         leaves = [
             node for node in self._web_template.leaves if node.name == name
@@ -158,6 +163,12 @@ class Composition:
                 ])
                 try:
                     for node in resolver.glob(self._root._node, path):
+                        if not kwargs:
+                            kwargs = {}
+                            for input_ in node.web_template.get_descendant(
+                                    name).inputs:
+                                key = input_.get('suffix', 'value')
+                                kwargs[key] = input_['defaultValue']
                         CompositionNode(node, node.web_template).create_node(
                             name, **kwargs)
                 except anytree.ChildResolverError:
