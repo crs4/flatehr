@@ -128,18 +128,21 @@ class Composition:
     def root(self):
         return self._root
 
-    def create_node(self, path, *args, **kwargs) -> "CompositionNode":
+    def create_node(self,
+                    path,
+                    increment_cardinality: bool = True,
+                    **kwargs) -> "CompositionNode":
         path = path.replace(f'{self.root.path}', '')
-        composition_node = self.root.create_node(path)
-        if args or kwargs:
-            value = factory(composition_node.web_template, *args, **kwargs)
+        composition_node = self.root.create_node(path, increment_cardinality)
+        if kwargs:
+            value = factory(composition_node.web_template, **kwargs)
             composition_node.value = value
         return composition_node
 
     def get(self, path) -> "CompositionNode":
         raise NotImplementedError()
 
-    def set_default(self, name: str, *args, **kwargs) -> "CompositionNode":
+    def set_default(self, name: str, **kwargs) -> "CompositionNode":
         resolver = anytree.resolver.Resolver('name')
         leaves = [
             node for node in self._web_template.leaves if node.name == name
@@ -147,7 +150,7 @@ class Composition:
         for target in leaves:
             descendants = self._web_template.walk_to(target)[:-1]
             if not descendants:
-                self._root.create_node(name, *args, **kwargs)
+                self._root.create_node(name, **kwargs)
             else:
                 path = self._root.separator.join([
                     descendant.name if descendant.inf_cardinality is False else
@@ -156,7 +159,7 @@ class Composition:
                 try:
                     for node in resolver.glob(self._root._node, path):
                         CompositionNode(node, node.web_template).create_node(
-                            name, *args, **kwargs)
+                            name, **kwargs)
                 except anytree.ChildResolverError:
                     ...
 
@@ -201,14 +204,22 @@ class CompositionNode(Node):
     def web_template(self):
         return self._web_template_node
 
-    def add_child(self, name: str, value: DataValue = None):
+    def add_child(self,
+                  name: str,
+                  value: DataValue = None,
+                  increment_cardinality: bool = True):
         web_template_node = self._web_template_node.get_descendant(name)
         if web_template_node.inf_cardinality:
             n_siblings = len(self._resolver.glob(self._node, f'{name}:*'))
             logger.debug('create new sibling %s for path %s/%s', n_siblings,
                          self.path, name)
-            name = f'{name}:{n_siblings}'
-            node = anytree.Node(name, parent=self._node)
+            increment_cardinality = increment_cardinality or n_siblings == 0
+            if increment_cardinality:
+                name = f'{name}:{n_siblings}'
+                node = anytree.Node(name, parent=self._node)
+            else:
+                node = self._resolver.get(self._node,
+                                          f'{name}:{n_siblings -1}')
         else:
             try:
                 node = self._resolver.get(self._node, name)
@@ -216,18 +227,23 @@ class CompositionNode(Node):
                 node = anytree.Node(name, parent=self._node)
         return CompositionNode(node, web_template_node, value)
 
-    def create_node(self, path: str, *args, **kwargs) -> "CompositionNode":
+    def create_node(self,
+                    path: str,
+                    increment_cardinality: bool = True,
+                    **kwargs) -> "CompositionNode":
         logger.debug('create node: parent %s, path %s', self.path, path)
 
-        def _add_descendant(root, path_, *args, **kwargs):
+        def _add_descendant(root, path_, **kwargs):
             try:
                 node = self._resolver.get(root, path_)
             except anytree.ChildResolverError as ex:
                 last_node = ex.node
                 missing_child = ex.child
+                logger.debug('last_node %s, missing_child %s', last_node,
+                             missing_child)
                 web_template_node = last_node.web_template
-                node = CompositionNode(
-                    last_node, web_template_node).add_child(missing_child)
+                node = CompositionNode(last_node, web_template_node).add_child(
+                    missing_child, increment_cardinality=increment_cardinality)
 
                 path_to_remove = [n.name for n in last_node.path] + [
                     missing_child
@@ -241,16 +257,16 @@ class CompositionNode(Node):
 
                 path_ = path_.lstrip(root.separator)
 
-                return _add_descendant(node._node, path_, *args, **kwargs)
+                return _add_descendant(node._node, path_, **kwargs)
             else:
                 web_template_node = node.web_template
-                if args or kwargs:
-                    value = factory(node.web_template, *args, **kwargs)
+                if kwargs:
+                    value = factory(node.web_template, **kwargs)
                 else:
                     value = None
                 return CompositionNode(node, web_template_node, value)
 
-        return _add_descendant(self._node, path, *args, **kwargs)
+        return _add_descendant(self._node, path, **kwargs)
 
     def _get_web_template(self):
         path = re.sub(r'\[\d+\]', '', self.path)

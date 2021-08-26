@@ -12,16 +12,15 @@ def _camel(snake_str):
     return ''.join([*map(str.title, words)])
 
 
-def factory(web_template_node, *args, **kwargs):
+def factory(web_template_node, **kwargs):
     dv_stripped = web_template_node.rm_type.replace('DV_', '', 1)
     class_name = _camel(dv_stripped)
     try:
-        return getattr(sys.modules[__name__],
-                       class_name).create(*args, **kwargs)
+        return getattr(sys.modules[__name__], class_name).create(**kwargs)
     except TypeError as ex:
         raise FactoryWrongArguments(
-            f'failed building {class_name}, {web_template_node.path}. Given args: {args},\
-            kwargs {kwargs}') from ex
+            f'failed building {class_name}, {web_template_node.path}. \
+            Given  kwargs {kwargs}') from ex
 
 
 class FactoryWrongArguments(Exception):
@@ -34,8 +33,8 @@ class DataValue(abc.ABC):
         ...
 
     @classmethod
-    def create(cls, *args, **kwargs) -> "DataValue":
-        return cls(*args, **kwargs)
+    def create(cls, **kwargs) -> "DataValue":
+        return cls(**kwargs)
 
 
 @dataclass
@@ -134,10 +133,10 @@ class Identifier(DataValue):
 @dataclass
 class PartyProxy(DataValue):
     # TODO: check if it is the right representation
-    name: str
+    value: str
 
     def to_flat(self, path: str) -> Dict:
-        return {f'{path}|name': self.name}
+        return {f'{path}|name': self.value}
 
 
 @dataclass
