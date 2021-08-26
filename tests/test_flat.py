@@ -85,9 +85,9 @@ def test_composition_create_party_proxy(web_template_json):
     composition = Composition(web_template)
     name = 'composer'
     path = 'composer'
-    node = composition.create_node(path, name=name)
+    node = composition.create_node(path, value=name)
     assert isinstance(node.value, data_types.PartyProxy)
-    assert node.value.name == name
+    assert node.value.value == name
 
     flat = composition.as_flat()
     assert flat == {f'{composition.root.name}/{path}|name': name}
