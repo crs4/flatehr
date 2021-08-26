@@ -256,15 +256,11 @@ class CompositionNode(Node):
                 node = CompositionNode(last_node, web_template_node).add_child(
                     missing_child, increment_cardinality=increment_cardinality)
 
-                path_to_remove = [n.name for n in last_node.path] + [
-                    missing_child
-                ]  # if path_.startswith('/') else [missing_child]
+                path_to_remove = [n.name
+                                  for n in last_node.path] + [missing_child]
 
-                #  print('****', path_, path_to_remove)
                 for el in path_to_remove:
-                    #  path_ = path_.replace(f'{el}/', '', 1)
                     path_ = re.sub(r'^' + el + '(/|$)', '', path_, 1)
-                    #  print(path_)
 
                 path_ = path_.lstrip(root.separator)
 
