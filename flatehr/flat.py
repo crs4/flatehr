@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Union
 
 import anytree
 
@@ -186,7 +186,8 @@ class Composition:
              address: str,
              ehr_id: str,
              template_id,
-             auth: http.Auth = None) -> http.Response:
+             auth: http.Auth = None,
+             return_posted: bool = False) -> Union[str, Dict]:
         composition_base_path = 'ehrbase/rest/ecis/v1/composition'
         resp = http.post(
             f'{address}/{composition_base_path}?format=FLAT&ehrId={ehr_id}&templateId={template_id}',
@@ -194,7 +195,17 @@ class Composition:
             auth,
             headers={'Prefer': 'return=representation'})
         resp.raise_for_status()
-        return resp
+        resp_json = resp.json()
+        composition_id = resp_json['compositionUid']
+        if return_posted:
+            posted = http.get(
+                f'{address}/{composition_base_path}/{composition_id}',
+                params={'format': 'FLAT'},
+                auth=auth)
+            posted.raise_for_status()
+            return posted.json()['composition']
+        else:
+            return composition_id
 
 
 class CompositionNode(Node):
