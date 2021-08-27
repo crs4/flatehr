@@ -195,7 +195,7 @@ class Composition:
             self.as_flat(),
             auth,
             headers={'Prefer': 'return=representation'})
-        resp.raise_for_status()
+
         resp_json = resp.json()
         composition_id = resp_json['compositionUid']
         if return_posted:
@@ -205,8 +205,7 @@ class Composition:
                 auth=auth)
             posted.raise_for_status()
             return posted.json()['composition']
-        else:
-            return composition_id
+        return composition_id
 
 
 class CompositionNode(Node):
