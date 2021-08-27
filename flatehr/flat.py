@@ -10,6 +10,8 @@ from flatehr.data_types import DataValue, factory
 
 logger = logging.getLogger('flatehr')
 
+_COMPOSITION_BASE_PATH = 'ehrbase/rest/ecis/v1/composition'
+
 
 class Node:
     def __init__(self, node: anytree.Node):
@@ -187,25 +189,23 @@ class Composition:
              address: str,
              ehr_id: str,
              template_id,
-             auth: http.Auth = None,
-             return_posted: bool = False) -> Union[str, Dict]:
-        composition_base_path = 'ehrbase/rest/ecis/v1/composition'
+             auth: http.Auth = None) -> str:
         resp = http.post(
-            f'{address}/{composition_base_path}?format=FLAT&ehrId={ehr_id}&templateId={template_id}',
+            f'{address}/{_COMPOSITION_BASE_PATH}?format=FLAT&ehrId={ehr_id}&templateId={template_id}',
             self.as_flat(),
             auth,
             headers={'Prefer': 'return=representation'})
 
         resp_json = resp.json()
-        composition_id = resp_json['compositionUid']
-        if return_posted:
-            posted = http.get(
-                f'{address}/{composition_base_path}/{composition_id}',
-                params={'format': 'FLAT'},
-                auth=auth)
-            posted.raise_for_status()
-            return posted.json()['composition']
-        return composition_id
+        return resp_json['compositionUid']
+
+
+def get(address: str, composition_id: str, auth: http.Auth = None) -> Dict:
+    resp = http.get(f'{address}/{_COMPOSITION_BASE_PATH}/{composition_id}',
+                    params={'format': 'FLAT'},
+                    auth=auth)
+    resp.raise_for_status()
+    return resp.json()['composition']
 
 
 class CompositionNode(Node):
