@@ -3,6 +3,7 @@ import re
 from typing import Dict, Tuple, Union
 
 import anytree
+from deepdiff import DeepDiff
 
 import flatehr.http as http
 from flatehr.data_types import DataValue, factory
@@ -294,3 +295,7 @@ class CompositionNode(Node):
     def leaves(self):
         for leaf in self._node.leaves:
             yield CompositionNode(leaf, leaf.web_template, leaf.value)
+
+
+def diff(flat_1: Dict, flat_2: Dict):
+    return DeepDiff(flat_1, flat_2, view='tree')
