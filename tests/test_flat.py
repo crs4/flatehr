@@ -1,23 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import logging
+
 import pytest
 
 import flatehr.data_types as data_types
 from flatehr.flat import Composition, CompositionNode, WebTemplateNode
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def test_composition_create_dv_text(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = 'ok'
-    path = 'test/context/status'
-    node = composition.create_node(path, text)
+    path = 'context/status'
+    node = composition.create_node(path, value=text)
     assert isinstance(node, CompositionNode)
     assert isinstance(node.value, data_types.Text)
     assert node.value.value == text
 
     flat = composition.as_flat()
-    assert flat == {path: text}
+    assert flat == {f'test/{path}': text}
 
 
 def test_composition_create_code_phrase(web_template_json):
@@ -25,7 +29,7 @@ def test_composition_create_code_phrase(web_template_json):
     composition = Composition(web_template)
     terminology = 'ISO_639-1'
     code = 'en'
-    path = 'test/language'
+    path = 'language'
 
     node = composition.create_node(path, terminology=terminology, code=code)
     assert isinstance(node.value, data_types.CodePhrase)
@@ -33,7 +37,10 @@ def test_composition_create_code_phrase(web_template_json):
     assert node.value.code == code
 
     flat = composition.as_flat()
-    assert flat == {f'{path}|code': code, f'{path}|terminology': terminology}
+    assert flat == {
+        f'{composition.root.name}/{path}|code': code,
+        f'{composition.root.name}/{path}|terminology': terminology
+    }
 
 
 def test_composition_create_dv_coded_text(web_template_json):
@@ -42,9 +49,9 @@ def test_composition_create_dv_coded_text(web_template_json):
     text = 'ok'
     terminology = 'ISO_639-1'
     code = 'en'
-    path = 'test/context/setting'
+    path = 'context/setting'
     node = composition.create_node(path,
-                                   text,
+                                   value=text,
                                    terminology=terminology,
                                    code=code)
     assert isinstance(node.value, data_types.CodedText)
@@ -55,69 +62,81 @@ def test_composition_create_dv_coded_text(web_template_json):
 
     flat = composition.as_flat()
     assert flat == {
-        f'{path}|code': code,
-        f'{path}|terminology': terminology,
-        f'{path}|value': text
+        f'{composition.root.name}/{path}|code': code,
+        f'{composition.root.name}/{path}|terminology': terminology,
+        f'{composition.root.name}/{path}|value': text
     }
 
 
 def test_composition_create_dv_datetime(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
-    text = '2021-04-22T10:19:49.915Z'
-    path = 'test/context/start_time'
-    node = composition.create_node(path, text)
+    path = 'context/start_time'
+    node = composition.create_node(path, year=2021, month=4, day=22)
     assert isinstance(node.value, data_types.DateTime)
-    assert node.value.value == text
 
     flat = composition.as_flat()
-    assert flat == {path: text}
+    text = '2021-04-22T00:00:00'
+    assert flat == {f'{composition.root.name}/{path}': text}
 
 
 def test_composition_create_party_proxy(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     name = 'composer'
-    path = 'test/composer'
-    node = composition.create_node(path, name)
+    path = 'composer'
+    node = composition.create_node(path, value=name)
     assert isinstance(node.value, data_types.PartyProxy)
-    assert node.value.name == name
+    assert node.value.value == name
 
     flat = composition.as_flat()
-    assert flat == {f'{path}|name': name}
+    assert flat == {f'{composition.root.name}/{path}|name': name}
 
 
 def test_composition_to_flat(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
     text = 'ok'
-    path_status = 'test/context/status'
-    composition.create_node(path_status, text)
+    path_status = 'context/status'
+    composition.create_node(path_status, value=text)
 
     terminology = 'ISO_639-1'
     code = 'en'
-    path_lang = 'test/language'
+    path_lang = 'language'
 
     composition.create_node(path_lang, terminology=terminology, code=code)
 
     flat = composition.as_flat()
     assert flat == {
-        path_status: text,
-        f'{path_lang}|code': code,
-        f'{path_lang}|terminology': terminology
+        f'{composition.root.name}/{path_status}': text,
+        f'{composition.root.name}/{path_lang}|code': code,
+        f'{composition.root.name}/{path_lang}|terminology': terminology
     }
 
 
 def test_composition_add_multiple_instances(composition):
     for i in range(2):
         event = composition.create_node(
-            'test/lab_result_details/result_group/laboratory_test_result/any_event'
-        )
-        event.create_node('test_name', f'test-{i}')
+            'lab_result_details/result_group/laboratory_test_result/any_event')
+        event.create_node('test_name', value=f'test-{i}')
     assert composition.as_flat() == {
         'test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name':
         'test-0',
         'test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name':
+        'test-1',
+    }
+
+
+def test_composition_not_increment_cardinality(composition):
+    for i, child in enumerate(['test_name', 'test_diagnosis']):
+        event = composition.create_node(
+            'lab_result_details/result_group/laboratory_test_result/any_event',
+            False)
+        event.create_node(child, value=f'test-{i}')
+    assert composition.as_flat() == {
+        'test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name':
+        'test-0',
+        'test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_diagnosis:0':
         'test-1',
     }
 
@@ -127,38 +146,41 @@ def test_composition_set_default(composition):
     code = 'en'
     composition.set_default('language', code=code, terminology=terminology)
 
-    path_lang = 'test/language'
+    path_lang = 'language'
     flat = composition.as_flat()
     assert flat == {
-        f'{path_lang}|code': code,
-        f'{path_lang}|terminology': terminology
+        f'{composition.root.name}/{path_lang}|code': code,
+        f'{composition.root.name}/{path_lang}|terminology': terminology
     }
 
-    path_lab_test_result = 'test/lab_result_details/result_group/laboratory_test_result'
+    path_lab_test_result = 'lab_result_details/result_group/laboratory_test_result'
     composition.create_node(path_lab_test_result)
     composition.set_default('language', code=code, terminology=terminology)
     flat = composition.as_flat()
     print(flat)
     assert flat == {
-        f'{path_lang}|code': code,
-        f'{path_lang}|terminology': terminology,
-        f'{path_lab_test_result}/language|code': code,
-        f'{path_lab_test_result}/language|terminology': terminology,
+        f'{composition.root.name}/{path_lang}|code':
+        code,
+        f'{composition.root.name}/{path_lang}|terminology':
+        terminology,
+        f'{composition.root.name}/{path_lab_test_result}/language|code':
+        code,
+        f'{composition.root.name}/{path_lab_test_result}/language|terminology':
+        terminology,
     }
 
     for _ in range(2):
         composition.create_node(
-            'test/lab_result_details/result_group/laboratory_test_result/any_event'
-        )
-        composition.set_default('test_name', 'test_name')
+            'lab_result_details/result_group/laboratory_test_result/any_event')
+        composition.set_default('test_name', value='test_name')
     assert composition.as_flat() == {
-        f'{path_lang}|code':
+        f'{composition.root.name}/{path_lang}|code':
         code,
-        f'{path_lang}|terminology':
+        f'{composition.root.name}/{path_lang}|terminology':
         terminology,
-        f'{path_lab_test_result}/language|code':
+        f'{composition.root.name}/{path_lab_test_result}/language|code':
         code,
-        f'{path_lab_test_result}/language|terminology':
+        f'{composition.root.name}/{path_lab_test_result}/language|terminology':
         terminology,
         'test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name':
         'test_name',
@@ -178,6 +200,6 @@ def test_composition_get_path(web_template_json):
     composition = Composition(web_template)
     text = 'ok'
     path = '/test/context/status'
-    composition.create_node(path, text)
+    composition.create_node(path, value=text)
     node = composition.get(path)
     assert isinstance(node.value, data_types.Text)
