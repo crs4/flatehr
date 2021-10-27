@@ -9,7 +9,7 @@ def post(address, json, auth: "Auth" = None, headers=None) -> "Response":
     try:
         resp.raise_for_status()
     except requests.exceptions.HTTPError as ex:
-        raise HTTPException(resp.json(), ex.args) from ex
+        raise HTTPException(resp.text, ex.args) from ex
     return resp
 
 
