@@ -9,7 +9,7 @@ def post(address, json, auth: "Auth" = None, headers=None) -> "Response":
     try:
         resp.raise_for_status()
     except requests.exceptions.HTTPError as ex:
-        raise HTTPException(resp.json(), ex.args) from ex
+        raise HTTPException(resp.text, ex.args) from ex
     return resp
 
 
@@ -31,6 +31,6 @@ class Response(requests.Response):
 
 
 class HTTPException(Exception):
-    def __init__(self, json: Dict, *args):
-        self.json = json
+    def __init__(self, text: str, *args):
+        self.text = text
         super().__init__(*args)
