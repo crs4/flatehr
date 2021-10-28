@@ -75,6 +75,7 @@ class WebTemplateNode(Node):
                 inf_cardinality=web_template_el["max"] == -1,
                 annotations=web_template_el.get("annotations", {}),
                 inputs=web_template_el.get("inputs"),
+                aql_path=web_template_el.get("aqlPath"),
             )
 
             children = []
@@ -91,6 +92,10 @@ class WebTemplateNode(Node):
     @property
     def rm_type(self):
         return self._node.rm_type
+
+    @property
+    def aql_path(self):
+        return self._node.aql_path
 
     @property
     def required(self):
