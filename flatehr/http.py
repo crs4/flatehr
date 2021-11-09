@@ -34,3 +34,6 @@ class HTTPException(Exception):
     def __init__(self, text: str, *args):
         self.text = text
         super().__init__(*args)
+
+    def __str__(self):
+        return self.text
