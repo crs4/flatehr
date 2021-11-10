@@ -8,6 +8,7 @@ authors = ["Mauro Del Rio <mauro@crs4.it>"]
 python = "^3.8"
 requests = "^2.25.1"
 anytree = "2.8.0"
+deepdiff = "^5.5.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
