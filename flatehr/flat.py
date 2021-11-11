@@ -306,4 +306,4 @@ class CompositionNode(Node):
 
 
 def diff(flat_1: Dict, flat_2: Dict):
-    return DeepDiff(flat_1, flat_2, view="tree")
+    return DeepDiff(flat_1, flat_2, verbose_level=2)
