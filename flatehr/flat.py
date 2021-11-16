@@ -1,16 +1,13 @@
 import logging
 import re
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple
 
 import anytree
 from deepdiff import DeepDiff
 
-import flatehr.http as http
 from flatehr.data_types import DataValue, factory
 
 logger = logging.getLogger("flatehr")
-
-_COMPOSITION_BASE_PATH = "ehrbase/rest/ecis/v1/composition"
 
 
 class Node:
@@ -193,29 +190,6 @@ class Composition:
             if leaf.web_template.is_leaf:
                 flat.update(leaf.value.to_flat(f"{leaf.path.strip(leaf.separator)}"))
         return flat
-
-    def post(
-        self, address: str, ehr_id: str, template_id, auth: http.Auth = None
-    ) -> str:
-        resp = http.post(
-            f"{address}/{_COMPOSITION_BASE_PATH}?format=FLAT&ehrId={ehr_id}&templateId={template_id}",
-            self.as_flat(),
-            auth,
-            headers={"Prefer": "return=representation"},
-        )
-
-        resp_json = resp.json()
-        return resp_json["compositionUid"]
-
-
-def get(address: str, composition_id: str, auth: http.Auth = None) -> Dict:
-    resp = http.get(
-        f"{address}/{_COMPOSITION_BASE_PATH}/{composition_id}",
-        params={"format": "FLAT"},
-        auth=auth,
-    )
-    resp.raise_for_status()
-    return resp.json()["composition"]
 
 
 class CompositionNode(Node):
