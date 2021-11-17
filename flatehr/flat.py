@@ -115,11 +115,19 @@ class WebTemplateNode(Node):
         return self._node.inputs
 
     def __str__(self):
-        return f"{self.path}, rm_type={self.rm_type},"
-        f"required={self.required}, inf_cardinality={self.inf_cardinality}"
+        return f"{self.path}, rm_type={self.rm_type}, required={self.required}"
 
     def __repr__(self):
         return f"{self.__class__.__name__}({str(self)})"
+
+    @property
+    def parent(self):
+        return WebTemplateNode(self._node.parent)
+
+    @property
+    def ancestors(self):
+        for ancestor in self._node.ancestors:
+            yield WebTemplateNode(ancestor)
 
 
 class Composition:
