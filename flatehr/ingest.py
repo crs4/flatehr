@@ -4,11 +4,12 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from pprint import pprint
 from typing import Dict, Iterable, Tuple, Union
 
 from tqdm.contrib.concurrent import thread_map
 
-from .flat import Composition, WebTemplateNode
+from .flat import Composition, WebTemplateNode, diff
 from .http import OpenEHRClient
 
 logger = logging.getLogger()
@@ -72,7 +73,10 @@ class BasicIngester(Ingester):
         return comp_id
 
     def _dump_composition(
-        self, composition: Composition, external_id: str, dirname: str = "compositions"
+        self,
+        composition: Composition,
+        external_id: str,
+        dirname: str = "compositions",
     ):
         os.makedirs(dirname, exist_ok=True)
         dump_filename = f"{dirname}/{external_id}.json"
@@ -86,7 +90,18 @@ class BasicIngester(Ingester):
         composition_id: str,
         dirname: str = "diff",
     ):
-        ...
+        saved = self.client.get_composition(composition_id)
+        os.makedirs(dirname, exist_ok=True)
+        diff_from_posted = diff(composition.as_flat(), saved)
+        diff_filename = f"{dirname}/{composition_id}.diff"
+        logger.info("dumping diff to %s", diff_filename)
+        with open(diff_filename, "w") as f_obj:
+            pprint(diff_from_posted, f_obj, indent=2)
+
+        dump_db_filename = f"{composition_id}.db.json"
+        logger.info("dumping db composition to %s", dump_db_filename)
+        with open(dump_db_filename, "w") as f_obj:
+            json.dump(saved, f_obj)
 
 
 @dataclass
@@ -115,19 +130,6 @@ class MultiThreadedIngester(BasicIngester):
                 logger.exception(ex)
                 fail += 1
         return (success, fail)
-
-    #  saved = self.client.get_composition(composition_id)
-    #  os.makedirs(dirname, exist_ok=True)
-    #  diff_from_posted = diff(composition.as_flat(), saved)
-    #  diff_filename = f"{dirname}/{composition_id}.diff"
-    #  logger.info("dumping diff to %s", diff_filename)
-    #  with open(diff_filename, "w") as f_obj:
-    #      pprint(diff_from_posted, f_obj, indent=2)
-    #
-    #  dump_db_filename = f"{composition_id}.db.json"
-    #  logger.info("dumping db composition to %s", dump_db_filename)
-    #  with open(dump_db_filename, "w") as f_obj:
-    #      json.dump(saved, f_obj)
 
 
 def multi_source_ingestion(
