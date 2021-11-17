@@ -4,11 +4,11 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from typing import Iterable, Tuple
+from typing import Dict, Iterable, Tuple, Union
 
 from tqdm.contrib.concurrent import thread_map
 
-from .flat import Composition
+from .flat import Composition, WebTemplateNode
 from .http import OpenEHRClient
 
 logger = logging.getLogger()
@@ -153,3 +153,23 @@ def multi_source_ingestion(
         success += res[0]
         fail += res[1]
     return success, fail
+
+
+class CompositionFactory(abc.ABC):
+    @abc.abstractmethod
+    def get_compositions(self) -> Iterable[Composition]:
+        ...
+
+
+VALUE = Union[float, str]
+KWARGS = Dict[str, VALUE]
+
+
+class ValueConverter(abc.ABC):
+    @abc.abstractmethod
+    def convert(self, web_template_node: WebTemplateNode, value) -> KWARGS:
+        ...
+
+    @abc.abstractmethod
+    def accepted_data_types(self) -> Tuple[str]:
+        ...
