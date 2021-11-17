@@ -10,6 +10,7 @@ requests = "^2.25.1"
 anytree = "2.8.0"
 deepdiff = "^5.5.0"
 tqdm = "^4.62.3"
+clize = "^4.2.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
