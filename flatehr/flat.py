@@ -164,6 +164,26 @@ class Composition:
         will be retrieved
 
         """
+
+        def _set_default(existing_path: str, path_to_create: str, kwargs):
+            if existing_path:
+                try:
+                    for node in resolver.glob(self._root._node, existing_path):
+                        if not kwargs:
+                            kwargs = {}
+                            for input_ in node.web_template.get_descendant(name).inputs:
+                                key = input_.get("suffix", "value")
+                                kwargs[key] = input_["defaultValue"]
+                        CompositionNode(node, node.web_template).create_node(
+                            path_to_create, **kwargs
+                        )
+                except anytree.ChildResolverError:
+                    nodes = existing_path.split("/")
+                    last_node = nodes[-1]
+                    existing_path = "/".join(nodes[: len(nodes) - 1])
+                    path_to_create = last_node + "/" + path_to_create
+                    _set_default(existing_path, path_to_create, kwargs)
+
         resolver = anytree.resolver.Resolver("name")
         leaves = [node for node in self._web_template.leaves if node.name == name]
         for target in leaves:
@@ -179,18 +199,7 @@ class Composition:
                         for descendant in descendants
                     ]
                 )
-                try:
-                    for node in resolver.glob(self._root._node, path):
-                        if not kwargs:
-                            kwargs = {}
-                            for input_ in node.web_template.get_descendant(name).inputs:
-                                key = input_.get("suffix", "value")
-                                kwargs[key] = input_["defaultValue"]
-                        CompositionNode(node, node.web_template).create_node(
-                            name, **kwargs
-                        )
-                except anytree.ChildResolverError:
-                    ...
+                _set_default(path, name, kwargs)
 
     def as_flat(self):
         flat = {}
