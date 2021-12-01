@@ -101,15 +101,21 @@ class CodedText(DataValue):
         for _input in web_template_node.inputs:
             if _input["type"] == "CODED_TEXT":
                 for code in _input["list"]:
-                    label = code.get("label", code["localizedLabels"]["en"])
+
+                    try:
+                        label = code["label"]
+                    except KeyError:
+                        label = code["localizedLabels"]["en"]
+
                     if label.lower() == value.lower():
                         kwargs["code"] = code["value"]
-                try:
-                    kwargs["terminology"] = _input["terminology"]
-                except KeyError:
-                    kwargs["terminology"] = list(code["termBindings"].values())[0][
-                        "value"
-                    ]
+                if "terminology" not in kwargs:
+                    try:
+                        kwargs["terminology"] = _input["terminology"]
+                    except KeyError:
+                        kwargs["terminology"] = list(code["termBindings"].values())[0][
+                            "value"
+                        ]
 
         return cls(**kwargs)
 
