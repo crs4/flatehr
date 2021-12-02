@@ -136,6 +136,10 @@ class Composition:
         self._root = CompositionNode(
             anytree.Node(web_template.path.strip(web_template.separator)), web_template
         )
+        self.metadata = {}
+
+    def __str__(self):
+        return f"<template {self._web_template.name}, metadata {self.metadata}>"
 
     @property
     def web_template(self):

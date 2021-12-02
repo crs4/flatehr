@@ -80,7 +80,7 @@ class BasicIngester(Ingester):
     ):
         os.makedirs(dirname, exist_ok=True)
         dump_filename = f"{dirname}/{external_id}.json"
-        logger.info("dumping composition to %s", dump_filename)
+        logger.info("dumping composition %s to %s", composition, dump_filename)
         with open(dump_filename, "w") as f_obj:
             json.dump(composition.as_flat(), f_obj)
 
