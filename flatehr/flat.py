@@ -299,6 +299,11 @@ class CompositionNode(Node):
         for leaf in self._node.leaves:
             yield CompositionNode(leaf, leaf.web_template, leaf.value)
 
+    def get_descendant(self, path: str):
+        resolver = anytree.Resolver("name")
+        node = resolver.get(self._node, path)
+        return type(self)(node, node.web_template)
+
 
 def diff(flat_1: Dict, flat_2: Dict):
     return DeepDiff(flat_1, flat_2, verbose_level=2)
