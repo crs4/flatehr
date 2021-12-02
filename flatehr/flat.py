@@ -174,9 +174,13 @@ class Composition:
                             for input_ in node.web_template.get_descendant(name).inputs:
                                 key = input_.get("suffix", "value")
                                 kwargs[key] = input_["defaultValue"]
-                        CompositionNode(node, node.web_template).create_node(
-                            path_to_create, **kwargs
+                        composition_node = CompositionNode(node, node.web_template)
+                        child = node.web_template.get_descendant(
+                            path_to_create.split("/")[0]
                         )
+                        if child.required:
+                            composition_node.create_node(path_to_create, **kwargs)
+
                 except anytree.ChildResolverError:
                     nodes = existing_path.split("/")
                     last_node = nodes[-1]
