@@ -115,7 +115,7 @@ class WebTemplateNode(Node):
         return self._node.inputs
 
     def __str__(self):
-        return f"{self.path}, rm_type={self.rm_type}, required={self.required}"
+        return f"{self.path}, rm_type={self.rm_type}, cardinality={int(self.required)}:{ '*' if self.inf_cardinality else 1 }"
 
     def __repr__(self):
         return f"{self.__class__.__name__}({str(self)})"
