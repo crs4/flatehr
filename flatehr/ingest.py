@@ -7,10 +7,11 @@ from dataclasses import dataclass
 from pprint import pprint
 from typing import Dict, Iterable, Tuple, Union
 
+import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 from .flat import Composition, WebTemplateNode, diff
-from .http import OpenEHRClient
+from .http import HTTPException, OpenEHRClient
 
 logger = logging.getLogger()
 
@@ -65,7 +66,10 @@ class BasicIngester(Ingester):
         if self.dump_composition:
             self._dump_composition(composition, ehr_id)
 
-        comp_id = self.client.post_composition(composition, ehr_id)
+        try:
+            comp_id = self.client.post_composition(composition, ehr_id)
+        except HTTPException as ex:
+            raise RuntimeError(f"failed posting composition {composition}, error: {ex}")
         #  logger.info("patient %s-> composition %s", external_id, comp_id)
 
         if self.save_diff:
