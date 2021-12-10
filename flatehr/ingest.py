@@ -152,7 +152,8 @@ def multi_source_ingestion(
 
     else:
         results = [
-            ingester.ingest(ehr_composition) for ehr_composition in ehr_compositions
+            ingester.ingest(ehr_composition)
+            for ehr_composition in tqdm.tqdm(list(ehr_compositions))
         ]
 
     for res in results:
