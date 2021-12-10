@@ -160,7 +160,7 @@ class Composition:
         return composition_node
 
     def get(self, path) -> "CompositionNode":
-        raise NotImplementedError()
+        return self._root.get_descendant(path)
 
     def set_default(self, name: str, **kwargs) -> "CompositionNode":
         """
@@ -304,9 +304,10 @@ class CompositionNode(Node):
             yield CompositionNode(leaf, leaf.web_template, leaf.value)
 
     def get_descendant(self, path: str):
+        path = path if path.startswith("/") else f"/{path}"
         resolver = anytree.Resolver("name")
         node = resolver.get(self._node, path)
-        return type(self)(node, node.web_template)
+        return type(self)(node, node.web_template, value=node.value)
 
 
 def diff(flat_1: Dict, flat_2: Dict):
