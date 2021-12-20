@@ -69,7 +69,9 @@ class BasicIngester(Ingester):
         try:
             comp_id = self.client.post_composition(composition, ehr_id)
         except HTTPException as ex:
-            raise RuntimeError(f"failed posting composition {composition}, error: {ex}")
+            raise RuntimeError(
+                f"failed posting composition {composition}, error: {ex}"
+            ) from ex
         #  logger.info("patient %s-> composition %s", external_id, comp_id)
 
         if self.save_diff:
