@@ -50,13 +50,13 @@ class BasicIngester(Ingester):
         ehr_compositions: EHRCompositionMappings,
     ) -> Tuple[SUCCESS, FAIL]:
         success = fail = 0
-        try:
-            for ehr_composition in ehr_compositions:
+        for ehr_composition in ehr_compositions:
+            try:
                 self._ingest(ehr_composition)
                 success += 1
-        except Exception as ex:
-            logger.exception(ex)
-            fail += 1
+            except Exception as ex:
+                logger.exception(ex)
+                fail += 1
         return (success, fail)
 
     def _ingest(self, ehr_composition: EHRCompositionMapping) -> str:
