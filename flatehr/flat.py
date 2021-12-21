@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from typing import Dict, Tuple
 
@@ -272,8 +273,13 @@ class CompositionNode(Node):
                 missing_child = ex.child
                 logger.debug("last_node %s, missing_child %s", last_node, missing_child)
                 web_template_node = last_node.web_template
+                missing_path = os.path.join(root.web_template.path, path_).replace(
+                    web_template_node.path, ""
+                )
+                is_last = len(missing_path.strip("/").split("/")) == 1
                 node = CompositionNode(last_node, web_template_node).add_child(
-                    missing_child, increment_cardinality=increment_cardinality
+                    missing_child,
+                    increment_cardinality=is_last and increment_cardinality,
                 )
 
                 path_to_remove = [n.name for n in last_node.path] + [missing_child]
