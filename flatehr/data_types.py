@@ -47,6 +47,12 @@ class Text(DataValue):
     def to_flat(self, path: str) -> Dict:
         return {path: self.value}
 
+    @classmethod
+    def create(cls, web_template_node, value: str = None) -> "DataValue":
+        if value is None:
+            value = web_template_node.inputs[0]["defaultValue"]
+        return cls(value)
+
 
 @dataclass
 class DateTime(DataValue):
@@ -97,27 +103,33 @@ class CodedText(DataValue):
 
     @classmethod
     def create(cls, web_template_node, **kwargs) -> "CodedText":
-        value = kwargs["value"]
-        for _input in web_template_node.inputs:
-            if _input["type"] == "CODED_TEXT":
-                for code in _input["list"]:
+        value = kwargs.get("value")
+        code = kwargs.get("code")
+        code_info = web_template_node.inputs[0]
+        if value and not code:
+            for el in code_info.get("list", []):
+                try:
+                    label = el["label"]
+                except KeyError:
+                    label = el["localizedLabels"]["en"]
+                if label.lower() == value.lower():
+                    code = el["value"]
+                    break
+        else:
+            code = code or code_info.get("defaultValue")
+            for el in code_info.get("list", []):
+                if el["value"] == code:
+                    value = el["label"]
+                    break
 
-                    try:
-                        label = code["label"]
-                    except KeyError:
-                        label = code["localizedLabels"]["en"]
-
-                    if label.lower() == value.lower():
-                        kwargs["code"] = code["value"]
-                if "terminology" not in kwargs:
-                    try:
-                        kwargs["terminology"] = _input["terminology"]
-                    except KeyError:
-                        kwargs["terminology"] = list(code["termBindings"].values())[0][
-                            "value"
-                        ]
-
-        return cls(**kwargs)
+        try:
+            terminology = kwargs["terminology"]
+        except KeyError:
+            try:
+                terminology = code_info["terminology"]
+            except KeyError:
+                terminology = list(el["termBindings"].values())[0]["value"]
+        return cls(value=value, code=code, terminology=terminology)
 
     @property
     def terminology(self):

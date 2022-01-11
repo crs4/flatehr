@@ -61,6 +61,11 @@ class Node:
         resolver = anytree.Resolver("name")
         return type(self)(resolver.get(self._node, path))
 
+    @property
+    def parent(self):
+        parent = self._node.parent
+        return type(self)(parent)
+
 
 class WebTemplateNode(Node):
     @staticmethod
@@ -163,7 +168,7 @@ class Composition:
     def get(self, path) -> "CompositionNode":
         return self._root.get_descendant(path)
 
-    def set_default(self, name: str, **kwargs) -> "CompositionNode":
+    def set_all(self, name: str, **kwargs) -> "CompositionNode":
         """
         if kwargs is not provided, defaultValue on inputs fields
         will be retrieved
@@ -216,6 +221,21 @@ class Composition:
             if leaf.web_template.is_leaf:
                 flat.update(leaf.value.to_flat(f"{leaf.path.strip(leaf.separator)}"))
         return flat
+
+    def set_defaults(self):
+        leaves_parents = {
+            leaf.parent for leaf in self.root.leaves if leaf.web_template.is_leaf
+        }
+        for parent in leaves_parents:
+            children_names = {child.name for child in parent.children}
+            for web_template_child in parent.web_template.children:
+                if (
+                    web_template_child.is_leaf
+                    and web_template_child.required
+                    and web_template_child.name not in children_names
+                ):
+                    node = self.create_node(web_template_child.path)
+                    node.set_defaults()
 
 
 class CompositionNode(Node):
@@ -314,6 +334,21 @@ class CompositionNode(Node):
         resolver = anytree.Resolver("name")
         node = resolver.get(self._node, path)
         return type(self)(node, node.web_template, value=node.value)
+
+    @property
+    def parent(self):
+        parent = self._node.parent
+        return CompositionNode(parent, parent.web_template, parent.value)
+
+    @property
+    def children(self):
+        return [
+            CompositionNode(child, child.web_template, child.value)
+            for child in self._node.children
+        ]
+
+    def set_defaults(self):
+        self.value = factory(self.web_template)
 
 
 def diff(flat_1: Dict, flat_2: Dict):

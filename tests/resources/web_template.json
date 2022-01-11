@@ -1439,6 +1439,100 @@
           }
         ],
         "inContext": true
+      },
+      {
+        "id": "targeted_therapy_start",
+        "name": "Targeted therapy start",
+        "localizedName": "Targeted therapy start",
+        "rmType": "CLUSTER",
+        "nodeId": "openEHR-EHR-CLUSTER.timing_nondaily.v1",
+        "min": 1,
+        "max": 1,
+        "localizedNames": {
+          "en": "Targeted therapy start"
+        },
+        "localizedDescriptions": {
+          "en": "Structured information about the intended timing pattern for a therapeutic or diagnostic activity occurring over days, weeks, months or years."
+        },
+        "aqlPath": "/content[openEHR-EHR-SECTION.adhoc.v1,'Therapies']/items[openEHR-EHR-SECTION.adhoc.v1,'Targeted therapy']/items[openEHR-EHR-ACTION.procedure.v1,'Targeted therapy']/description[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Targeted therapy start']",
+        "children": [
+          {
+            "id": "start_of_targeted_therapy",
+            "name": "Start of targeted therapy",
+            "localizedName": "Start of targeted therapy",
+            "rmType": "CLUSTER",
+            "nodeId": "at0006",
+            "min": 1,
+            "max": 1,
+            "localizedNames": {
+              "en": "Start of targeted therapy"
+            },
+            "localizedDescriptions": {
+              "en": "The activity should take place in relation to a specific named event."
+            },
+            "aqlPath": "/content[openEHR-EHR-SECTION.adhoc.v1,'Therapies']/items[openEHR-EHR-SECTION.adhoc.v1,'Targeted therapy']/items[openEHR-EHR-ACTION.procedure.v1,'Targeted therapy']/description[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Targeted therapy start']/items[at0006,'Start of targeted therapy']",
+            "children": [
+              {
+                "id": "from_event",
+                "name": "From event",
+                "localizedName": "From event",
+                "rmType": "DV_TEXT",
+                "nodeId": "at0005",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "From event"
+                },
+                "localizedDescriptions": {
+                  "en": "The name of the event that triggers the activity to take place."
+                },
+                "annotations": {
+                  "comment": "This element is intended for events that can occur at variable dates, such as onset of menstruation, and not for doses or activities that are conditional on a different varable. If required, the event name can be coded using a terminology, which could potentially be used to trigger an application to set a concrete date for the activity."
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.adhoc.v1,'Therapies']/items[openEHR-EHR-SECTION.adhoc.v1,'Targeted therapy']/items[openEHR-EHR-ACTION.procedure.v1,'Targeted therapy']/description[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Targeted therapy start']/items[at0006,'Start of targeted therapy']/items[at0005,'From event']/value",
+                "inputs": [
+                  {
+                    "type": "TEXT",
+                    "defaultValue": "Primary diagnosis"
+                  }
+                ]
+              },
+              {
+                "id": "date_of_start_of_targeted_therapy",
+                "name": "Date of start of targeted therapy",
+                "localizedName": "Date of start of targeted therapy",
+                "rmType": "DV_DURATION",
+                "nodeId": "at0009",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Date of start of targeted therapy"
+                },
+                "localizedDescriptions": {
+                  "en": "The period of time before or after the named event when the activity should take place. Negative durations can be used to signify that the activity should be taken before a known event."
+                },
+                "annotations": {
+                  "comment": "For example: '3 days after onset of menstruation = menstrual onset + 3 days', '2 weeks prior to admission= admission -2 weeks'."
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.adhoc.v1,'Therapies']/items[openEHR-EHR-SECTION.adhoc.v1,'Targeted therapy']/items[openEHR-EHR-ACTION.procedure.v1,'Targeted therapy']/description[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Targeted therapy start']/items[at0006,'Start of targeted therapy']/items[at0009,'Date of start of targeted therapy']/value",
+                "inputs": [
+                  {
+                    "suffix": "week",
+                    "type": "INTEGER",
+                    "validation": {
+                      "range": {
+                        "minOp": ">=",
+                        "min": 0,
+                        "maxOp": "<=",
+                        "max": 600
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
