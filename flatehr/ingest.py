@@ -7,10 +7,11 @@ from dataclasses import dataclass
 from pprint import pprint
 from typing import Dict, Iterable, Tuple, Union
 
+import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 from .flat import Composition, WebTemplateNode, diff
-from .http import OpenEHRClient
+from .http import HTTPException, OpenEHRClient
 
 logger = logging.getLogger()
 
@@ -49,13 +50,13 @@ class BasicIngester(Ingester):
         ehr_compositions: EHRCompositionMappings,
     ) -> Tuple[SUCCESS, FAIL]:
         success = fail = 0
-        try:
-            for ehr_composition in ehr_compositions:
+        for ehr_composition in ehr_compositions:
+            try:
                 self._ingest(ehr_composition)
                 success += 1
-        except Exception as ex:
-            logger.exception(ex)
-            fail += 1
+            except Exception as ex:
+                logger.exception(ex)
+                fail += 1
         return (success, fail)
 
     def _ingest(self, ehr_composition: EHRCompositionMapping) -> str:
@@ -65,7 +66,12 @@ class BasicIngester(Ingester):
         if self.dump_composition:
             self._dump_composition(composition, ehr_id)
 
-        comp_id = self.client.post_composition(composition, ehr_id)
+        try:
+            comp_id = self.client.post_composition(composition, ehr_id)
+        except HTTPException as ex:
+            raise RuntimeError(
+                f"failed posting composition {composition}, error: {ex}"
+            ) from ex
         #  logger.info("patient %s-> composition %s", external_id, comp_id)
 
         if self.save_diff:
@@ -80,7 +86,7 @@ class BasicIngester(Ingester):
     ):
         os.makedirs(dirname, exist_ok=True)
         dump_filename = f"{dirname}/{external_id}.json"
-        logger.info("dumping composition to %s", dump_filename)
+        logger.info("dumping composition %s to %s", composition, dump_filename)
         with open(dump_filename, "w") as f_obj:
             json.dump(composition.as_flat(), f_obj)
 
@@ -148,7 +154,8 @@ def multi_source_ingestion(
 
     else:
         results = [
-            ingester.ingest(ehr_composition) for ehr_composition in ehr_compositions
+            ingester.ingest(ehr_composition)
+            for ehr_composition in tqdm.tqdm(list(ehr_compositions))
         ]
 
     for res in results:

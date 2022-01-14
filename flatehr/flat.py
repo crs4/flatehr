@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from typing import Dict, Tuple
 
@@ -60,6 +61,11 @@ class Node:
         resolver = anytree.Resolver("name")
         return type(self)(resolver.get(self._node, path))
 
+    @property
+    def parent(self):
+        parent = self._node.parent
+        return type(self)(parent)
+
 
 class WebTemplateNode(Node):
     @staticmethod
@@ -115,7 +121,7 @@ class WebTemplateNode(Node):
         return self._node.inputs
 
     def __str__(self):
-        return f"{self.path}, rm_type={self.rm_type}, required={self.required}"
+        return f"{self.path}, rm_type={self.rm_type}, cardinality={int(self.required)}:{ '*' if self.inf_cardinality else 1 }"
 
     def __repr__(self):
         return f"{self.__class__.__name__}({str(self)})"
@@ -136,6 +142,10 @@ class Composition:
         self._root = CompositionNode(
             anytree.Node(web_template.path.strip(web_template.separator)), web_template
         )
+        self.metadata = {}
+
+    def __str__(self):
+        return f"<template {self._web_template.name}, metadata {self.metadata}>"
 
     @property
     def web_template(self):
@@ -156,14 +166,38 @@ class Composition:
         return composition_node
 
     def get(self, path) -> "CompositionNode":
-        raise NotImplementedError()
+        return self._root.get_descendant(path)
 
-    def set_default(self, name: str, **kwargs) -> "CompositionNode":
+    def set_all(self, name: str, **kwargs) -> "CompositionNode":
         """
         if kwargs is not provided, defaultValue on inputs fields
         will be retrieved
 
         """
+
+        def _set_default(existing_path: str, path_to_create: str, kwargs):
+            if existing_path:
+                try:
+                    for node in resolver.glob(self._root._node, existing_path):
+                        if not kwargs:
+                            kwargs = {}
+                            for input_ in node.web_template.get_descendant(name).inputs:
+                                key = input_.get("suffix", "value")
+                                kwargs[key] = input_["defaultValue"]
+                        composition_node = CompositionNode(node, node.web_template)
+                        child = node.web_template.get_descendant(
+                            path_to_create.split("/")[0]
+                        )
+                        if child.required:
+                            composition_node.create_node(path_to_create, **kwargs)
+
+                except anytree.ChildResolverError:
+                    nodes = existing_path.split("/")
+                    last_node = nodes[-1]
+                    existing_path = "/".join(nodes[: len(nodes) - 1])
+                    path_to_create = last_node + "/" + path_to_create
+                    _set_default(existing_path, path_to_create, kwargs)
+
         resolver = anytree.resolver.Resolver("name")
         leaves = [node for node in self._web_template.leaves if node.name == name]
         for target in leaves:
@@ -179,18 +213,7 @@ class Composition:
                         for descendant in descendants
                     ]
                 )
-                try:
-                    for node in resolver.glob(self._root._node, path):
-                        if not kwargs:
-                            kwargs = {}
-                            for input_ in node.web_template.get_descendant(name).inputs:
-                                key = input_.get("suffix", "value")
-                                kwargs[key] = input_["defaultValue"]
-                        CompositionNode(node, node.web_template).create_node(
-                            name, **kwargs
-                        )
-                except anytree.ChildResolverError:
-                    ...
+                _set_default(path, name, kwargs)
 
     def as_flat(self):
         flat = {}
@@ -198,6 +221,21 @@ class Composition:
             if leaf.web_template.is_leaf:
                 flat.update(leaf.value.to_flat(f"{leaf.path.strip(leaf.separator)}"))
         return flat
+
+    def set_defaults(self):
+        leaves_parents = {
+            leaf.parent for leaf in self.root.leaves if leaf.web_template.is_leaf
+        }
+        for parent in leaves_parents:
+            children_names = {child.name for child in parent.children}
+            for web_template_child in parent.web_template.children:
+                if (
+                    web_template_child.is_leaf
+                    and web_template_child.required
+                    and web_template_child.name not in children_names
+                ):
+                    node = self.create_node(web_template_child.path)
+                    node.set_defaults()
 
 
 class CompositionNode(Node):
@@ -255,8 +293,13 @@ class CompositionNode(Node):
                 missing_child = ex.child
                 logger.debug("last_node %s, missing_child %s", last_node, missing_child)
                 web_template_node = last_node.web_template
+                missing_path = os.path.join(root.web_template.path, path_).replace(
+                    web_template_node.path, ""
+                )
+                is_last = len(missing_path.strip("/").split("/")) == 1
                 node = CompositionNode(last_node, web_template_node).add_child(
-                    missing_child, increment_cardinality=increment_cardinality
+                    missing_child,
+                    increment_cardinality=is_last and increment_cardinality,
                 )
 
                 path_to_remove = [n.name for n in last_node.path] + [missing_child]
@@ -285,6 +328,27 @@ class CompositionNode(Node):
     def leaves(self):
         for leaf in self._node.leaves:
             yield CompositionNode(leaf, leaf.web_template, leaf.value)
+
+    def get_descendant(self, path: str):
+        path = path if path.startswith("/") else f"/{path}"
+        resolver = anytree.Resolver("name")
+        node = resolver.get(self._node, path)
+        return type(self)(node, node.web_template, value=node.value)
+
+    @property
+    def parent(self):
+        parent = self._node.parent
+        return CompositionNode(parent, parent.web_template, parent.value)
+
+    @property
+    def children(self):
+        return [
+            CompositionNode(child, child.web_template, child.value)
+            for child in self._node.children
+        ]
+
+    def set_defaults(self):
+        self.value = factory(self.web_template)
 
 
 def diff(flat_1: Dict, flat_2: Dict):

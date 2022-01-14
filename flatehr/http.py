@@ -107,6 +107,6 @@ class OpenEHRClient:
                 headers={"Prefer": "return=representation"},
             )
             ehr_id = resp.json()["ehr_id"]["value"]
-            logger.info("created ehr_id %s", ehr_id)
+            logger.debug("created ehr_id %s", ehr_id)
             return ehr_id
         return _id

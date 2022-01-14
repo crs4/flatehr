@@ -8,19 +8,22 @@ from typing import Dict, Union
 
 def _camel(snake_str):
     "from https://stackoverflow.com/questions/19053707/converting-snake-case-to-lower-camel-case-lowercamelcase"
-    words = snake_str.lower().split('_')
-    return ''.join([*map(str.title, words)])
+    words = snake_str.lower().split("_")
+    return "".join([*map(str.title, words)])
 
 
 def factory(web_template_node, **kwargs):
-    dv_stripped = web_template_node.rm_type.replace('DV_', '', 1)
+    dv_stripped = web_template_node.rm_type.replace("DV_", "", 1)
     class_name = _camel(dv_stripped)
     try:
-        return getattr(sys.modules[__name__], class_name).create(**kwargs)
+        return getattr(sys.modules[__name__], class_name).create(
+            web_template_node, **kwargs
+        )
     except TypeError as ex:
         raise FactoryWrongArguments(
-            f'failed building {class_name}, {web_template_node.path}. \
-            Given  kwargs {kwargs}') from ex
+            f"failed building {class_name}, {web_template_node.path}. \
+            Given  kwargs {kwargs}"
+        ) from ex
 
 
 class FactoryWrongArguments(Exception):
@@ -33,7 +36,7 @@ class DataValue(abc.ABC):
         ...
 
     @classmethod
-    def create(cls, **kwargs) -> "DataValue":
+    def create(cls, web_template_node, **kwargs) -> "DataValue":
         return cls(**kwargs)
 
 
@@ -44,6 +47,12 @@ class Text(DataValue):
     def to_flat(self, path: str) -> Dict:
         return {path: self.value}
 
+    @classmethod
+    def create(cls, web_template_node, value: str = None) -> "DataValue":
+        if value is None:
+            value = web_template_node.inputs[0]["defaultValue"]
+        return cls(value)
+
 
 @dataclass
 class DateTime(DataValue):
@@ -53,8 +62,7 @@ class DateTime(DataValue):
 
     @property
     def value(self):
-        return datetime(year=self.year, month=self.month,
-                        day=self.day).isoformat()
+        return datetime(year=self.year, month=self.month, day=self.day).isoformat()
 
     def to_flat(self, path: str) -> Dict:
         return {path: self.value}
@@ -82,12 +90,9 @@ class CodePhrase(DataValue):
     preferred_term: str = None
 
     def to_flat(self, path: str) -> Dict:
-        dct = {
-            f'{path}|code': self.code,
-            f'{path}|terminology': self.terminology
-        }
+        dct = {f"{path}|code": self.code, f"{path}|terminology": self.terminology}
         if self.preferred_term:
-            dct[f'{path}|preferred_term'] = self.preferred_term
+            dct[f"{path}|preferred_term"] = self.preferred_term
         return dct
 
 
@@ -95,6 +100,36 @@ class CodedText(DataValue):
     def __init__(self, value, terminology, code, preferred_term=None):
         self.value = value
         self._code_phrase = CodePhrase(terminology, code, preferred_term)
+
+    @classmethod
+    def create(cls, web_template_node, **kwargs) -> "CodedText":
+        value = kwargs.get("value")
+        code = kwargs.get("code")
+        code_info = web_template_node.inputs[0]
+        if value and not code:
+            for el in code_info.get("list", []):
+                try:
+                    label = el["label"]
+                except KeyError:
+                    label = el["localizedLabels"]["en"]
+                if label.lower() == value.lower():
+                    code = el["value"]
+                    break
+        else:
+            code = code or code_info.get("defaultValue")
+            for el in code_info.get("list", []):
+                if el["value"] == code:
+                    value = el["label"]
+                    break
+
+        try:
+            terminology = kwargs["terminology"]
+        except KeyError:
+            try:
+                terminology = code_info["terminology"]
+            except KeyError:
+                terminology = list(el["termBindings"].values())[0]["value"]
+        return cls(value=value, code=code, terminology=terminology)
 
     @property
     def terminology(self):
@@ -110,7 +145,7 @@ class CodedText(DataValue):
 
     def to_flat(self, path: str) -> Dict:
         dct = self._code_phrase.to_flat(path)
-        dct[f'{path}|value'] = self.value
+        dct[f"{path}|value"] = self.value
         return dct
 
 
@@ -122,8 +157,8 @@ class Identifier(DataValue):
     type_: str = None
 
     def to_flat(self, path: str) -> Dict:
-        dct = {f'{path}|id': self.id_}
-        for attr in ('issuer', 'assigner', 'type_'):
+        dct = {f"{path}|id": self.id_}
+        for attr in ("issuer", "assigner", "type_"):
             value = getattr(self, attr)
             if value is not None:
                 dct[f'{path}|{attr.strip("_")}'] = value
@@ -136,7 +171,7 @@ class PartyProxy(DataValue):
     value: str
 
     def to_flat(self, path: str) -> Dict:
-        return {f'{path}|name': self.value}
+        return {f"{path}|name": self.value}
 
 
 @dataclass
@@ -144,17 +179,21 @@ class IsmTransition(DataValue):
     current_state: CodedText
 
     @classmethod
-    def create(cls,
-               current_state_value,
-               current_state_terminology,
-               current_state_code,
-               current_state_preferred_term=None) -> "IsmTransition":
-        current_state = CodedText(current_state_value,
-                                  current_state_terminology,
-                                  current_state_code,
-                                  current_state_preferred_term)
+    def create(
+        cls,
+        current_state_value,
+        current_state_terminology,
+        current_state_code,
+        current_state_preferred_term=None,
+    ) -> "IsmTransition":
+        current_state = CodedText(
+            current_state_value,
+            current_state_terminology,
+            current_state_code,
+            current_state_preferred_term,
+        )
 
         return cls(current_state)
 
     def to_flat(self, path: str) -> Dict:
-        return self.current_state.to_flat(os.path.join(path, 'current_state'))
+        return self.current_state.to_flat(os.path.join(path, "current_state"))
