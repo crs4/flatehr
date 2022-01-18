@@ -332,7 +332,10 @@ class CompositionNode(Node):
     def get_descendant(self, path: str):
         path = path if path.startswith("/") else f"/{path}"
         resolver = anytree.Resolver("name")
-        node = resolver.get(self._node, path)
+        try:
+            node = resolver.get(self._node, path)
+        except anytree.resolver.ChildResolverError as ex:
+            raise NodeNotFound(f"{path} not found")
         return type(self)(node, node.web_template, value=node.value)
 
     @property
@@ -349,6 +352,10 @@ class CompositionNode(Node):
 
     def set_defaults(self):
         self.value = factory(self.web_template)
+
+
+class NodeNotFound(Exception):
+    ...
 
 
 def diff(flat_1: Dict, flat_2: Dict):
