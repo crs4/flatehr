@@ -59,7 +59,11 @@ class Node:
 
     def get_descendant(self, path: str):
         resolver = anytree.Resolver("name")
-        return type(self)(resolver.get(self._node, path))
+        #  return type(self)(resolver.get(self._node, path))
+        try:
+            return type(self)(resolver.get(self._node, path))
+        except anytree.ChildResolverError as ex:
+            raise NodeNotFound(f"node: {self.path}, path {path}")
 
     @property
     def parent(self):
@@ -192,9 +196,12 @@ class Composition:
                             path_to_create.split("/")[0]
                         )
                         if child.required:
-                            composition_node.create_node(path_to_create, **kwargs)
+                            try:
+                                composition_node.create_node(path_to_create, **kwargs)
+                            except NodeAlreadyExists as ex:
+                                logger.warning(ex)
 
-                except anytree.ChildResolverError:
+                except (NodeNotFound, anytree.ChildResolverError):
                     nodes = existing_path.split("/")
                     last_node = nodes[-1]
                     existing_path = "/".join(nodes[: len(nodes) - 1])
@@ -206,7 +213,10 @@ class Composition:
         for target in leaves:
             descendants = self._web_template.walk_to(target)[:-1]
             if not descendants:
-                self._root.create_node(name, **kwargs)
+                try:
+                    self._root.create_node(name, **kwargs)
+                except NodeAlreadyExists as ex:
+                    logger.warning(ex)
             else:
                 path = self._root.separator.join(
                     [
@@ -321,7 +331,12 @@ class CompositionNode(Node):
                     value = None
                 return CompositionNode(node, web_template_node, value)
 
-        return _add_descendant(self._node, path, **kwargs)
+        try:
+            self.get_descendant(path)
+        except NodeNotFound:
+            return _add_descendant(self._node, path, **kwargs)
+        else:
+            raise NodeAlreadyExists(f"node {self.path}, path {path}")
 
     def _get_web_template(self):
         path = re.sub(r"\[\d+\]", "", self.path)
@@ -338,7 +353,7 @@ class CompositionNode(Node):
         try:
             node = resolver.get(self._node, path)
         except anytree.resolver.ChildResolverError as ex:
-            raise NodeNotFound(f"{path} not found")
+            raise NodeNotFound(f"{path} not found") from ex
         return type(self)(node, node.web_template, value=node.value)
 
     @property
@@ -358,6 +373,10 @@ class CompositionNode(Node):
 
 
 class NodeNotFound(Exception):
+    ...
+
+
+class NodeAlreadyExists(Exception):
     ...
 
 
