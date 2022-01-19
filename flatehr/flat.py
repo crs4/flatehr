@@ -173,6 +173,7 @@ class Composition:
         return composition_node
 
     def get(self, path) -> "CompositionNode":
+        path = path.replace(self._root.name, "").strip("/")
         return self._root.get_descendant(path)
 
     def set_all(self, name: str, **kwargs) -> "CompositionNode":
@@ -348,7 +349,7 @@ class CompositionNode(Node):
             yield CompositionNode(leaf, leaf.web_template, leaf.value)
 
     def get_descendant(self, path: str):
-        path = path if path.startswith("/") else f"/{path}"
+        #  path = path if path.startswith("/") else f"/{path}"
         resolver = anytree.Resolver("name")
         try:
             node = resolver.get(self._node, path)
