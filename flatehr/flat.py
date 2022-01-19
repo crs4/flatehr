@@ -66,6 +66,9 @@ class Node:
         parent = self._node.parent
         return type(self)(parent)
 
+    def render(self) -> str:
+        return anytree.RenderTree(self._node)
+
 
 class WebTemplateNode(Node):
     @staticmethod
