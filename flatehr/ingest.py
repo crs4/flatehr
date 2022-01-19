@@ -44,6 +44,7 @@ class BasicIngester(Ingester):
     client: OpenEHRClient
     dump_composition: bool = False
     save_diff: bool = False
+    stop_at_fail: bool = False
 
     def ingest(
         self,
@@ -57,6 +58,8 @@ class BasicIngester(Ingester):
             except Exception as ex:
                 logger.exception(ex)
                 fail += 1
+                if self.stop_at_fail:
+                    raise ex
         return (success, fail)
 
     def _ingest(self, ehr_composition: EHRCompositionMapping) -> str:
