@@ -3,7 +3,7 @@ import os
 import sys
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict
 
 
 def _camel(snake_str):
@@ -12,32 +12,32 @@ def _camel(snake_str):
     return "".join([*map(str.title, words)])
 
 
-def factory(web_template_node, **kwargs):
-    dv_stripped = web_template_node.rm_type.replace("DV_", "", 1)
-    class_name = _camel(dv_stripped)
-    try:
-        return getattr(sys.modules[__name__], class_name).create(
-            web_template_node, **kwargs
-        )
-    except TypeError as ex:
-        raise FactoryWrongArguments(
-            f"failed building {class_name}, {web_template_node.path}. \
-            Given  kwargs {kwargs}"
-        ) from ex
+@dataclass
+class NullFlavour:
+    value: str
+    code: str
+    terminology: str
 
+    @staticmethod
+    def get_default():
+        return NullFlavour("unknown", "253", "openehr")
 
-class FactoryWrongArguments(Exception):
-    pass
+    def to_flat(self, path: str) -> Dict:
+        flat = {}
+        flat[f"{path}/_null_flavour|value"] = self.value
+        flat[f"{path}/_null_flavour|code"] = self.code
+        flat[f"{path}/_null_flavour|terminology"] = self.terminology
+
+        # workaround for ehrbase expecting value even in case of NullFlavour
+        # (at least for some data types)
+        flat[path] = ""
+        return flat
 
 
 class DataValue(abc.ABC):
     @abc.abstractmethod
-    def to_flat(self, path: str) -> Dict:
+    def to_flat(self, path: str) -> Dict[str, str]:
         ...
-
-    @classmethod
-    def create(cls, web_template_node, **kwargs) -> "DataValue":
-        return cls(**kwargs)
 
 
 @dataclass
@@ -46,12 +46,6 @@ class Text(DataValue):
 
     def to_flat(self, path: str) -> Dict:
         return {path: self.value}
-
-    @classmethod
-    def create(cls, web_template_node, value: str = None) -> "DataValue":
-        if value is None:
-            value = web_template_node.inputs[0]["defaultValue"]
-        return cls(value)
 
 
 @dataclass
@@ -101,36 +95,6 @@ class CodedText(DataValue):
         self.value = value
         self._code_phrase = CodePhrase(terminology, code, preferred_term)
 
-    @classmethod
-    def create(cls, web_template_node, **kwargs) -> "CodedText":
-        value = kwargs.get("value")
-        code = kwargs.get("code")
-        code_info = web_template_node.inputs[0]
-        if value and not code:
-            for el in code_info.get("list", []):
-                try:
-                    label = el["label"]
-                except KeyError:
-                    label = el["localizedLabels"]["en"]
-                if label.lower() == value.lower():
-                    code = el["value"]
-                    break
-        else:
-            code = code or code_info.get("defaultValue")
-            for el in code_info.get("list", []):
-                if el["value"] == code:
-                    value = el["label"]
-                    break
-
-        try:
-            terminology = kwargs["terminology"]
-        except KeyError:
-            try:
-                terminology = code_info["terminology"]
-            except KeyError:
-                terminology = list(el["termBindings"].values())[0]["value"]
-        return cls(value=value, code=code, terminology=terminology)
-
     @property
     def terminology(self):
         return self._code_phrase.terminology
@@ -178,14 +142,94 @@ class PartyProxy(DataValue):
 class IsmTransition(DataValue):
     current_state: CodedText
 
-    @classmethod
-    def create(
-        cls,
-        current_state_value,
-        current_state_terminology,
-        current_state_code,
+    def to_flat(self, path: str) -> Dict:
+        return self.current_state.to_flat(os.path.join(path, "current_state"))
+
+
+class Factory:
+    def __init__(self, web_template_node):
+        self.web_template_node = web_template_node
+        self._class_method_mapping = {}
+
+        for method in dir(self):
+            if callable(getattr(self, method)) and method.startswith("create_"):
+                class_name = _camel(method.split("_")[1])
+                self._class_method_mapping[class_name] = method
+
+    def create(self, **kwargs) -> DataValue:
+        rm_type = self.web_template_node.rm_type
+        dv_name = rm_type.replace("DV_", "", 1)
+
+        try:
+            create_method = getattr(self, f"_create_{dv_name.lower()}")
+        except AttributeError:
+            create_method = getattr(sys.modules[__name__], _camel(dv_name))
+        try:
+            return create_method(
+                **kwargs,
+            )
+        except TypeError as ex:
+            raise FactoryWrongArguments(
+                f"failed building {rm_type}, {self.web_template_node.path}. \
+                Given  kwargs {kwargs}"
+            ) from ex
+
+    def _create_text(
+        self,
+        *,
+        value: str = None,
+    ) -> Text:
+        if value is None:
+            value = self.web_template_node.inputs[0]["defaultValue"]
+        return Text(value)
+
+    def _create_datetime(
+        self,
+        *,
+        year: int,
+        month: int,
+        day: int,
+    ) -> DateTime:
+        return DateTime(year, month, day)
+
+    def _create_coded_text(
+        self,
+        value: str,
+        code: str = None,
+        terminology: str = None,
+    ) -> CodedText:
+        code_info = self.web_template_node.inputs[0]
+        if value and not code:
+            for el in code_info.get("list", []):
+                try:
+                    label = el["label"]
+                except KeyError:
+                    label = el["localizedLabels"]["en"]
+                if label.lower() == value.lower():
+                    code = el["value"]
+                    break
+        else:
+            code = code or code_info.get("defaultValue")
+            for el in code_info.get("list", []):
+                if el["value"] == code:
+                    value = el["label"]
+                    break
+
+        if terminology is None:
+            try:
+                terminology = code_info["terminology"]
+            except KeyError:
+                terminology = list(el["termBindings"].values())[0]["value"]
+        return CodedText(value=value, code=code, terminology=terminology)
+
+    def _create_ismtransition(
+        self,
+        current_state_value: str,
+        current_state_terminology: str,
+        current_state_code: str,
         current_state_preferred_term=None,
-    ) -> "IsmTransition":
+    ) -> IsmTransition:
+
         current_state = CodedText(
             current_state_value,
             current_state_terminology,
@@ -193,7 +237,8 @@ class IsmTransition(DataValue):
             current_state_preferred_term,
         )
 
-        return cls(current_state)
+        return IsmTransition(current_state)
 
-    def to_flat(self, path: str) -> Dict:
-        return self.current_state.to_flat(os.path.join(path, "current_state"))
+
+class FactoryWrongArguments(Exception):
+    pass

@@ -24,6 +24,14 @@ def test_composition_create_dv_text(web_template_json):
     assert flat == {f"test/{path}": text}
 
 
+def test_composition_create_dv_text_with_default(web_template_json):
+    web_template = WebTemplateNode.create(web_template_json)
+    composition = Composition(web_template)
+    path = "/test/targeted_therapy_start/start_of_targeted_therapy/from_event"
+    node = composition.create_node(path)
+    assert node.value.value == "Primary diagnosis"
+
+
 def test_composition_create_code_phrase(web_template_json):
     web_template = WebTemplateNode.create(web_template_json)
     composition = Composition(web_template)
@@ -151,7 +159,6 @@ def test_composition_set_all(composition):
     composition.create_node(path_lab_test_result)
     composition.set_all("language", code=code, terminology=terminology)
     flat = composition.as_flat()
-    print(flat)
     assert flat == {
         f"{composition.root.name}/{path_lang}|code": code,
         f"{composition.root.name}/{path_lang}|terminology": terminology,
@@ -198,3 +205,41 @@ def test_composition_set_defaults(composition):
     composition.set_defaults()
     flat = composition.as_flat()
     assert "test/targeted_therapy_start/start_of_targeted_therapy/from_event" in flat
+
+
+def test_set_null_flavour(composition):
+    null_flavour = data_types.NullFlavour(
+        value="unknown", code="253", terminology="openehr"
+    )
+    #  import pudb
+    #
+    #  pudb.set_trace()
+    composition.create_node(
+        "/test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/",
+        null_flavour=null_flavour,
+    )
+    flat = composition.as_flat()
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|value"
+        ]
+        == null_flavour.value
+    )
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|code"
+        ]
+        == null_flavour.code
+    )
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|terminology"
+        ]
+        == null_flavour.terminology
+    )
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy"
+        ]
+        == ""
+    )

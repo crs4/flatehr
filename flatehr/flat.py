@@ -6,7 +6,7 @@ from typing import Dict, Tuple
 import anytree
 from deepdiff import DeepDiff
 
-from flatehr.data_types import DataValue, factory
+from flatehr.data_types import DataValue, Factory, NullFlavour
 
 logger = logging.getLogger("flatehr")
 
@@ -163,12 +163,19 @@ class Composition:
         return self._root
 
     def create_node(
-        self, path, increment_cardinality: bool = True, **kwargs
+        self,
+        path,
+        increment_cardinality: bool = True,
+        null_flavour: NullFlavour = None,
+        **kwargs,
     ) -> "CompositionNode":
         path = path.replace(f"{self.root.path}", "")
-        composition_node = self.root.create_node(path, increment_cardinality)
-        if kwargs:
-            value = factory(composition_node.web_template, **kwargs)
+        composition_node = self.root.create_node(
+            path, increment_cardinality, null_flavour
+        )
+        # @fixme it should be on CompositionNode.create_node
+        if composition_node.web_template.is_leaf and not null_flavour:
+            value = Factory(composition_node.web_template).create(**kwargs)
             composition_node.value = value
         return composition_node
 
@@ -232,8 +239,7 @@ class Composition:
     def as_flat(self):
         flat = {}
         for leaf in self._root.leaves:
-            if leaf.web_template.is_leaf:
-                flat.update(leaf.value.to_flat(f"{leaf.path.strip(leaf.separator)}"))
+            flat.update(leaf.as_flat())
         return flat
 
     def set_defaults(self):
@@ -258,22 +264,32 @@ class CompositionNode(Node):
         node: anytree.Node,
         web_template_node: WebTemplateNode,
         value: DataValue = None,
+        null_flavour: NullFlavour = None,
     ):
         super().__init__(node)
         self._node.web_template = web_template_node
         self._web_template_node = web_template_node
         self._resolver = anytree.Resolver("name")
         self._node.value = value
+        self._node.null_flavour = null_flavour
 
     def __repr__(self):
         return "<CompositionNode %s>" % self._node
+
+    @property
+    def null_flavour(self):
+        return self._node.null_flavour
 
     @property
     def web_template(self):
         return self._web_template_node
 
     def add_child(
-        self, name: str, value: DataValue = None, increment_cardinality: bool = True
+        self,
+        name: str,
+        value: DataValue = None,
+        increment_cardinality: bool = True,
+        null_flavour: NullFlavour = None,
     ):
         web_template_node = self._web_template_node.get_descendant(name)
         if web_template_node.inf_cardinality:
@@ -292,10 +308,14 @@ class CompositionNode(Node):
                 node = self._resolver.get(self._node, name)
             except anytree.ChildResolverError:
                 node = anytree.Node(name, parent=self._node)
-        return CompositionNode(node, web_template_node, value)
+        return CompositionNode(node, web_template_node, value, null_flavour)
 
     def create_node(
-        self, path: str, increment_cardinality: bool = True, **kwargs
+        self,
+        path: str,
+        increment_cardinality: bool = True,
+        null_flavour: NullFlavour = None,
+        **kwargs,
     ) -> "CompositionNode":
         logger.debug("create node: parent %s, path %s", self.path, path)
 
@@ -314,6 +334,7 @@ class CompositionNode(Node):
                 node = CompositionNode(last_node, web_template_node).add_child(
                     missing_child,
                     increment_cardinality=is_last and increment_cardinality,
+                    null_flavour=null_flavour if is_last else None,
                 )
 
                 path_to_remove = [n.name for n in last_node.path] + [missing_child]
@@ -327,10 +348,15 @@ class CompositionNode(Node):
             else:
                 web_template_node = node.web_template
                 if kwargs:
-                    value = factory(node.web_template, **kwargs)
+                    value = Factory(node.web_template).create(**kwargs)
                 else:
                     value = None
-                return CompositionNode(node, web_template_node, value)
+                return CompositionNode(
+                    node,
+                    web_template_node,
+                    value,
+                    null_flavour,
+                )
 
         try:
             self.get_descendant(path)
@@ -346,7 +372,12 @@ class CompositionNode(Node):
     @property
     def leaves(self):
         for leaf in self._node.leaves:
-            yield CompositionNode(leaf, leaf.web_template, leaf.value)
+            yield CompositionNode(
+                leaf,
+                leaf.web_template,
+                leaf.value,
+                null_flavour=leaf.null_flavour,
+            )
 
     def get_descendant(self, path: str):
         #  path = path if path.startswith("/") else f"/{path}"
@@ -360,17 +391,38 @@ class CompositionNode(Node):
     @property
     def parent(self):
         parent = self._node.parent
-        return CompositionNode(parent, parent.web_template, parent.value)
+        return CompositionNode(
+            parent, parent.web_template, parent.value, parent.null_flavour
+        )
 
     @property
     def children(self):
         return [
-            CompositionNode(child, child.web_template, child.value)
+            CompositionNode(
+                child,
+                child.web_template,
+                child.value,
+                child.null_flavour,
+            )
             for child in self._node.children
         ]
 
     def set_defaults(self):
-        self.value = factory(self.web_template)
+        self.value = Factory(self.web_template).create()
+
+    def as_flat(self):
+        flat = {}
+        if self.web_template.is_leaf:
+
+            value = self.value or self.null_flavour
+            if value is None:
+                raise AttributeError(f"value and null_flavour of {self} not set")
+
+            flat.update(value.to_flat(f"{self.path.strip(self.separator)}"))
+        else:
+            for leaf in self.leaves:
+                flat.update(leaf.as_flat())
+        return flat
 
 
 class NodeNotFound(Exception):
