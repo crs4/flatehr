@@ -245,35 +245,41 @@ class Composition:
 
     def set_defaults(self):
         def _get_required_children(
-            web_template_node: WebTemplateNode, node: CompositionNode = None
-        ) -> List[WebTemplateNode]:
+            node: CompositionNode,
+        ) -> Tuple[CompositionNode, List[WebTemplateNode]]:
 
-            existing_children = (
-                {c.web_template.name for c in node.children} if node else set()
+            existing_children = {c.web_template.name for c in node.children}
+
+            logger.debug(
+                "existing_children for node %s, %s",
+                node.name,
+                existing_children,
             )
-            logger.debug("existing_children for node %s, %s", node.name if node else None, existing_children)
             required = [
                 child
-                for child in web_template_node.children
+                for child in node.web_template.children
                 if child.required and child.name not in existing_children
             ]
-            logger.debug("required for node %s, %s", node.name if node else None, required)
-            return required
+            logger.debug(
+                "required for node %s, %s", node.name if node else None, required
+            )
+            return node, required
 
-        def _set_default(web_template_node):
-            if web_template_node.is_leaf:
-                logger.debug("creating node %s and setting default", web_template_node)
-                node = self.create_node(web_template_node.path)
-                node.set_defaults()
-            else:
-                required_children = _get_required_children(web_template_node)
-                list(map(_set_default, required_children))
+        def _set_default(node, web_template_nodes):
+            for web_template_node in web_template_nodes:
+                child = node.add_child(web_template_node.name)
+                if web_template_node.is_leaf:
+                    logger.debug("creating node %s and setting default", web_template_node)
+                    #  node = self.create_node(web_template_node.path)
+                    child.set_defaults()
+                else:
+                    required_children = _get_required_children(child)
+                    list(map(lambda x: _set_default(*x), required_children))
 
         nodes = anytree.PreOrderIter(self.root)
-        required_children = itertools.chain.from_iterable(
-            map(lambda n: _get_required_children(n.web_template, n), nodes)
-        )
-        list(map(_set_default, required_children))
+        required_children = map(_get_required_children, nodes)
+        #  list(map(_set_default, required_children))
+        list(map(lambda x: _set_default(*x), required_children))
 
 
 class CompositionNode(Node):
