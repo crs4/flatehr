@@ -30,7 +30,7 @@ class NullFlavour:
 
         # workaround for ehrbase expecting value even in case of NullFlavour
         # (at least for some data types)
-        flat[path] = ""
+        flat[path] = "1"
         return flat
 
 
