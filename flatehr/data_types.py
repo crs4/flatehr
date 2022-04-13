@@ -14,13 +14,16 @@ def _camel(snake_str):
 
 @dataclass
 class NullFlavour:
+    # place_holder is a workaround for ehrbase expecting value even in case of NullFlavour
+    # (at least for some data types)
     value: str
     code: str
     terminology: str
+    place_holder: str = ""
 
     @staticmethod
-    def get_default():
-        return NullFlavour("unknown", "253", "openehr")
+    def get_default(place_holder=""):
+        return NullFlavour("unknown", "253", "openehr", place_holder)
 
     def to_flat(self, path: str) -> Dict:
         flat = {}
@@ -28,9 +31,7 @@ class NullFlavour:
         flat[f"{path}/_null_flavour|code"] = self.code
         flat[f"{path}/_null_flavour|terminology"] = self.terminology
 
-        # workaround for ehrbase expecting value even in case of NullFlavour
-        # (at least for some data types)
-        flat[path] = "1"
+        flat[path] = self.place_holder
         return flat
 
 
