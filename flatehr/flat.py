@@ -274,7 +274,7 @@ class Composition:
                     child.set_defaults()
                 else:
                     required_children = _get_required_children(child)
-                    list(map(lambda x: _set_default(*x), required_children))
+                    _set_default(*required_children)
 
         nodes = anytree.PreOrderIter(self.root)
         required_children = map(_get_required_children, nodes)
