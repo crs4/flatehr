@@ -1,7 +1,8 @@
+import itertools
 import logging
 import os
 import re
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import anytree
 from deepdiff import DeepDiff
@@ -243,19 +244,36 @@ class Composition:
         return flat
 
     def set_defaults(self):
-        leaves_parents = {
-            leaf.parent for leaf in self.root.leaves if leaf.web_template.is_leaf
-        }
-        for parent in leaves_parents:
-            children_names = {child.name for child in parent.children}
-            for web_template_child in parent.web_template.children:
-                if (
-                    web_template_child.is_leaf
-                    and web_template_child.required
-                    and web_template_child.name not in children_names
-                ):
-                    node = self.create_node(web_template_child.path)
-                    node.set_defaults()
+        def _get_required_children(
+            web_template_node: WebTemplateNode, node: CompositionNode = None
+        ) -> List[WebTemplateNode]:
+
+            existing_children = (
+                {c.web_template.name for c in node.children} if node else set()
+            )
+            logger.debug("existing_children for node %s, %s", node.name if node else None, existing_children)
+            required = [
+                child
+                for child in web_template_node.children
+                if child.required and child.name not in existing_children
+            ]
+            logger.debug("required for node %s, %s", node.name if node else None, required)
+            return required
+
+        def _set_default(web_template_node):
+            if web_template_node.is_leaf:
+                logger.debug("creating node %s and setting default", web_template_node)
+                node = self.create_node(web_template_node.path)
+                node.set_defaults()
+            else:
+                required_children = _get_required_children(web_template_node)
+                list(map(_set_default, required_children))
+
+        nodes = anytree.PreOrderIter(self.root)
+        required_children = itertools.chain.from_iterable(
+            map(lambda n: _get_required_children(n.web_template, n), nodes)
+        )
+        list(map(_set_default, required_children))
 
 
 class CompositionNode(Node):
