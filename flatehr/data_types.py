@@ -183,18 +183,18 @@ class Factory:
             value = self.web_template_node.inputs[0]["defaultValue"]
         return Text(value)
 
-    def _create_datetime(
+    def _create_date_time(
         self,
-        *,
-        year: int,
-        month: int,
-        day: int,
+        year: int = None,
+        month: int = 1,
+        day: int = 1,
     ) -> DateTime:
+        year = year or 9999
         return DateTime(year, month, day)
 
     def _create_coded_text(
         self,
-        value: str,
+        value: str = None,
         code: str = None,
         terminology: str = None,
     ) -> CodedText:
