@@ -70,7 +70,9 @@ class Date(Text):
 
 @dataclass
 class Duration(Text):
-    ...
+    def __post_init__(self):
+        if not self.value:
+            self.value = NullFlavour.get_default("P1W")
 
 
 @dataclass
@@ -181,8 +183,16 @@ class Factory:
         value: str = None,
     ) -> Text:
         if value is None:
-            value = self.web_template_node.inputs[0]["defaultValue"]
+            try:
+                value = self.web_template_node.inputs[0]["defaultValue"]
+            except (IndexError, KeyError):
+                return NullFlavour.get_default()
         return Text(value)
+
+    def _create_duration(self, value: str = None):
+        if not value:
+            return NullFlavour.get_default("P1W")
+        return Duration(value)
 
     def _create_date_time(
         self,
@@ -199,6 +209,8 @@ class Factory:
         code: str = None,
         terminology: str = None,
     ) -> CodedText:
+        if value == None and code == None and terminology == None:
+            return NullFlavour.get_default()
         code_info = self.web_template_node.inputs[0]
         if value and not code:
             for el in code_info.get("list", []):
@@ -240,6 +252,10 @@ class Factory:
 
         return IsmTransition(current_state)
 
+    def _create_identifier(self, **kwargs):
+        if len(kwargs):
+            return Identifier(**kwargs)
+        return NullFlavour.get_default()
 
 class FactoryWrongArguments(Exception):
     pass
