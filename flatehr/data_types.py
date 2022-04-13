@@ -152,8 +152,8 @@ class Factory:
         self._class_method_mapping = {}
 
         for method in dir(self):
-            if callable(getattr(self, method)) and method.startswith("create_"):
-                class_name = _camel(method.split("_")[1])
+            if callable(getattr(self, method)) and method.startswith("_create"):
+                class_name = _camel(method.split("_")[-1])
                 self._class_method_mapping[class_name] = method
 
     def create(self, **kwargs) -> DataValue:
