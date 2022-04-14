@@ -13,6 +13,9 @@
         POETRY_VIRTUALENVS_CREATE: false
 
       steps:
+      - name: workaround
+        run: git config --global --add safe.directory /github/workspace
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: '0'
