@@ -44,6 +44,7 @@ class BasicIngester(Ingester):
     client: OpenEHRClient
     dump_composition: bool = False
     save_diff: bool = False
+    stop_at_fail: bool = False
 
     def ingest(
         self,
@@ -57,6 +58,8 @@ class BasicIngester(Ingester):
             except Exception as ex:
                 logger.exception(ex)
                 fail += 1
+                if self.stop_at_fail:
+                    raise ex
         return (success, fail)
 
     def _ingest(self, ehr_composition: EHRCompositionMapping) -> str:
@@ -64,7 +67,7 @@ class BasicIngester(Ingester):
         composition = ehr_composition.composition
 
         if self.dump_composition:
-            self._dump_composition(composition, ehr_id)
+            self._dump_composition(composition)
 
         try:
             comp_id = self.client.post_composition(composition, ehr_id)
@@ -81,14 +84,8 @@ class BasicIngester(Ingester):
     def _dump_composition(
         self,
         composition: Composition,
-        external_id: str,
-        dirname: str = "compositions",
     ):
-        os.makedirs(dirname, exist_ok=True)
-        dump_filename = f"{dirname}/{external_id}.json"
-        logger.info("dumping composition %s to %s", composition, dump_filename)
-        with open(dump_filename, "w") as f_obj:
-            json.dump(composition.as_flat(), f_obj)
+        print(json.dumps(composition.as_flat()))
 
     def _save_diff(
         self,
