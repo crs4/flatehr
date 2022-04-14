@@ -216,9 +216,6 @@ def test_set_null_flavour(composition):
     null_flavour = data_types.NullFlavour(
         value="unknown", code="253", terminology="openehr"
     )
-    #  import pudb
-    #
-    #  pudb.set_trace()
     composition.create_node(
         "/test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/",
         null_flavour=null_flavour,
