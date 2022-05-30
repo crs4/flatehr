@@ -2,6 +2,7 @@ import itertools
 import logging
 import os
 import re
+from functools import singledispatchmethod
 from typing import Dict, List, Tuple
 
 import anytree
@@ -76,33 +77,13 @@ class Node:
 
 
 class WebTemplateNode(Node):
-    @staticmethod
-    def create(dct: Dict) -> "WebTemplateNode":
-        def _recursive_create(web_template_el):
-            _node = anytree.Node(
-                web_template_el["id"],
-                rm_type=web_template_el["rmType"],
-                required=web_template_el["min"] == 1,
-                inf_cardinality=web_template_el["max"] == -1,
-                annotations=web_template_el.get("annotations", {}),
-                inputs=web_template_el.get("inputs"),
-                aql_path=web_template_el.get("aqlPath"),
-            )
-
-            children = []
-            for child in web_template_el.get("children", []):
-                children.append(_recursive_create(child)._node)
-            _node.children = children
-
-            return WebTemplateNode(_node)
-
-        tree = dct["tree"]
-        node = _recursive_create(tree)
-        return node
-
     @property
     def rm_type(self):
         return self._node.rm_type
+
+    @property
+    def _id(self):
+        return self._node.name
 
     @property
     def aql_path(self):
@@ -269,7 +250,9 @@ class Composition:
             for web_template_node in web_template_nodes:
                 child = node.add_child(web_template_node.name)
                 if web_template_node.is_leaf:
-                    logger.debug("creating node %s and setting default", web_template_node)
+                    logger.debug(
+                        "creating node %s and setting default", web_template_node
+                    )
                     #  node = self.create_node(web_template_node.path)
                     child.set_defaults()
                 else:
@@ -459,3 +442,62 @@ class NodeAlreadyExists(Exception):
 
 def diff(flat_1: Dict, flat_2: Dict):
     return DeepDiff(flat_1, flat_2, verbose_level=2)
+
+
+class WebTemplateNodeFactory:
+    @singledispatchmethod
+    @staticmethod
+    def create(*args) -> WebTemplateNode:
+        ...
+
+    @staticmethod
+    @create.register
+    def _create_from_dict(dct: dict) -> "WebTemplateNode":
+        def _recursive_create(web_template_el):
+            _node = anytree.Node(
+                web_template_el["id"],
+                rm_type=web_template_el["rmType"],
+                required=web_template_el["min"] == 1,
+                inf_cardinality=web_template_el["max"] == -1,
+                annotations=web_template_el.get("annotations", {}),
+                inputs=web_template_el.get("inputs"),
+                aql_path=web_template_el.get("aqlPath"),
+            )
+
+            children = []
+            for child in web_template_el.get("children", []):
+                children.append(_recursive_create(child)._node)
+            _node.children = children
+
+            return WebTemplateNode(_node)
+
+        tree = dct["tree"]
+        node = _recursive_create(tree)
+        return node
+
+    @staticmethod
+    @create.register
+    def _create(
+        _id: str,
+        rm_type: str,
+        required: bool,
+        inf_cardinality: bool,
+        aql_path: str,
+        children: List["WebTemplateNode"] = None,
+        inputs: Dict = None,
+        annotations: Dict = None,
+    ) -> "WebTemplateNode":
+        _node = anytree.Node(
+            _id,
+            rm_type=rm_type,
+            required=required,
+            inf_cardinality=inf_cardinality,
+            annotations=annotations or {},
+            inputs=inputs or {},
+            aql_path=aql_path,
+        )
+
+        children = children or []
+        _node.children = [c._node for c in children]
+
+        return WebTemplateNode(_node)

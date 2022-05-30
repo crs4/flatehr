@@ -165,17 +165,3 @@ class CompositionFactory(abc.ABC):
     @abc.abstractmethod
     def get_compositions(self) -> Iterable[Composition]:
         ...
-
-
-VALUE = Union[float, str]
-KWARGS = Dict[str, VALUE]
-
-
-class ValueConverter(abc.ABC):
-    @abc.abstractmethod
-    def convert(self, web_template_node: WebTemplateNode, value) -> KWARGS:
-        ...
-
-    @abc.abstractmethod
-    def accepted_data_types(self) -> Tuple[str]:
-        ...

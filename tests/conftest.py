@@ -3,7 +3,7 @@ from typing import Iterable
 
 import pytest
 
-from flatehr.flat import Composition, WebTemplateNode
+from flatehr import template_factory, composition_factory
 from flatehr.http import OpenEHRClient
 from flatehr.ingest import (
     BasicIngester,
@@ -11,6 +11,7 @@ from flatehr.ingest import (
     Ingester,
     MultiThreadedIngester,
 )
+from flatehr.mappers import ValueMapper
 
 
 @pytest.fixture
@@ -20,9 +21,8 @@ def web_template_json():
 
 
 @pytest.fixture
-def composition(web_template_json):
-    web_template = WebTemplateNode.create(web_template_json)
-    return Composition(web_template)
+def composition(template, backend):
+    return composition_factory(backend, template).get()
 
 
 @pytest.fixture
@@ -43,3 +43,18 @@ def ehr_composition_mapping(
 @pytest.fixture(params=[BasicIngester, MultiThreadedIngester])
 def ingester(request) -> Ingester:
     return request.param(client=OpenEHRClient("localhost:8080", dry_run=True))
+
+
+@pytest.fixture
+def value_mapper():
+    return ValueMapper({}, True)
+
+
+@pytest.fixture
+def template(backend, web_template_json):
+    return template_factory(backend, web_template_json).get()
+
+
+@pytest.fixture
+def template_node(node_id, template):
+    return template.root.get_descendant(node_id)
