@@ -1,5 +1,6 @@
 import abc
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Union, Optional
+from dataclasses import dataclass
 
 WebTemplate = Dict[str, Union[str, bool, int, float]]
 
@@ -13,49 +14,21 @@ class Template:
         return self._root
 
 
+@dataclass
 class TemplateNode(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def rm_type(self) -> str:
-        ...
+    _id: str
+    rm_type: str
+    aql_path: str
 
-    @property
-    @abc.abstractmethod
-    def _id(self) -> str:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def aql_path(self) -> str:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def required(self) -> bool:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def inf_cardinality(self) -> bool:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def annotations(self) -> List[Dict[str, str]]:
-        ...
+    required: bool
+    inf_cardinality: bool
+    annotations: Optional[List[Dict[str, str]]] = None
+    inputs: Optional[Dict[str, str]] = None
 
     @property
     @abc.abstractmethod
     def children(self) -> List["TemplateNode"]:
         ...
-
-    @property
-    @abc.abstractmethod
-    def inputs(self):
-        ...
-
-    def __str__(self):
-        return f"{self.path}, rm_type={self.rm_type}, cardinality={int(self.required)}:{ '*' if self.inf_cardinality else 1 }"
 
     @property
     @abc.abstractmethod
@@ -70,6 +43,11 @@ class TemplateNode(abc.ABC):
     @property
     @abc.abstractmethod
     def path(self) -> str:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def is_leaf(self) -> bool:
         ...
 
     @abc.abstractmethod
