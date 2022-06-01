@@ -1,6 +1,7 @@
 import abc
-from typing import Callable, Dict, List, Union, Optional
+import re
 from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Union
 
 WebTemplate = Dict[str, Union[str, bool, int, float]]
 
@@ -13,13 +14,16 @@ class Template:
     def root(self) -> "TemplateNode":
         return self._root
 
+    def __getitem__(self, path: str) -> "TemplateNode":
+        path = path.replace(self.root._id, "").lstrip("/")
+        return self.root[path]
+
 
 @dataclass
 class TemplateNode(abc.ABC):
     _id: str
     rm_type: str
     aql_path: str
-
     required: bool
     inf_cardinality: bool
     annotations: Optional[List[Dict[str, str]]] = None
@@ -51,5 +55,13 @@ class TemplateNode(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def get_descendant(self, path: str) -> "TemplateNode":
+    def walk_to(self, dest: "TemplateNode") -> "TemplateNode":
         ...
+
+    @abc.abstractmethod
+    def __getitem__(self, path) -> "TemplateNode":
+        ...
+
+
+def remove_cardinality(path: str) -> str:
+    return re.sub(r"(:[0-9]+)", "", path)

@@ -56,5 +56,5 @@ def template(backend, web_template_json):
 
 
 @pytest.fixture
-def template_node(node_id, template):
-    return template.root.get_descendant(node_id)
+def template_node(path, template):
+    return template[path]

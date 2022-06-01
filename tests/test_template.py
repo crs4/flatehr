@@ -35,10 +35,10 @@ def test_factory(template):
 
 @pytest.mark.parametrize("backend", template_factory.backends())
 @pytest.mark.parametrize(
-    "node_id,expected_attrs",
+    "path,expected_attrs",
     [
         (
-            "context",
+            "test/context",
             {
                 "_id": "context",
                 "rm_type": "EVENT_CONTEXT",
@@ -50,7 +50,7 @@ def test_factory(template):
             },
         ),
         (
-            "context/start_time",
+            "test/context/start_time",
             {
                 "_id": "start_time",
                 "rm_type": "DV_DATE_TIME",

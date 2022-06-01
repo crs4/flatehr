@@ -1,123 +1,122 @@
 import abc
 import logging
-from typing import Dict, List, Union
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Union
 
 from flatehr.data_types import DataValue, Factory, NullFlavour
-from flatehr.template import Template
+from flatehr.template import Template, TemplateNode
 
 logger = logging.getLogger(__name__)
 
 
-class Composition(abc.ABC):
+class Composition:
     def __init__(
         self,
+        template: Template,
         root: "CompositionNode",
-        metadata: Dict[str, Union[str, int]] = None,
+        metadata: Optional[Dict[str, Union[str, int]]] = None,
     ):
+        self._template = template
         self._root = root
         self.metadata = metadata or {}
 
     @property
     def template(self) -> Template:
-        return self.root.template
+        return self._template
 
-    @property
-    def root(self) -> "CompositionNode":
-        return self._root
+    def __getitem__(
+        self, path: str
+    ) -> Union["CompositionNode", List["CompositionNode"]]:
+        path = path.replace(self._root._id, "").strip("/")
+        return self._root[path]
 
-    def create_node(
-        self,
-        path: str,
-        increment_cardinality: bool = True,
-        null_flavour: NullFlavour = None,
-        **kwargs,
-    ) -> "CompositionNode":
-        path = path.replace(f"{self.root.path}", "")
-        composition_node = self.root.create_node(
-            path, increment_cardinality, null_flavour
-        )
-        # @fixme it should be on CompositionNode.create_node
-        if composition_node.template.is_leaf and not null_flavour:
-            value = Factory(composition_node.template).create(**kwargs)
-            composition_node.value = value
-        return composition_node
+    def __setitem__(self, path, value: Union[DataValue, "CompositionNode"]):
+        path = path.replace(self._root._id, "").strip("/")
+        self._root[path] = value
 
-    def get(self, path: str) -> "CompositionNode":
-        path = path.replace(self.root.name, "").strip("/")
-        return self.root.get_descendant(path)
-
-    @abc.abstractmethod
-    def set_all(self, name: str, **kwargs) -> "CompositionNode":
+    def add_sibling(self, path: str):
         ...
+
+    #  def create_node(
+    #      self,
+    #      path: str,
+    #      increment_cardinality: bool = True,
+    #      null_flavour: Optional[NullFlavour] = None,
+    #      **kwargs,
+    #  ) -> "CompositionNode":
+    #      path = path.replace(f"{self.root.path}", "")
+    #      composition_node = self.root.create_node(
+    #          path, increment_cardinality, null_flavour
+    #      )
+    #      # @fixme it should be on CompositionNode.create_node
+    #      if composition_node.template.is_leaf and not null_flavour:
+    #          value = Factory(composition_node.template).create(**kwargs)
+    #          composition_node.value = value
+    #      return composition_node
+    #
+    #  def get(self, path: str) -> "CompositionNode":
+    #      path = path.replace(self.root._id, "").strip("/")
+    #      return self.root.get_descendant(path)
+    #
+    # @FIXME: restore method
+    #  @abc.abstractmethod
+    #  def set_all(self, name: str, **kwargs) -> "CompositionNode":
+    #      ...
 
     def as_flat(self):
         flat = {}
-        for leaf in self.root.leaves:
-            flat.update(leaf.as_flat())
+        for leaf in self._root.leaves:
+            if leaf.template.is_leaf:
+                flat.update(leaf.as_flat())
         return flat
 
-    @abc.abstractmethod
-    def set_defaults(self):
-        ...
+    # @fixme
+    #  @abc.abstractmethod
+    #  def set_defaults(self):
+    #      ...
 
 
+@dataclass
 class CompositionNode(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def value(self) -> DataValue:
-        ...
+    template: TemplateNode
+    value: Optional[DataValue] = None
+    null_flavour: Optional[NullFlavour] = None
 
-    @value.setter
-    @abc.abstractmethod
-    def value(self, value: DataValue):
-        ...
+    def __post_init__(self):
+        self._id = self.template._id
 
     @property
     @abc.abstractmethod
-    def template(self):
-        ...
-
-    @property
-    @abc.abstractmethod
-    def path(self):
+    def path(self) -> str:
         ...
 
     @abc.abstractmethod
-    def add_child(
-        self,
-        name: str,
-        value: DataValue = None,
-        increment_cardinality: bool = True,
-        null_flavour: NullFlavour = None,
-    ):
+    def __getitem__(self, path) -> Union["CompositionNode", List["CompositionNode"]]:
         ...
 
     @abc.abstractmethod
-    def create_node(
-        self,
-        path: str,
-        increment_cardinality: bool = True,
-        null_flavour: NullFlavour = None,
-        **kwargs,
-    ) -> "CompositionNode":
+    def __setitem__(self, path, value: Union[DataValue, "CompositionNode"]):
         ...
 
     @property
     @abc.abstractmethod
-    def leaves(self):
-        ...
-
-    @abc.abstractmethod
-    def get_descendant(self, path: str) -> "CompositionNode":
-        ...
-
-    @abc.abstractmethod
-    def find_descendants(self, path) -> List["CompositionNode"]:
+    def leaves(self) -> List["CompositionNode"]:
         ...
 
     @property
     @abc.abstractmethod
     def parent(self):
+        ...
+
+    @parent.setter
+    def parent(self, value: "CompositionNode"):
+        if self.template.inf_cardinality:
+            cardinality = len(value[f"{self.template._id}:*"])
+            self._id = f"{self._id}:{cardinality + 1}"
+        self._set_parent(value)
+
+    @abc.abstractmethod
+    def _set_parent(self, value: "CompositionNode"):
         ...
 
     @property
@@ -142,3 +141,7 @@ class CompositionNode(abc.ABC):
             for leaf in self.leaves:
                 flat.update(leaf.as_flat())
         return flat
+
+
+class NotaLeaf(Exception):
+    ...

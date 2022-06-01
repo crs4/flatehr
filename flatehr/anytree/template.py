@@ -1,21 +1,12 @@
 import logging
-import os
-import re
-from functools import singledispatchmethod
-from typing import Any, Dict, List, Tuple, Optional
-
-import anytree
-from deepdiff import DeepDiff
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
 
 from flatehr.anytree._node import Node
-from flatehr.composition import Composition as BaseComposition
-from flatehr.composition import CompositionNode as BaseCompositionNode
-from flatehr.data_types import DataValue, Factory, NullFlavour
-from flatehr.template import Template
 from flatehr.factory import template_factory
+from flatehr.template import Template
 from flatehr.template import TemplateNode as BaseTemplateNode
-from flatehr.template import WebTemplate
-from dataclasses import dataclass
+from flatehr.template import WebTemplate, remove_cardinality
 
 logger = logging.getLogger("flatehr")
 
@@ -57,3 +48,6 @@ class TemplateNode(Node, BaseTemplateNode):
     inf_cardinality: bool
     annotations: Optional[Dict[str, Any]] = None
     inputs: Optional[Dict[str, Any]] = None
+
+    def __getitem__(self, path: str) -> BaseTemplateNode:
+        return super().__getitem__(remove_cardinality(path))
