@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Tuple, cast
+from typing import Tuple, cast, Union, List
 
 import anytree
 
@@ -26,7 +26,7 @@ class Node(anytree.NodeMixin):
         self._resolver = anytree.Resolver("_id")
         self._walker = anytree.Walker()
 
-    def __getitem__(self, path: str):
+    def __getitem__(self, path: str) -> "Node":
 
         try:
             return (

@@ -1,6 +1,7 @@
 import logging
+import os
 from dataclasses import dataclass
-from typing import List, Union, cast
+from typing import List, Optional, Union, cast
 
 import anytree
 
@@ -27,20 +28,45 @@ class CompositionFactory:
 
 
 class CompositionNode(Node, BaseCompositionNode):
-    def __init__(self, template: TemplateNode):
-        Node.__init__(self, _id=template._id)
+    def __init__(
+        self, template: TemplateNode, parent: Optional["BaseCompositionNode"] = None
+    ):
+        if parent and template.inf_cardinality:
+            cardinality = len(cast(list, parent[f"{template._id}:*"]))
+            _id = f"{template._id}:{cardinality}"
+        else:
+            _id = template._id
+
+        Node.__init__(self, _id=_id)
         BaseCompositionNode.__init__(self, template)
+        Node.parent.fset(self, parent)
 
     def __setitem__(self, path, value: DataValue):
         try:
-            node = self[path]
+            node = cast("CompositionNode", self[path])
         except NodeNotFound as ex:
             last_node = cast(BaseCompositionNode, ex.node)
             missing_child_template = last_node.template[ex.child]
-            missing_child = CompositionNode(missing_child_template)
-            missing_child.parent = last_node
+
+            if missing_child_template.inf_cardinality:
+                cardinality = (
+                    len(cast(list, last_node[f"{missing_child_template._id}:*"])) - 1
+                )
+                if cardinality < 0:
+                    missing_child = CompositionNode(missing_child_template, last_node)
+                else:
+                    missing_child = last_node[
+                        f"{missing_child_template._id}:{cardinality}"
+                    ]
+            else:
+                missing_child = CompositionNode(missing_child_template, last_node)
+
             remaining_path = path.replace(
-                missing_child.path.replace(self.path, "").strip(self.separator), ""
+                missing_child_template.path.replace(self.template.path, "", 1).strip(
+                    self.separator
+                ),
+                "",
+                1,
             ).strip(self.separator)
             missing_child[remaining_path] = value
         else:
@@ -48,8 +74,14 @@ class CompositionNode(Node, BaseCompositionNode):
                 raise NotaLeaf(f"{path} is not a leaf")
             node.value = value
 
-    def _set_parent(self, value: "CompositionNode"):
-        self.parent = value
+    @property
+    def parent(self) -> "CompositionNode":
+        return cast("CompositionNode", Node.parent.fget(self))
+
+    def add(self, path: str) -> str:
+        parent = cast("CompositionNode", self[os.path.dirname(path)])
+        node = CompositionNode(self.template[path], parent)
+        return node.path
 
     #      try:
     #          self[path].value = value

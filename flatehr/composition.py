@@ -1,5 +1,6 @@
 import abc
 import logging
+import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
@@ -27,15 +28,22 @@ class Composition:
     def __getitem__(
         self, path: str
     ) -> Union["CompositionNode", List["CompositionNode"]]:
-        path = path.replace(self._root._id, "").strip("/")
+        path = path.replace(self._root._id, "", 1).strip("/")
         return self._root[path]
 
     def __setitem__(self, path, value: Union[DataValue, "CompositionNode"]):
-        path = path.replace(self._root._id, "").strip("/")
+        path = self._remove_root_path(path)
         self._root[path] = value
 
-    def add_sibling(self, path: str):
-        ...
+    #  def list(self, path: str)->"CompositionNode":
+    #      return self._root.
+    #
+    def add(self, path: str) -> str:
+        path = self._remove_root_path(path)
+        return self._root.add(path)
+
+    def _remove_root_path(self, path: str) -> str:
+        return path.replace(self._root._id, "", 1).strip("/")
 
     #  def create_node(
     #      self,
@@ -109,14 +117,8 @@ class CompositionNode(abc.ABC):
         ...
 
     @parent.setter
-    def parent(self, value: "CompositionNode"):
-        if self.template.inf_cardinality:
-            cardinality = len(value[f"{self.template._id}:*"])
-            self._id = f"{self._id}:{cardinality + 1}"
-        self._set_parent(value)
-
     @abc.abstractmethod
-    def _set_parent(self, value: "CompositionNode"):
+    def parent(self, value: "CompositionNode"):
         ...
 
     @property
@@ -126,6 +128,10 @@ class CompositionNode(abc.ABC):
 
     @abc.abstractmethod
     def set_defaults(self):
+        ...
+
+    @abc.abstractmethod
+    def add(self, path: str) -> str:
         ...
 
     def as_flat(self):

@@ -22,23 +22,45 @@ def test_factory(composition, template):
 def test_composition_create_dv_text(composition):
     text = "ok"
     path = "test/context/status"
-    #  import pudb
-    #
-    #  pudb.set_trace()
     composition[path] = data_types.Text(text)
 
     flat = composition.as_flat()
     assert flat == {path: text}
 
 
-#
-#  def test_composition_create_dv_text_with_default(web_template_json):
-#      web_template = WebTemplateNode.create(web_template_json)
-#      composition = Composition(web_template)
-#      path = "/test/targeted_therapy_start/start_of_targeted_therapy/from_event"
+@pytest.mark.parametrize("backend", template_factory.backends())
+def test_composition_add_multiple_instances(composition):
+    path = "test/lab_result_details/result_group/laboratory_test_result/any_event"
+
+    composition[f"{path}/test_name"] = data_types.Text("test-0")
+
+    assert composition.as_flat() == {f"{path}:0/test_name": "test-0"}
+
+    composition[f"{path}/test_name"] = data_types.Text("test-0-0")
+    assert composition.as_flat() == {f"{path}:0/test_name": "test-0-0"}
+
+    composition.add(path)
+    composition[f"{path}/test_name"] = data_types.Text("test-1")
+
+    assert composition.as_flat() == {
+        f"{path}:0/test_name": "test-0-0",
+        f"{path}:1/test_name": "test-1",
+    }
+
+    composition[f"{path}:0/test_name"] = data_types.Text("test-0-0-0")
+    assert composition.as_flat() == {
+        f"{path}:0/test_name": "test-0-0-0",
+        f"{path}:1/test_name": "test-1",
+    }
+
+
+#  @pytest.mark.parametrize("backend", template_factory.backends())
+#  def test_composition_create_dv_text_with_default(composition):
+#      path = "test/targeted_therapy_start/start_of_targeted_therapy/from_event"
 #      node = composition.create_node(path)
 #      assert node.value.value == "Primary diagnosis"
-#
+
+
 #
 #  def test_composition_create_code_phrase(web_template_json):
 #      web_template = WebTemplateNode.create(web_template_json)
@@ -127,17 +149,7 @@ def test_composition_create_dv_text(composition):
 #      }
 #
 #
-#  def test_composition_add_multiple_instances(composition):
-#      for i in range(2):
-#          event = composition.create_node(
-#              "lab_result_details/result_group/laboratory_test_result/any_event"
-#          )
-#          event.create_node("test_name", value=f"test-{i}")
-#      assert composition.as_flat() == {
-#          "test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name": "test-0",
-#          "test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name": "test-1",
-#      }
-#
+
 #
 #  def test_composition_not_increment_cardinality(composition):
 #      for i, child in enumerate(["test_name", "test_diagnosis"]):

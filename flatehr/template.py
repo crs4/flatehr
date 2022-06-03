@@ -15,7 +15,7 @@ class Template:
         return self._root
 
     def __getitem__(self, path: str) -> "TemplateNode":
-        path = path.replace(self.root._id, "").lstrip("/")
+        path = path.replace(self.root._id, "", 1).lstrip("/")
         return self.root[path]
 
 
