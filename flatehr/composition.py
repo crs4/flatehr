@@ -1,10 +1,9 @@
 import abc
 import logging
-import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-from flatehr.data_types import DataValue, Factory, NullFlavour
+from flatehr.data_types import DATA_VALUE, NullFlavour
 from flatehr.template import Template, TemplateNode
 
 logger = logging.getLogger(__name__)
@@ -31,7 +30,7 @@ class Composition:
         path = path.replace(self._root._id, "", 1).strip("/")
         return self._root[path]
 
-    def __setitem__(self, path, value: Union[DataValue, "CompositionNode"]):
+    def __setitem__(self, path, value: Union[DATA_VALUE, "CompositionNode"]):
         path = self._remove_root_path(path)
         self._root[path] = value
 
@@ -87,7 +86,7 @@ class Composition:
 @dataclass
 class CompositionNode(abc.ABC):
     template: TemplateNode
-    value: Optional[DataValue] = None
+    value: Optional[DATA_VALUE] = None
     null_flavour: Optional[NullFlavour] = None
 
     def __post_init__(self):
@@ -103,7 +102,7 @@ class CompositionNode(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def __setitem__(self, path, value: Union[DataValue, "CompositionNode"]):
+    def __setitem__(self, path, value: Union[DATA_VALUE, "CompositionNode"]):
         ...
 
     @property
@@ -150,4 +149,8 @@ class CompositionNode(abc.ABC):
 
 
 class NotaLeaf(Exception):
+    ...
+
+
+class IncompatibleDataType(Exception):
     ...

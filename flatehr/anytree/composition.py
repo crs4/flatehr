@@ -2,13 +2,17 @@ import logging
 import os
 from typing import List, Optional, Union, cast
 
+import anytree
+from pipe import chain, map
+
+from flatehr import data_types
 from flatehr.anytree._node import Node, NodeNotFound
 from flatehr.composition import Composition
 from flatehr.composition import CompositionNode as BaseCompositionNode
-from flatehr.composition import NotaLeaf
-from flatehr.data_types import DataValue
+from flatehr.composition import IncompatibleDataType, NotaLeaf
+from flatehr.data_types import DATA_VALUE
 from flatehr.factory import composition_factory
-from flatehr.template import Template, TemplateNode
+from flatehr.template import Template, TemplateNode, to_string
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +33,7 @@ class CompositionNode(Node, BaseCompositionNode):
         self, template: TemplateNode, parent: Optional["CompositionNode"] = None
     ):
         if parent and template.inf_cardinality:
-            cardinality = len(cast(list, parent._get(f"{template._id}:*")))
+            cardinality = len(cast(list, parent.get(f"{template._id}:*")))
             _id = f"{template._id}:{cardinality}"
         else:
             _id = template._id
@@ -38,23 +42,49 @@ class CompositionNode(Node, BaseCompositionNode):
         BaseCompositionNode.__init__(self, template)
         Node.parent.fset(self, parent)
 
-    def _get(self, path) -> "CompositionNode":
-        return cast(CompositionNode, Node.__getitem__(self, path))
+    def get(self, path) -> "CompositionNode":
+        return cast(CompositionNode, Node.get(self, path))
 
-    def __getitem__(
-        self, path: str
-    ) -> Union[List[Optional[DataValue]], Optional[DataValue]]:
-        nodes = self._get(path)
+    def __getitem__(self, path: str) -> Union[List[DATA_VALUE], DATA_VALUE]:
+        nodes = self.get(path)
         return (
             [node.value for node in nodes] if isinstance(nodes, list) else nodes.value
         )
 
-    def __setitem__(self, path, value: DataValue):
+    def _get_required_leaves(self, path: str) -> List[DATA_VALUE]:
+        ...
+
+    def __setitem__(self, path, value: DATA_VALUE):
+
+        if path.startswith("**"):
+            _id = os.path.basename(path)
+            not_leaves = anytree.iterators.preorderiter.PreOrderIter(
+                self,
+                filter_=lambda node: not node.template.is_leaf == _id and node.is_leaf,
+            )
+            list(
+                not_leaves
+                | map(
+                    lambda node: anytree.iterators.preorderiter.PreOrderIter(
+                        node.template,
+                        stop=lambda n: not n.required,
+                        filter_=lambda n: n.is_leaf and n._id == _id,
+                    )
+                )
+                | chain
+                | map(
+                    lambda template: self.__setitem__(
+                        os.path.relpath(to_string(template, wildcard=True), self._id),
+                        value,
+                    )
+                )
+            )
+            return
         try:
-            node = cast("CompositionNode", self._get(path))
+            node = cast("CompositionNode", self.get(path))
         except NodeNotFound as ex:
             last_node = cast(CompositionNode, ex.node)
-            missing_child_template = last_node.template[ex.child]
+            missing_child_template = last_node.template.get(ex.child)
 
             if missing_child_template.inf_cardinality:
                 cardinality = (
@@ -63,16 +93,14 @@ class CompositionNode(Node, BaseCompositionNode):
                 if cardinality < 0:
                     missing_child = CompositionNode(missing_child_template, last_node)
                 else:
-                    missing_child = last_node._get(
+                    missing_child = last_node.get(
                         f"{missing_child_template._id}:{cardinality}"
                     )
             else:
                 missing_child = CompositionNode(missing_child_template, last_node)
 
             remaining_path = path.replace(
-                missing_child_template.path.replace(self.template.path, "", 1).strip(
-                    self.separator
-                ),
+                to_string(missing_child_template, relative_to=self.template),
                 "",
                 1,
             ).strip(self.separator)
@@ -80,16 +108,47 @@ class CompositionNode(Node, BaseCompositionNode):
         else:
             if not node.template.is_leaf:
                 raise NotaLeaf(f"{path} is not a leaf")
+            if not isinstance(value, getattr(data_types, node.template.rm_type)):
+                raise IncompatibleDataType(
+                    f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
+                )
             node.value = value
 
+    #  def _get_or_create_node(self, path: str) -> "CompositionNode":
+    #      try:
+    #          node = , self.get(path)
+    #      except NodeNotFound as ex:
+    #          last_node = cast(CompositionNode, ex.node)
+    #          missing_child_template = last_node.template.get(ex.child)
+    #
+    #          if missing_child_template.inf_cardinality:
+    #              cardinality = (
+    #                  len(cast(list, last_node[f"{missing_child_template._id}:*"])) - 1
+    #              )
+    #              if cardinality < 0:
+    #                  missing_child = CompositionNode(missing_child_template, last_node)
+    #              else:
+    #                  missing_child = last_node.get(
+    #                      f"{missing_child_template._id}:{cardinality}"
+    #                  )
+    #          else:
+    #              missing_child = CompositionNode(missing_child_template, last_node)
+    #
+    #          remaining_path = path.replace(
+    #              to_string(missing_child_template, relative_to=self.template),
+    #              "",
+    #              1,
+    #          ).strip(self.separator)
+    #          missing_child[remaining_path] = value
+    #
     @property
     def parent(self) -> "CompositionNode":
         return cast("CompositionNode", Node.parent.fget(self))
 
     def add(self, path: str) -> str:
-        parent = cast("CompositionNode", self._get(os.path.dirname(path)))
-        node = CompositionNode(self.template[path], parent)
-        return node.path
+        parent = cast("CompositionNode", self.get(os.path.dirname(path)))
+        node = CompositionNode(self.template.get(path), parent)
+        return str(node)
 
     #      try:
     #          self[path].value = value
@@ -198,7 +257,7 @@ class CompositionNode(Node, BaseCompositionNode):
             if value is None:
                 raise AttributeError(f"value and null_flavour of {self} not set")
 
-            flat.update(value.to_flat(f"{self.path.strip('/')}"))
+            flat.update(value.to_flat(f"{str(self).strip('/')}"))
         else:
             for leaf in self.leaves:
                 flat.update(leaf.as_flat())

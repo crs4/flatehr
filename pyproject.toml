@@ -11,6 +11,7 @@ anytree = "2.8.0"
 deepdiff = "^5.5.0"
 tqdm = "^4.62.3"
 clize = "^4.2.1"
+pipe = "^2.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

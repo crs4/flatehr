@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 import anytree
 from deepdiff import DeepDiff
 
-from flatehr.data_types import DataValue, Factory, NullFlavour
+from flatehr.data_types import DATA_VALUE, Factory, NullFlavour
 
 logger = logging.getLogger("flatehr")
 
@@ -270,7 +270,7 @@ class CompositionNode(Node):
         self,
         node: anytree.Node,
         web_template_node: WebTemplateNode,
-        value: DataValue = None,
+        value: DATA_VALUE = None,
         null_flavour: NullFlavour = None,
     ):
         super().__init__(node)
@@ -294,7 +294,7 @@ class CompositionNode(Node):
     def add_child(
         self,
         name: str,
-        value: DataValue = None,
+        value: DATA_VALUE = None,
         increment_cardinality: bool = True,
         null_flavour: NullFlavour = None,
     ):

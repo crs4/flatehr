@@ -5,8 +5,8 @@ import logging
 import pytest
 
 import flatehr.data_types as data_types
+from flatehr.composition import Composition, IncompatibleDataType, NotaLeaf
 from flatehr.factory import composition_factory, template_factory
-from flatehr.composition import Composition
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -19,35 +19,50 @@ def test_factory(composition, template):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
-def test_composition_create_dv_text(composition):
+def test_create_dv_text(composition):
     text = "ok"
     path = "test/context/status"
-    composition[path] = data_types.Text(text)
+    composition[path] = data_types.DV_TEXT(text)
 
     flat = composition.as_flat()
     assert flat == {path: text}
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+def test_not_a_leaf(composition):
+    text = "ok"
+    path = "test/context"
+    with pytest.raises(NotaLeaf):
+        composition[path] = data_types.DV_TEXT(text)
+
+
+@pytest.mark.parametrize("backend", template_factory.backends())
+def test_incompatible_data_type(composition):
+    path = "test/context/status"
+    with pytest.raises(IncompatibleDataType):
+        composition[path] = data_types.DV_DATE_TIME(year=2001)
+
+
+@pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_add_multiple_instances(composition):
     path = "test/lab_result_details/result_group/laboratory_test_result/any_event"
 
-    composition[f"{path}/test_name"] = data_types.Text("test-0")
+    composition[f"{path}/test_name"] = data_types.DV_TEXT("test-0")
 
     assert composition.as_flat() == {f"{path}:0/test_name": "test-0"}
 
-    composition[f"{path}/test_name"] = data_types.Text("test-0-0")
+    composition[f"{path}/test_name"] = data_types.DV_TEXT("test-0-0")
     assert composition.as_flat() == {f"{path}:0/test_name": "test-0-0"}
 
     composition.add(path)
-    composition[f"{path}/test_name"] = data_types.Text("test-1")
+    composition[f"{path}/test_name"] = data_types.DV_TEXT("test-1")
 
     assert composition.as_flat() == {
         f"{path}:0/test_name": "test-0-0",
         f"{path}:1/test_name": "test-1",
     }
 
-    composition[f"{path}:0/test_name"] = data_types.Text("test-0-0-0")
+    composition[f"{path}:0/test_name"] = data_types.DV_TEXT("test-0-0-0")
     assert composition.as_flat() == {
         f"{path}:0/test_name": "test-0-0-0",
         f"{path}:1/test_name": "test-1",
@@ -67,9 +82,9 @@ def test_composition_create_code_phrase(composition):
     code = "en"
     path = "test/language"
 
-    composition[path] = data_types.CodePhrase(terminology=terminology, code=code)
+    composition[path] = data_types.CODE_PHRASE(terminology=terminology, code=code)
     value = composition[path]
-    assert isinstance(value, data_types.CodePhrase)
+    assert isinstance(value, data_types.CODE_PHRASE)
     assert value.terminology == terminology
     assert value.code == code
 
@@ -86,11 +101,11 @@ def test_composition_create_dv_coded_text(composition):
     terminology = "ISO_639-1"
     code = "en"
     path = "test/context/setting"
-    composition[path] = data_types.CodedText(
+    composition[path] = data_types.DV_CODED_TEXT(
         value=text, terminology=terminology, code=code
     )
     value = composition[path]
-    assert isinstance(value, data_types.CodedText)
+    assert isinstance(value, data_types.DV_CODED_TEXT)
 
     assert value.value == text
     assert value.terminology == terminology
@@ -107,9 +122,9 @@ def test_composition_create_dv_coded_text(composition):
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_create_dv_datetime(composition):
     path = "test/context/start_time"
-    composition[path] = data_types.DateTime(year=2021, month=4, day=22)
+    composition[path] = data_types.DV_DATE_TIME(year=2021, month=4, day=22)
     value = composition[path]
-    assert isinstance(value, data_types.DateTime)
+    assert isinstance(value, data_types.DV_DATE_TIME)
 
     flat = composition.as_flat()
     text = "2021-04-22T00:00:00"
@@ -120,9 +135,9 @@ def test_composition_create_dv_datetime(composition):
 def test_composition_create_party_proxy(composition):
     name = "composer"
     path = "test/composer"
-    composition[path] = data_types.PartyProxy(name)
+    composition[path] = data_types.PARTY_PROXY(name)
     value = composition[path]
-    assert isinstance(value, data_types.PartyProxy)
+    assert isinstance(value, data_types.PARTY_PROXY)
     assert value.value == name
 
     flat = composition.as_flat()
@@ -133,13 +148,13 @@ def test_composition_create_party_proxy(composition):
 def test_composition_to_flat(composition):
     text = "ok"
     path_status = "test/context/status"
-    composition[path_status] = data_types.Text(text)
+    composition[path_status] = data_types.DV_TEXT(text)
 
     terminology = "ISO_639-1"
     code = "en"
     path_lang = "test/language"
 
-    composition[path_lang] = data_types.CodePhrase(terminology=terminology, code=code)
+    composition[path_lang] = data_types.CODE_PHRASE(terminology=terminology, code=code)
 
     flat = composition.as_flat()
     assert flat == {
@@ -151,27 +166,24 @@ def test_composition_to_flat(composition):
 
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_set_all(composition):
+    #  __import__("pudb").set_trace()
     terminology = "ISO_639-1"
     code = "en"
-    composition["*/language"] = data_types.CodePhrase(
+    composition["**/language"] = data_types.CODE_PHRASE(
         code=code, terminology=terminology
     )
 
     path_lang = "test/language"
-    path_lab_test_result = "test/lab_result_details/result_group/laboratory_test_result"
 
     flat = composition.as_flat()
-    assert flat == {
-        f"{path_lang}|code": code,
-        f"{path_lang}|terminology": terminology,
-        f"{path_lab_test_result}/language|code": code,
-        f"{path_lab_test_result}/language|terminology": terminology,
-    }
+    assert flat == {f"{path_lang}|code": code, f"{path_lang}|terminology": terminology}
+
+    path_lab_test_result = (
+        "test/lab_result_details/result_group/laboratory_test_result/any_event"
+    )
 
     #  for _ in range(2):
-    #      composition.create_node(
-    #          "lab_result_details/result_group/laboratory_test_result/any_event"
-    #      )
+    composition.add(path_lab_test_result)
     #      composition.set_all("test_name", value="test_name")
     #  assert composition.as_flat() == {
     #      f"{path_lang}|code": code,

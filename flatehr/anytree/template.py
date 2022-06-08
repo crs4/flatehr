@@ -1,6 +1,8 @@
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
+
+from pipe import map
 
 from flatehr.anytree._node import Node
 from flatehr.factory import template_factory
@@ -49,5 +51,5 @@ class TemplateNode(Node, BaseTemplateNode):
     annotations: Optional[Dict[str, Any]] = None
     inputs: Optional[Dict[str, Any]] = None
 
-    def __getitem__(self, path: str) -> BaseTemplateNode:
-        return super().__getitem__(remove_cardinality(path))
+    def get(self, path: str) -> BaseTemplateNode:
+        return cast(TemplateNode, super().get(remove_cardinality(path)))

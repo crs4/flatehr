@@ -158,6 +158,14 @@ python-versions = ">=3.6"
 pyparsing = ">=2.0.2"
 
 [[package]]
+name = "pipe"
+version = "2.0"
+description = "Module enablig a sh like infix syntax (using pipes)"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "pluggy"
 version = "0.13.1"
 description = "plugin and hook calling mechanisms for python"
@@ -285,7 +293,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f25ead138eae87fd02e89767157fbd7bdecc36eaa86e0049788cf027e234f533"
+content-hash = "b000806d6d3d7037f45ba49e9842f395286045a4546ec3a48a635a81483f4780"
 
 [metadata.files]
 anytree = [
@@ -385,6 +393,10 @@ ordered-set = [
 packaging = [
     {file = "packaging-21.0-py3-none-any.whl", hash = "sha256:c86254f9220d55e31cc94d69bade760f0847da8000def4dfe1c6b872fd14ff14"},
     {file = "packaging-21.0.tar.gz", hash = "sha256:7dc96269f53a4ccec5c0670940a4281106dd0bb343f47b7471f779df49c2fbe7"},
+]
+pipe = [
+    {file = "pipe-2.0-py3-none-any.whl", hash = "sha256:12dc5baae854843d0fa8ab674ab555e58cc703eb64d8bf86da8db46b7115d07c"},
+    {file = "pipe-2.0.tar.gz", hash = "sha256:a1cf3f29f98576b7e6552231142bc711e8dd324513a2c4525fc68c33f47fabad"},
 ]
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
