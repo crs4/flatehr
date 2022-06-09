@@ -194,37 +194,20 @@ def test_composition_set_all(composition):
     }
 
 
-#
-#  @pytest.mark.skip("TBD")
-#  def test_web_template_node(web_template_json):
-#      WebTemplateNode.create(web_template_json)
-#
-#
-#  @pytest.mark.skip("Composition.get TBD")
-#  def test_composition_get_path(web_template_json):
-#      web_template = WebTemplateNode.create(web_template_json)
-#      composition = Composition(web_template)
-#      text = "ok"
-#      path = "/test/context/status"
-#      composition.create_node(path, value=text)
-#      node = composition.get(path)
-#      assert isinstance(node.value, data_types.Text)
-#
-#
-#  def test_composition_set_defaults(composition):
-#      composition.create_node(
-#          "/test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/",
-#          value="P1W",
-#      )
-#
-#      composition.set_all("language", code="en", terminology="ISO_639-1")
-#      composition.set_all("territory", code="it", terminology="ISO_3166-1")
-#      composition.set_all("composer", value="test")
-#
-#      composition.set_defaults()
-#      flat = composition.as_flat()
-#      assert "test/targeted_therapy_start/start_of_targeted_therapy/from_event" in flat
-#
+def test_composition_set_defaults(composition):
+    composition[
+        "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/"
+    ] = ("P1W",)
+
+    composition.set_all("language", code="en", terminology="ISO_639-1")
+    composition.set_all("territory", code="it", terminology="ISO_3166-1")
+    composition.set_all("composer", value="test")
+
+    composition.set_defaults()
+    flat = composition.as_flat()
+    assert "test/targeted_therapy_start/start_of_targeted_therapy/from_event" in flat
+
+
 #
 #  def test_set_null_flavour(composition):
 #      null_flavour = data_types.NullFlavour(

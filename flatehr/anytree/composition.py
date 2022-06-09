@@ -51,43 +51,44 @@ class CompositionNode(Node, BaseCompositionNode):
             [node.value for node in nodes] if isinstance(nodes, list) else nodes.value
         )
 
-    def _get_required_leaves(self, path: str) -> List[DATA_VALUE]:
-        ...
+    def _get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+        not_leaves = anytree.iterators.preorderiter.PreOrderIter(
+            self,
+            filter_=lambda node: not node.template.is_leaf and node.is_leaf,
+        )
+        missing_required = (
+            not_leaves
+            | map(
+                lambda node: anytree.iterators.preorderiter.PreOrderIter(
+                    node.template,
+                    stop=lambda n: not n.required if n != node.template else False,
+                    filter_=lambda n: n.is_leaf and (n._id == _id if _id else True),
+                )
+            )
+            | chain
+        )
+        missing_required_leaves = (
+            missing_required
+            | map(
+                lambda template: os.path.relpath(
+                    to_string(template, wildcard=True), self._id
+                )
+            )
+            | traverse
+        )
+        return list(missing_required_leaves)
 
     def __setitem__(self, path, value: DATA_VALUE):
 
         if path.startswith("**"):
             _id = os.path.basename(path)
-            not_leaves = anytree.iterators.preorderiter.PreOrderIter(
-                self,
-                filter_=lambda node: not node.template.is_leaf and node.is_leaf,
-            )
-            missing_required = (
-                not_leaves
-                | map(
-                    lambda node: anytree.iterators.preorderiter.PreOrderIter(
-                        node.template,
-                        stop=lambda n: not n.required if n != node.template else False,
-                        filter_=lambda n: n.is_leaf and n._id == _id,
-                    )
-                )
-                | chain
-            )
-            missing_required_parent = (
-                missing_required
-                | map(
-                    lambda template: self._get_or_create_node(
-                        os.path.dirname(
-                            os.path.relpath(
-                                to_string(template, wildcard=True), self._id
-                            )
-                        )
-                    )
-                )
-                | traverse
-            )
+
+            missing_required_parents = (
+                self._get_required_leaves(_id)
+                | map(lambda path: self._get_or_create_node(os.path.dirname(path)))
+            ) | traverse
             list(
-                missing_required_parent
+                missing_required_parents
                 | map(lambda node: node.__setitem__(os.path.basename(path), value))
             )
             return

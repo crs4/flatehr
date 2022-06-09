@@ -35,41 +35,12 @@ class Composition:
         path = self._remove_root_path(path)
         self._root[path] = value
 
-    #  def list(self, path: str)->"CompositionNode":
-    #      return self._root.
-    #
     def add(self, path: str) -> str:
         path = self._remove_root_path(path)
         return self._root.add(path)
 
     def _remove_root_path(self, path: str) -> str:
         return re.sub(f"(\/?{self._root._id}/)", "", path)
-
-    #  def create_node(
-    #      self,
-    #      path: str,
-    #      increment_cardinality: bool = True,
-    #      null_flavour: Optional[NullFlavour] = None,
-    #      **kwargs,
-    #  ) -> "CompositionNode":
-    #      path = path.replace(f"{self.root.path}", "")
-    #      composition_node = self.root.create_node(
-    #          path, increment_cardinality, null_flavour
-    #      )
-    #      # @fixme it should be on CompositionNode.create_node
-    #      if composition_node.template.is_leaf and not null_flavour:
-    #          value = Factory(composition_node.template).create(**kwargs)
-    #          composition_node.value = value
-    #      return composition_node
-    #
-    #  def get(self, path: str) -> "CompositionNode":
-    #      path = path.replace(self.root._id, "").strip("/")
-    #      return self.root.get_descendant(path)
-    #
-    # @FIXME: restore method
-    #  @abc.abstractmethod
-    #  def set_all(self, name: str, **kwargs) -> "CompositionNode":
-    #      ...
 
     def as_flat(self):
         flat = {}
@@ -78,10 +49,9 @@ class Composition:
                 flat.update(leaf.as_flat())
         return flat
 
-    # @fixme
-    #  @abc.abstractmethod
-    #  def set_defaults(self):
-    #      ...
+    @abc.abstractmethod
+    def set_defaults(self):
+        ...
 
 
 @dataclass
