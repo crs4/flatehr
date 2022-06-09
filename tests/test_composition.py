@@ -166,9 +166,9 @@ def test_composition_to_flat(composition):
 
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_set_all(composition):
-    #  __import__("pudb").set_trace()
     terminology = "ISO_639-1"
     code = "en"
+    #  __import__("pudb").set_trace()
     composition["**/language"] = data_types.CODE_PHRASE(
         code=code, terminology=terminology
     )
@@ -182,18 +182,18 @@ def test_composition_set_all(composition):
         "test/lab_result_details/result_group/laboratory_test_result/any_event"
     )
 
-    #  for _ in range(2):
-    composition.add(path_lab_test_result)
-    #      composition.set_all("test_name", value="test_name")
-    #  assert composition.as_flat() == {
-    #      f"{path_lang}|code": code,
-    #      f"{path_lang}|terminology": terminology,
-    #      f"{path_lab_test_result}/language|code": code,
-    #      f"{path_lab_test_result}/language|terminology": terminology,
-    #      "test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name": "test_name",
-    #      "test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name": "test_name",
-    #  }
-    #
+    for _ in range(2):
+        composition.add(path_lab_test_result)
+
+    composition["**/test_name"] = data_types.DV_TEXT("test_name")
+    assert composition.as_flat() == {
+        f"{path_lang}|code": code,
+        f"{path_lang}|terminology": terminology,
+        #  f"{path_lab_test_result}/language|code": code,
+        #  f"{path_lab_test_result}/language|terminology": terminology,
+        "test/lab_result_details/result_group/laboratory_test_result/any_event:0/test_name": "test_name",
+        "test/lab_result_details/result_group/laboratory_test_result/any_event:1/test_name": "test_name",
+    }
 
 
 #

@@ -1,6 +1,7 @@
 import abc
 import logging
 from dataclasses import dataclass
+import re
 from typing import Dict, List, Optional, Union
 
 from flatehr.data_types import DATA_VALUE, NullFlavour
@@ -42,7 +43,7 @@ class Composition:
         return self._root.add(path)
 
     def _remove_root_path(self, path: str) -> str:
-        return path.replace(self._root._id, "", 1).strip("/")
+        return re.sub(f"(\/?{self._root._id}/)", "", path)
 
     #  def create_node(
     #      self,

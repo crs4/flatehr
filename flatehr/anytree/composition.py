@@ -3,7 +3,7 @@ import os
 from typing import List, Optional, Union, cast
 
 import anytree
-from pipe import chain, map
+from pipe import chain, map, traverse
 
 from flatehr import data_types
 from flatehr.anytree._node import Node, NodeNotFound
@@ -60,28 +60,55 @@ class CompositionNode(Node, BaseCompositionNode):
             _id = os.path.basename(path)
             not_leaves = anytree.iterators.preorderiter.PreOrderIter(
                 self,
-                filter_=lambda node: not node.template.is_leaf == _id and node.is_leaf,
+                filter_=lambda node: not node.template.is_leaf and node.is_leaf,
             )
-            list(
+            missing_required = (
                 not_leaves
                 | map(
                     lambda node: anytree.iterators.preorderiter.PreOrderIter(
                         node.template,
-                        stop=lambda n: not n.required,
+                        stop=lambda n: not n.required if n != node.template else False,
                         filter_=lambda n: n.is_leaf and n._id == _id,
                     )
                 )
                 | chain
+            )
+            missing_required_parent = (
+                missing_required
                 | map(
-                    lambda template: self.__setitem__(
-                        os.path.relpath(to_string(template, wildcard=True), self._id),
-                        value,
+                    lambda template: self._get_or_create_node(
+                        os.path.dirname(
+                            os.path.relpath(
+                                to_string(template, wildcard=True), self._id
+                            )
+                        )
                     )
                 )
+                | traverse
+            )
+            list(
+                missing_required_parent
+                | map(lambda node: node.__setitem__(os.path.basename(path), value))
             )
             return
+
+        nodes = self._get_or_create_node(path)
+        if not isinstance(nodes, list):
+            nodes = [nodes]
+        for node in nodes:
+            if not node.template.is_leaf:
+                raise NotaLeaf(f"{path} is not a leaf")
+            if not isinstance(value, getattr(data_types, node.template.rm_type)):
+                raise IncompatibleDataType(
+                    f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
+                )
+            node.value = value
+
+    def _get_or_create_node(self, path: str) -> "CompositionNode":
+        if not path:
+            return self
         try:
-            node = cast("CompositionNode", self.get(path))
+            return cast("CompositionNode", self.get(path))
         except NodeNotFound as ex:
             last_node = cast(CompositionNode, ex.node)
             missing_child_template = last_node.template.get(ex.child)
@@ -104,49 +131,16 @@ class CompositionNode(Node, BaseCompositionNode):
                 "",
                 1,
             ).strip(self.separator)
-            missing_child[remaining_path] = value
-        else:
-            if not node.template.is_leaf:
-                raise NotaLeaf(f"{path} is not a leaf")
-            if not isinstance(value, getattr(data_types, node.template.rm_type)):
-                raise IncompatibleDataType(
-                    f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
-                )
-            node.value = value
+            return missing_child._get_or_create_node(remaining_path)
 
-    #  def _get_or_create_node(self, path: str) -> "CompositionNode":
-    #      try:
-    #          node = , self.get(path)
-    #      except NodeNotFound as ex:
-    #          last_node = cast(CompositionNode, ex.node)
-    #          missing_child_template = last_node.template.get(ex.child)
-    #
-    #          if missing_child_template.inf_cardinality:
-    #              cardinality = (
-    #                  len(cast(list, last_node[f"{missing_child_template._id}:*"])) - 1
-    #              )
-    #              if cardinality < 0:
-    #                  missing_child = CompositionNode(missing_child_template, last_node)
-    #              else:
-    #                  missing_child = last_node.get(
-    #                      f"{missing_child_template._id}:{cardinality}"
-    #                  )
-    #          else:
-    #              missing_child = CompositionNode(missing_child_template, last_node)
-    #
-    #          remaining_path = path.replace(
-    #              to_string(missing_child_template, relative_to=self.template),
-    #              "",
-    #              1,
-    #          ).strip(self.separator)
-    #          missing_child[remaining_path] = value
-    #
     @property
     def parent(self) -> "CompositionNode":
         return cast("CompositionNode", Node.parent.fget(self))
 
     def add(self, path: str) -> str:
-        parent = cast("CompositionNode", self.get(os.path.dirname(path)))
+        parent = cast(
+            "CompositionNode", self._get_or_create_node(os.path.dirname(path))
+        )
         node = CompositionNode(self.template.get(path), parent)
         return str(node)
 
