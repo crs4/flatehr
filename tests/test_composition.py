@@ -194,14 +194,15 @@ def test_composition_set_all(composition):
     }
 
 
+@pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_set_defaults(composition):
     composition[
         "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/"
-    ] = ("P1W",)
+    ] = data_types.DV_DURATION("P1W")
 
-    composition.set_all("language", code="en", terminology="ISO_639-1")
-    composition.set_all("territory", code="it", terminology="ISO_3166-1")
-    composition.set_all("composer", value="test")
+    #  composition.set_all("language", code="en", terminology="ISO_639-1")
+    #  composition.set_all("territory", code="it", terminology="ISO_3166-1")
+    #  composition.set_all("composer", value="test")
 
     composition.set_defaults()
     flat = composition.as_flat()

@@ -1,9 +1,12 @@
 import abc
+import os
 import re
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Union
 
-from pipe import chain, map
+from pipe import map
+
+from flatehr.data_types import DATA_VALUE
 
 WebTemplate = Dict[str, Union[str, bool, int, float]]
 
@@ -17,7 +20,7 @@ class Template:
         return self._root
 
     def __getitem__(self, path: str) -> "TemplateNode":
-        path = path.replace(self.root._id, "", 1).lstrip("/")
+        path = os.path.relpath(path, self.root._id)
         return self.root.get(path)
 
 
@@ -28,8 +31,8 @@ class TemplateNode(abc.ABC):
     aql_path: str
     required: bool
     inf_cardinality: bool
-    annotations: Optional[List[Dict[str, str]]] = None
-    inputs: Optional[Dict[str, str]] = None
+    annotations: Tuple[Dict[str, str], ...] = ()
+    inputs: Tuple[Dict[str, str], ...] = ()
 
     @property
     @abc.abstractmethod
@@ -62,6 +65,11 @@ class TemplateNode(abc.ABC):
 
     @abc.abstractmethod
     def get(self, path) -> "TemplateNode":
+        ...
+
+    @property
+    @abc.abstractmethod
+    def default(self) -> DATA_VALUE:
         ...
 
 

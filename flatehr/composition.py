@@ -1,6 +1,7 @@
 import abc
 import logging
 from dataclasses import dataclass
+import os
 import re
 from typing import Dict, List, Optional, Union
 
@@ -49,9 +50,18 @@ class Composition:
                 flat.update(leaf.as_flat())
         return flat
 
-    @abc.abstractmethod
     def set_defaults(self):
-        ...
+        for path in self.get_required_leaves():
+            try:
+                self[path] = self.template[path].default
+            except InvalidDefault as ex:
+                logger.error(ex)
+
+    def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+        return [
+            os.path.join(self._root._id, path)
+            for path in self._root.get_required_leaves(_id)
+        ]
 
 
 @dataclass
@@ -97,10 +107,6 @@ class CompositionNode(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def set_defaults(self):
-        ...
-
-    @abc.abstractmethod
     def add(self, path: str) -> str:
         ...
 
@@ -118,10 +124,18 @@ class CompositionNode(abc.ABC):
                 flat.update(leaf.as_flat())
         return flat
 
+    @abc.abstractmethod
+    def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+        ...
+
 
 class NotaLeaf(Exception):
     ...
 
 
 class IncompatibleDataType(Exception):
+    ...
+
+
+class InvalidDefault(Exception):
     ...

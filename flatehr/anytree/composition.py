@@ -51,10 +51,10 @@ class CompositionNode(Node, BaseCompositionNode):
             [node.value for node in nodes] if isinstance(nodes, list) else nodes.value
         )
 
-    def _get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+    def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
         not_leaves = anytree.iterators.preorderiter.PreOrderIter(
             self,
-            filter_=lambda node: not node.template.is_leaf and node.is_leaf,
+            filter_=lambda node: not node.template.is_leaf,
         )
         missing_required = (
             not_leaves
@@ -62,7 +62,9 @@ class CompositionNode(Node, BaseCompositionNode):
                 lambda node: anytree.iterators.preorderiter.PreOrderIter(
                     node.template,
                     stop=lambda n: not n.required if n != node.template else False,
-                    filter_=lambda n: n.is_leaf and (n._id == _id if _id else True),
+                    filter_=lambda n: n.is_leaf
+                    and n.required
+                    and (n._id == _id if _id else True),
                 )
             )
             | chain
@@ -84,7 +86,7 @@ class CompositionNode(Node, BaseCompositionNode):
             _id = os.path.basename(path)
 
             missing_required_parents = (
-                self._get_required_leaves(_id)
+                self.get_required_leaves(_id)
                 | map(lambda path: self._get_or_create_node(os.path.dirname(path)))
             ) | traverse
             list(
@@ -240,9 +242,6 @@ class CompositionNode(Node, BaseCompositionNode):
     #      path = re.sub(r"\[\d+\]", "", self.path)
     #      resolver = anytree.Resolver("_id")
     #      return resolver.get(self.template, path)
-
-    def set_defaults(self):
-        raise NotImplementedError()
 
     def as_flat(self):
         flat = {}

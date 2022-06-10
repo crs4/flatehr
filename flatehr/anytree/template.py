@@ -3,8 +3,11 @@ from dataclasses import dataclass
 from typing import Any, Dict, Optional, cast
 
 from pipe import map
+from flatehr import data_types
 
 from flatehr.anytree._node import Node
+from flatehr.composition import InvalidDefault
+from flatehr.data_types import DATA_VALUE
 from flatehr.factory import template_factory
 from flatehr.template import Template
 from flatehr.template import TemplateNode as BaseTemplateNode
@@ -25,8 +28,8 @@ class TemplateFactory:
                 rm_type=web_template_el["rmType"],
                 required=web_template_el["min"] == 1,
                 inf_cardinality=web_template_el["max"] == -1,
-                annotations=web_template_el.get("annotations", {}),
-                inputs=web_template_el.get("inputs"),
+                annotations=web_template_el.get("annotations", ()),
+                inputs=web_template_el.get("inputs", ()),
                 aql_path=web_template_el.get("aqlPath"),
             )
 
@@ -44,12 +47,21 @@ class TemplateFactory:
 
 @dataclass
 class TemplateNode(Node, BaseTemplateNode):
-    rm_type: str
-    aql_path: str
-    required: bool
-    inf_cardinality: bool
-    annotations: Optional[Dict[str, Any]] = None
-    inputs: Optional[Dict[str, Any]] = None
+    #  rm_type: str
+    #  aql_path: str
+    #  required: bool
+    #  inf_cardinality: bool
+    #  annotations: Optional[Dict[str, Any]] = None
+    #  inputs: Optional[Dict[str, Any]] = None
 
     def get(self, path: str) -> BaseTemplateNode:
         return cast(TemplateNode, super().get(remove_cardinality(path)))
+
+    @property
+    def default(self) -> DATA_VALUE:
+        try:
+            value = self.inputs[0]["defaultValue"]
+        except (IndexError, KeyError) as ex:
+            raise InvalidDefault(f"path {self} has no valid default") from ex
+
+        return getattr(data_types, self.rm_type)(value)
