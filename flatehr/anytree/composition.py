@@ -12,6 +12,7 @@ from flatehr.composition import CompositionNode as BaseCompositionNode
 from flatehr.composition import IncompatibleDataType, NotaLeaf
 from flatehr.data_types import DATA_VALUE
 from flatehr.factory import composition_factory
+from flatehr.rm import get_model_class, models
 from flatehr.template import Template, TemplateNode, to_string
 
 logger = logging.getLogger(__name__)
@@ -101,10 +102,11 @@ class CompositionNode(Node, BaseCompositionNode):
         for node in nodes:
             if not node.template.is_leaf:
                 raise NotaLeaf(f"{path} is not a leaf")
-            if not isinstance(value, getattr(data_types, node.template.rm_type)):
-                raise IncompatibleDataType(
-                    f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
-                )
+            # @fixme: not work in case of abstract classes
+            # if not isinstance(value, get_model_class(node.template.rm_type)):
+            #     raise IncompatibleDataType(
+            #         f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
+            #     )
             node.value = value
 
     def _get_or_create_node(self, path: str) -> "CompositionNode":

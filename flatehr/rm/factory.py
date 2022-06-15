@@ -5,7 +5,7 @@
 import pinject
 from pipe import map
 
-from flatehr.rm import models
+from flatehr.rm import get_model_class, models
 
 
 class BindingSpec(pinject.BindingSpec):
@@ -26,23 +26,7 @@ obj_graph = pinject.new_object_graph(
 
 
 def factory(class_name: str, **kwargs):
-    alternative_name = "".join(
-        class_name.split("_") | map(lambda el: el.capitalize() if el != "DV" else el)
-    )
-    try:
-        cls = getattr(models, class_name)
-    except AttributeError:
-
-        try:
-            cls = getattr(models, alternative_name)
-        except AttributeError as ex:
-            raise InvalidRMName(
-                f"tried {class_name}, {alternative_name}, both failed"
-            ) from ex
-
     obj_graph = pinject.new_object_graph(binding_specs=[BindingSpec(kwargs)])
+
+    cls = get_model_class(class_name)
     return obj_graph.provide(cls)
-
-
-class InvalidRMName(Exception):
-    ...

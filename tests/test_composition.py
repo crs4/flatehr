@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from datetime import datetime
 import logging
 
 import pytest
+from flatehr import rm
 
 import flatehr.data_types as data_types
 from flatehr.composition import Composition, IncompatibleDataType, NotaLeaf
 from flatehr.factory import composition_factory, template_factory
+from flatehr.flat import flatten
+from flatehr.rm import models
+from flatehr.rm.factory import factory
+from flatehr.rm.models import CodePhrase
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -15,16 +21,16 @@ logging.basicConfig(level=logging.DEBUG)
 def test_factory(composition, template):
     assert isinstance(composition, Composition)
     assert composition.template == template
-    assert composition.as_flat() == {}
+    assert flatten(composition) == {}
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_create_dv_text(composition):
     text = "ok"
     path = "test/context/status"
-    composition[path] = data_types.DV_TEXT(text)
+    composition[path] = rm.DVText(value=text)
 
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert flat == {path: text}
 
 
@@ -33,37 +39,38 @@ def test_not_a_leaf(composition):
     text = "ok"
     path = "test/context"
     with pytest.raises(NotaLeaf):
-        composition[path] = data_types.DV_TEXT(text)
+        composition[path] = ""
 
 
+@pytest.mark.skip("TBF")
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_incompatible_data_type(composition):
     path = "test/context/status"
     with pytest.raises(IncompatibleDataType):
-        composition[path] = data_types.DV_DATE_TIME(year=2001)
+        composition[path] = ""
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_add_multiple_instances(composition):
     path = "test/lab_result_details/result_group/laboratory_test_result/any_event"
 
-    composition[f"{path}/test_name"] = data_types.DV_TEXT("test-0")
+    composition[f"{path}/test_name"] = rm.DVText(value="test-0")
 
-    assert composition.as_flat() == {f"{path}:0/test_name": "test-0"}
+    assert flatten(composition) == {f"{path}:0/test_name": "test-0"}
 
-    composition[f"{path}/test_name"] = data_types.DV_TEXT("test-0-0")
-    assert composition.as_flat() == {f"{path}:0/test_name": "test-0-0"}
+    composition[f"{path}/test_name"] = rm.DVText(value="test-0-0")
+    assert flatten(composition) == {f"{path}:0/test_name": "test-0-0"}
 
     composition.add(path)
-    composition[f"{path}/test_name"] = data_types.DV_TEXT("test-1")
+    composition[f"{path}/test_name"] = rm.DVText(value="test-1")
 
-    assert composition.as_flat() == {
+    assert flatten(composition) == {
         f"{path}:0/test_name": "test-0-0",
         f"{path}:1/test_name": "test-1",
     }
 
-    composition[f"{path}:0/test_name"] = data_types.DV_TEXT("test-0-0-0")
-    assert composition.as_flat() == {
+    composition[f"{path}:0/test_name"] = rm.DVText(value="test-0-0-0")
+    assert flatten(composition) == {
         f"{path}:0/test_name": "test-0-0-0",
         f"{path}:1/test_name": "test-1",
     }
@@ -82,13 +89,15 @@ def test_composition_create_code_phrase(composition):
     code = "en"
     path = "test/language"
 
-    composition[path] = data_types.CODE_PHRASE(terminology=terminology, code=code)
+    composition[path] = rm.CodePhrase(
+        code_string=code, terminology_id={"value": terminology}
+    )
     value = composition[path]
-    assert isinstance(value, data_types.CODE_PHRASE)
-    assert value.terminology == terminology
-    assert value.code == code
+    assert isinstance(value, CodePhrase)
+    assert value.terminology_id.value == terminology
+    assert value.code_string == code
 
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert flat == {
         f"{path}|code": code,
         f"{path}|terminology": terminology,
@@ -101,17 +110,18 @@ def test_composition_create_dv_coded_text(composition):
     terminology = "ISO_639-1"
     code = "en"
     path = "test/context/setting"
-    composition[path] = data_types.DV_CODED_TEXT(
-        value=text, terminology=terminology, code=code
+    composition[path] = rm.DVCodedText(
+        value=text,
+        defining_code={"code_string": code, "terminology_id": {"value": terminology}},
     )
-    value = composition[path]
-    assert isinstance(value, data_types.DV_CODED_TEXT)
+    dv_coded_text = composition[path]
+    assert isinstance(dv_coded_text, rm.DVCodedText)
 
-    assert value.value == text
-    assert value.terminology == terminology
-    assert value.code == code
+    assert dv_coded_text.value == text
+    assert dv_coded_text.defining_code.code_string == code
+    assert dv_coded_text.defining_code.terminology_id.value == terminology
 
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert flat == {
         f"{path}|code": code,
         f"{path}|terminology": terminology,
@@ -122,25 +132,25 @@ def test_composition_create_dv_coded_text(composition):
 @pytest.mark.parametrize("backend", template_factory.backends())
 def test_composition_create_dv_datetime(composition):
     path = "test/context/start_time"
-    composition[path] = data_types.DV_DATE_TIME(year=2021, month=4, day=22)
-    value = composition[path]
-    assert isinstance(value, data_types.DV_DATE_TIME)
+    value = datetime(year=2021, month=4, day=22).isoformat()
+    composition[path] = rm.DVDateTime(value=value)
+    dt = composition[path]
+    assert isinstance(dt, rm.DVDateTime)
 
-    flat = composition.as_flat()
-    text = "2021-04-22T00:00:00"
-    assert flat == {f"{path}": text}
+    flat = flatten(composition)
+    assert flat == {f"{path}": dt.value}
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
-def test_composition_create_party_proxy(composition):
+def test_composition_create_party_identified(composition):
     name = "composer"
     path = "test/composer"
-    composition[path] = data_types.PARTY_PROXY(name)
-    value = composition[path]
-    assert isinstance(value, data_types.PARTY_PROXY)
-    assert value.value == name
+    composition[path] = rm.PartyIdentified(name=name)
+    party_identified = composition[path]
+    assert isinstance(party_identified, rm.PartyIdentified)
+    assert party_identified.name == name
 
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert flat == {f"{path}|name": name}
 
 
@@ -148,15 +158,17 @@ def test_composition_create_party_proxy(composition):
 def test_composition_to_flat(composition):
     text = "ok"
     path_status = "test/context/status"
-    composition[path_status] = data_types.DV_TEXT(text)
+    composition[path_status] = rm.DVText(value=text)
 
     terminology = "ISO_639-1"
     code = "en"
     path_lang = "test/language"
 
-    composition[path_lang] = data_types.CODE_PHRASE(terminology=terminology, code=code)
+    composition[path_lang] = rm.CodePhrase(
+        terminology_id={"value": terminology}, code_string=code
+    )
 
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert flat == {
         f"{path_status}": text,
         f"{path_lang}|code": code,
@@ -168,14 +180,13 @@ def test_composition_to_flat(composition):
 def test_composition_set_all(composition):
     terminology = "ISO_639-1"
     code = "en"
-    #  __import__("pudb").set_trace()
-    composition["**/language"] = data_types.CODE_PHRASE(
-        code=code, terminology=terminology
+    composition["**/language"] = rm.CodePhrase(
+        terminology_id={"value": terminology}, code_string=code
     )
 
     path_lang = "test/language"
 
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert flat == {f"{path_lang}|code": code, f"{path_lang}|terminology": terminology}
 
     path_lab_test_result = (
@@ -185,8 +196,8 @@ def test_composition_set_all(composition):
     for _ in range(2):
         composition.add(path_lab_test_result)
 
-    composition["**/test_name"] = data_types.DV_TEXT("test_name")
-    assert composition.as_flat() == {
+    composition["**/test_name"] = rm.DVText(value="test_name")
+    assert flatten(composition) == {
         f"{path_lang}|code": code,
         f"{path_lang}|terminology": terminology,
         f"{path_lab_test_result}:0/test_name": "test_name",
@@ -198,14 +209,14 @@ def test_composition_set_all(composition):
 def test_composition_set_defaults(composition):
     composition[
         "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/"
-    ] = data_types.DV_DURATION("P1W")
+    ] = rm.DVDuration(value="P1W")
 
     #  composition.set_all("language", code="en", terminology="ISO_639-1")
     #  composition.set_all("territory", code="it", terminology="ISO_3166-1")
     #  composition.set_all("composer", value="test")
 
     composition.set_defaults()
-    flat = composition.as_flat()
+    flat = flatten(composition)
     assert "test/targeted_therapy_start/start_of_targeted_therapy/from_event" in flat
 
 

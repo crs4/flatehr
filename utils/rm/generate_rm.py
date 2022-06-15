@@ -22,12 +22,10 @@ generate(
     schema,
     input_file_type=InputFileType.JsonSchema,
     output=output,
-    custom_template_dir=template_dir,
     custom_class_name_generator=rename_class,
-    base_class=" ",
 )
 
-subprocess.check_call(
-    ["sed", "-i", "7s/^/from pydantic.dataclasses import dataclass\\n/", "rm.py"]
-)
+#  subprocess.check_call(
+#      ["sed", "-i", "7s/^/from pydantic.dataclasses import dataclass\\n/", "rm.py"]
+#  )
 subprocess.check_call(["sed", "-i", "s/min_items=/minItems=/g", "rm.py"])

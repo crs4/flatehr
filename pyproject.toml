@@ -13,7 +13,7 @@ tqdm = "^4.62.3"
 clize = "^4.2.1"
 pipe = "^2.0"
 Pynject = "^0.4.1"
-pydantic = "^1.9.1"
+pydantic = "1.9.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

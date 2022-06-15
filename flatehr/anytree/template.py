@@ -9,6 +9,7 @@ from flatehr.anytree._node import Node
 from flatehr.composition import InvalidDefault
 from flatehr.data_types import DATA_VALUE
 from flatehr.factory import template_factory
+from flatehr.rm import get_model_class
 from flatehr.template import Template
 from flatehr.template import TemplateNode as BaseTemplateNode
 from flatehr.template import WebTemplate, remove_cardinality
@@ -64,4 +65,4 @@ class TemplateNode(Node, BaseTemplateNode):
         except (IndexError, KeyError) as ex:
             raise InvalidDefault(f"path {self} has no valid default") from ex
 
-        return getattr(data_types, self.rm_type)(value)
+        return get_model_class(self.rm_type)(value=value)

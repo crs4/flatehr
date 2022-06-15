@@ -23,6 +23,10 @@ class Composition:
         self.metadata = metadata or {}
 
     @property
+    def root(self) -> "CompositionNode":
+        return self._root
+
+    @property
     def template(self) -> Template:
         return self._template
 

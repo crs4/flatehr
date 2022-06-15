@@ -5,12 +5,12 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pprint import pprint
-from typing import Dict, Iterable, Tuple, Union
+from typing import Iterable, Tuple
 
 import tqdm
 from tqdm.contrib.concurrent import thread_map
 
-from .flat import Composition, WebTemplateNode, diff
+from .flat import Composition, diff
 from .http import HTTPException, OpenEHRClient
 
 logger = logging.getLogger()
