@@ -1,8 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from dataclasses import dataclass
 from flatehr.rm.models import *
 from pipe import map
+
+
+@dataclass
+class NullFlavour:
+    # place_holder is a workaround for ehrbase expecting value even in case of NullFlavour
+    # (at least for some data types)
+    value: str
+    code: str
+    terminology: str
+    place_holder: str = ""
+
+    @staticmethod
+    def get_default(place_holder=""):
+        return NullFlavour("unknown", "253", "openehr", place_holder)
 
 
 def get_model_class(class_name: str) -> type:

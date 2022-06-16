@@ -220,37 +220,34 @@ def test_composition_set_defaults(composition):
     assert "test/targeted_therapy_start/start_of_targeted_therapy/from_event" in flat
 
 
-#
-#  def test_set_null_flavour(composition):
-#      null_flavour = data_types.NullFlavour(
-#          value="unknown", code="253", terminology="openehr"
-#      )
-#      composition.create_node(
-#          "/test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/",
-#          null_flavour=null_flavour,
-#      )
-#      flat = composition.as_flat()
-#      assert (
-#          flat[
-#              "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|value"
-#          ]
-#          == null_flavour.value
-#      )
-#      assert (
-#          flat[
-#              "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|code"
-#          ]
-#          == null_flavour.code
-#      )
-#      assert (
-#          flat[
-#              "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|terminology"
-#          ]
-#          == null_flavour.terminology
-#      )
-#      assert (
-#          flat[
-#              "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy"
-#          ]
-#          == ""
-#      )
+@pytest.mark.parametrize("backend", template_factory.backends())
+def test_set_null_flavour(composition):
+    null_flavour = rm.NullFlavour(value="unknown", code="253", terminology="openehr")
+    composition[
+        "/test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/"
+    ] = null_flavour
+    flat = flatten(composition)
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|value"
+        ]
+        == null_flavour.value
+    )
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|code"
+        ]
+        == null_flavour.code
+    )
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|terminology"
+        ]
+        == null_flavour.terminology
+    )
+    assert (
+        flat[
+            "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy"
+        ]
+        == ""
+    )

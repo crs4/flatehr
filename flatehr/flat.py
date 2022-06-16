@@ -4,6 +4,7 @@ from typing import Dict
 
 from deepdiff import DeepDiff
 from flatehr.composition import Composition
+from flatehr.rm import NullFlavour
 
 from flatehr.rm.models import (
     CodePhrase,
@@ -59,6 +60,17 @@ def _flatten_dv_coded_text(model: DVCodedText, path: str) -> Dict:
 @flatten.register
 def _flatten_party_identified(model: PartyIdentified, path: str) -> Dict:
     return {f"{path.strip('/')}|name": model.name}
+
+
+@flatten.register
+def _flatten_null_flavour(model: NullFlavour, path: str) -> Dict:
+    flat = {}
+    flat[f"{path}/_null_flavour|value"] = model.value
+    flat[f"{path}/_null_flavour|code"] = model.code
+    flat[f"{path}/_null_flavour|terminology"] = model.terminology
+
+    flat[path] = model.place_holder
+    return flat
 
 
 def diff(flat_1: Dict, flat_2: Dict):
