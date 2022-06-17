@@ -3,7 +3,7 @@ import logging
 from dataclasses import dataclass
 import os
 import re
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from flatehr.data_types import DATA_VALUE, NullFlavour
 from flatehr.template import Template, TemplateNode

@@ -11,7 +11,7 @@ from flatehr.ingest import (
     Ingester,
     MultiThreadedIngester,
 )
-from flatehr.mappers import ValueMapper
+from flatehr.converters import ValueConverter
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def ingester(request) -> Ingester:
 
 @pytest.fixture
 def value_mapper():
-    return ValueMapper({}, True)
+    return ValueConverter({}, True)
 
 
 @pytest.fixture
@@ -58,3 +58,8 @@ def template(backend, web_template_json):
 @pytest.fixture
 def template_node(path, template):
     return template[path]
+
+
+@pytest.fixture
+def xml():
+    return "tests/resources/test.xml"
