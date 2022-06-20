@@ -2,8 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from dataclasses import dataclass
-from flatehr.rm.models import *
 from pipe import map
+from pydantic import BaseModel
+
+
+class RMObject(BaseModel):
+    ...
+
+
+from flatehr.rm.models import *
 
 
 @dataclass

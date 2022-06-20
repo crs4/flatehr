@@ -1,12 +1,13 @@
 import abc
 from itertools import repeat
-from typing import IO, Any, Dict, Iterable, Iterator, NewType, Optional, Tuple, Union
+from typing import Dict, IO, Iterator, NewType, Optional, Tuple, Union
 
 from lxml import etree
 from pipe import chain, map, sort
 
 from flatehr.converters import Converter
 from flatehr.data_types import DATA_VALUE
+from flatehr.rm.models import DVText
 
 SourcePath = NewType("SourcePath", str)
 DestPath = NewType("DestPath", str)
@@ -27,7 +28,7 @@ class XPathMapping(Mapping):
         converter: Optional[Converter] = None,
     ) -> None:
         self._mapping = mapping
-        self._converter = converter
+        self._convert = converter.convert if converter else lambda _, v: DVText(value=v)
 
     def get_values(
         self, input_: Union[IO, str]
@@ -52,17 +53,9 @@ class XPathMapping(Mapping):
                     el[1],
                     None
                     if len(el[2].getchildren())
-                    else el[2].text
-                    if not self._converter
-                    else self._converter.convert(el[1], el[2].text),
+                    else self._convert(el[1], el[2].text),
                 )
             )
         )
         for el in elements:
             yield el
-
-
-class Converter(abc.ABC):
-    @abc.abstractmethod
-    def convert(self, source_path: SourcePath, value) -> Any:
-        ...

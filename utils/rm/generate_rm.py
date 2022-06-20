@@ -23,6 +23,7 @@ generate(
     input_file_type=InputFileType.JsonSchema,
     output=output,
     custom_class_name_generator=rename_class,
+    base_class="flatehr.rm.RMObject",
 )
 
 #  subprocess.check_call(

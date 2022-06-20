@@ -4,6 +4,7 @@
 import pytest
 
 from flatehr.mappers import XPathMapping
+from flatehr.rm.models import DVText
 
 
 @pytest.mark.parametrize(
@@ -22,8 +23,11 @@ def test_xpath_mapper(mapping, xml):
         ("test/laboratory_test_result/any_event", None),
         (
             "test/laboratory_test_result/any_event/specimen/material_type/",
-            "Tumor tissue",
+            DVText(value="Tumor tissue"),
         ),
         ("test/laboratory_test_result/any_event", None),
-        ("test/laboratory_test_result/any_event/specimen/material_type/", "Other"),
+        (
+            "test/laboratory_test_result/any_event/specimen/material_type/",
+            DVText(value="Other"),
+        ),
     ]

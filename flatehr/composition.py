@@ -3,9 +3,10 @@ import logging
 from dataclasses import dataclass
 import os
 import re
-from typing import Any, Dict, List, Optional, Union
+from typing import IO, Any, Dict, List, Optional, Union
 
 from flatehr.data_types import DATA_VALUE, NullFlavour
+from flatehr.mappers import Mapping
 from flatehr.template import Template, TemplateNode
 
 logger = logging.getLogger(__name__)
@@ -143,3 +144,15 @@ class IncompatibleDataType(Exception):
 
 class InvalidDefault(Exception):
     ...
+
+
+def build(
+    composition: Composition,
+    source: Union[str, IO],
+    mapper: Mapping,
+):
+    for path, value in mapper.get_values(source):
+        if value is None:
+            composition.add(path)
+        else:
+            composition[path] = value
