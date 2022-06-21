@@ -5,14 +5,12 @@ from typing import List, Optional, Union, cast
 import anytree
 from pipe import chain, map, traverse
 
-from flatehr import data_types
 from flatehr.anytree._node import Node, NodeNotFound
 from flatehr.composition import Composition
 from flatehr.composition import CompositionNode as BaseCompositionNode
-from flatehr.composition import IncompatibleDataType, NotaLeaf
-from flatehr.data_types import DATA_VALUE
+from flatehr.composition import NotaLeaf
 from flatehr.factory import composition_factory
-from flatehr.rm import get_model_class, models
+from flatehr.rm import RMObject
 from flatehr.template import Template, TemplateNode, to_string
 
 logger = logging.getLogger(__name__)
@@ -46,7 +44,7 @@ class CompositionNode(Node, BaseCompositionNode):
     def get(self, path) -> "CompositionNode":
         return cast(CompositionNode, Node.get(self, path))
 
-    def __getitem__(self, path: str) -> Union[List[DATA_VALUE], DATA_VALUE]:
+    def __getitem__(self, path: str) -> Union[List[RMObject], RMObject]:
         nodes = self.get(path)
         return (
             [node.value for node in nodes] if isinstance(nodes, list) else nodes.value
@@ -81,7 +79,7 @@ class CompositionNode(Node, BaseCompositionNode):
         )
         return list(missing_required_leaves)
 
-    def __setitem__(self, path, value: DATA_VALUE):
+    def __setitem__(self, path, value: RMObject):
 
         if path.startswith("**"):
             _id = os.path.basename(path)
@@ -150,113 +148,3 @@ class CompositionNode(Node, BaseCompositionNode):
         )
         node = CompositionNode(self.template.get(path), parent)
         return str(node)
-
-    #      try:
-    #          self[path].value = value
-    #      except NodeNotFound as ex:
-    #          last_template_node = cast("CompositionNode", ex.node).template
-    #          missing_template_nodes last_template_node.walk_to()
-    #
-    #  def add_child(
-    #      self,
-    #      name: str,
-    #      value: Optional[None] = None,
-    #      increment_cardinality: bool = True,
-    #      null_flavour: Optional[NullFlavour] = None,
-    #  ):
-    #      resolver = anytree.Resolver("_id")
-    #      template_node = self.template.get_descendant(name)
-    #      if template_node.inf_cardinality:
-    #          n_siblings = len(resolver.glob(self, f"{name}:*"))
-    #          logger.debug(
-    #              "create new sibling %s for path %s/%s", n_siblings, self.path, name
-    #          )
-    #          increment_cardinality = increment_cardinality or n_siblings == 0
-    #          if increment_cardinality:
-    #              name = f"{name}:{n_siblings}"
-    #              child = CompositionNode(
-    #                  name,
-    #                  template_node,
-    #              )
-    #              child.parent = self
-    #          else:
-    #              child = resolver.get(self, f"{name}:{n_siblings -1}")
-    #      else:
-    #          try:
-    #              child = resolver.get(self, name)
-    #          except anytree.ChildResolverError:
-    #              child = CompositionNode(name, template_node)
-    #
-    #              child.parent = self
-    #      return child
-    #
-    #  def create_node(
-    #      self,
-    #      path: str,
-    #      increment_cardinality: bool = True,
-    #      null_flavour: Optional[NullFlavour] = None,
-    #      **kwargs,
-    #  ) -> "CompositionNode":
-    #      logger.debug("create node: parent %s, path %s", self.path, path)
-    #
-    #      def _add_descendant(root, path_, **kwargs):
-    #          resolver = anytree.Resolver("_id")
-    #          try:
-    #              node = resolver.get(root, path_)
-    #          except anytree.ChildResolverError as ex:
-    #              last_node = ex.node
-    #              missing_child = ex.child
-    #              logger.debug("last_node %s, missing_child %s", last_node, missing_child)
-    #              template_node = last_node.template
-    #              missing_path = os.path.join(root.template.path, path_).replace(
-    #                  template_node.path, ""
-    #              )
-    #              is_last = len(missing_path.strip("/").split("/")) == 1
-    #              node = CompositionNode(last_node._id, template_node).add_child(
-    #                  missing_child,
-    #                  increment_cardinality=is_last and increment_cardinality,
-    #                  null_flavour=null_flavour if is_last else None,
-    #              )
-    #              node.parent = root
-    #
-    #              path_to_remove = [n.name for n in last_node.path] + [missing_child]
-    #
-    #              for el in path_to_remove:
-    #                  path_ = re.sub(r"^" + el + "(/|$)", "", path_, 1)
-    #
-    #              path_ = path_.lstrip(root.separator)
-    #
-    #              return _add_descendant(node, path_, **kwargs)
-    #          else:
-    #              template_node = node.template
-    #              if kwargs:
-    #                  value = Factory(node.web_template).create(**kwargs)
-    #              else:
-    #                  value = None
-    #              return node
-    #
-    #      try:
-    #          self.get_descendant(path)
-    #      except NodeNotFound:
-    #          return _add_descendant(self, path, **kwargs)
-    #      else:
-    #          raise NodeAlreadyExists(f"node {self.path}, path {path}")
-    #
-    #  def _get_web_template(self):
-    #      path = re.sub(r"\[\d+\]", "", self.path)
-    #      resolver = anytree.Resolver("_id")
-    #      return resolver.get(self.template, path)
-
-    def as_flat(self):
-        flat = {}
-        if self.template.is_leaf:
-
-            value = self.value or self.null_flavour
-            if value is None:
-                raise AttributeError(f"value and null_flavour of {self} not set")
-
-            flat.update(value.to_flat(f"{str(self).strip('/')}"))
-        else:
-            for leaf in self.leaves:
-                flat.update(leaf.as_flat())
-        return flat

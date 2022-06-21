@@ -1,15 +1,12 @@
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, cast
+from typing import cast
 
-from pipe import map
-from flatehr import data_types
 
 from flatehr.anytree._node import Node
 from flatehr.composition import InvalidDefault
-from flatehr.data_types import DATA_VALUE
 from flatehr.factory import template_factory
-from flatehr.rm import get_model_class
+from flatehr.rm import RMObject, get_model_class
 from flatehr.template import Template
 from flatehr.template import TemplateNode as BaseTemplateNode
 from flatehr.template import WebTemplate, remove_cardinality
@@ -59,7 +56,7 @@ class TemplateNode(Node, BaseTemplateNode):
         return cast(TemplateNode, super().get(remove_cardinality(path)))
 
     @property
-    def default(self) -> DATA_VALUE:
+    def default(self) -> RMObject:
         try:
             value = self.inputs[0]["defaultValue"]
         except (IndexError, KeyError) as ex:

@@ -6,12 +6,9 @@ import logging
 import pytest
 from flatehr import rm
 
-import flatehr.data_types as data_types
 from flatehr.composition import Composition, IncompatibleDataType, NotaLeaf, build
 from flatehr.factory import composition_factory, template_factory
 from flatehr.flat import flatten
-from flatehr.rm import models
-from flatehr.rm.factory import factory
 from flatehr.rm.models import CodePhrase
 
 logging.basicConfig(level=logging.DEBUG)

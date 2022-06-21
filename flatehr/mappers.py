@@ -6,8 +6,7 @@ from lxml import etree
 from pipe import chain, map, sort
 
 from flatehr.converters import Converter
-from flatehr.data_types import DATA_VALUE
-from flatehr.rm.models import DVText
+from flatehr.rm.models import DVText, RMObject
 
 SourcePath = NewType("SourcePath", str)
 DestPath = NewType("DestPath", str)
@@ -17,7 +16,7 @@ class Mapping(abc.ABC):
     @abc.abstractmethod
     def get_values(
         self, input_: Union[IO, str]
-    ) -> Iterator[Tuple[DestPath, Optional[DATA_VALUE]]]:
+    ) -> Iterator[Tuple[DestPath, Optional[RMObject]]]:
         ...
 
 
@@ -32,7 +31,7 @@ class XPathMapping(Mapping):
 
     def get_values(
         self, input_: Union[IO, str]
-    ) -> Iterator[Tuple[DestPath, Optional[DATA_VALUE]]]:
+    ) -> Iterator[Tuple[DestPath, Optional[RMObject]]]:
         tree = etree.parse(input_)
         ns = tree.getroot().nsmap
         elements = (

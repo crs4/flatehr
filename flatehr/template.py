@@ -6,7 +6,8 @@ from typing import Dict, List, Optional, Tuple, Union
 
 from pipe import map
 
-from flatehr.data_types import DATA_VALUE
+from flatehr.rm import RMObject
+
 
 WebTemplate = Dict[str, Union[str, bool, int, float]]
 
@@ -69,7 +70,7 @@ class TemplateNode(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def default(self) -> DATA_VALUE:
+    def default(self) -> RMObject:
         ...
 
 
