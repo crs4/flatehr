@@ -7,7 +7,7 @@ import pytest
 from flatehr import rm
 
 import flatehr.data_types as data_types
-from flatehr.composition import Composition, IncompatibleDataType, NotaLeaf
+from flatehr.composition import Composition, IncompatibleDataType, NotaLeaf, build
 from flatehr.factory import composition_factory, template_factory
 from flatehr.flat import flatten
 from flatehr.rm import models
@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 @pytest.mark.parametrize("backend", composition_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_factory(composition, template):
     assert isinstance(composition, Composition)
     assert composition.template == template
@@ -25,6 +26,7 @@ def test_factory(composition, template):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_create_dv_text(composition):
     text = "ok"
     path = "test/context/status"
@@ -35,6 +37,7 @@ def test_create_dv_text(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_not_a_leaf(composition):
     text = "ok"
     path = "test/context"
@@ -44,6 +47,7 @@ def test_not_a_leaf(composition):
 
 @pytest.mark.skip("TBF")
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_incompatible_data_type(composition):
     path = "test/context/status"
     with pytest.raises(IncompatibleDataType):
@@ -51,6 +55,7 @@ def test_incompatible_data_type(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_add_multiple_instances(composition):
     path = "test/lab_result_details/result_group/laboratory_test_result/any_event"
 
@@ -84,6 +89,7 @@ def test_composition_add_multiple_instances(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_create_code_phrase(composition):
     terminology = "ISO_639-1"
     code = "en"
@@ -105,6 +111,7 @@ def test_composition_create_code_phrase(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_create_dv_coded_text(composition):
     text = "ok"
     terminology = "ISO_639-1"
@@ -130,6 +137,7 @@ def test_composition_create_dv_coded_text(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_create_dv_datetime(composition):
     path = "test/context/start_time"
     value = datetime(year=2021, month=4, day=22).isoformat()
@@ -142,6 +150,7 @@ def test_composition_create_dv_datetime(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_create_party_identified(composition):
     name = "composer"
     path = "test/composer"
@@ -155,6 +164,7 @@ def test_composition_create_party_identified(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_to_flat(composition):
     text = "ok"
     path_status = "test/context/status"
@@ -177,6 +187,7 @@ def test_composition_to_flat(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_set_all(composition):
     terminology = "ISO_639-1"
     code = "en"
@@ -206,6 +217,7 @@ def test_composition_set_all(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_composition_set_defaults(composition):
     composition[
         "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/"
@@ -221,6 +233,7 @@ def test_composition_set_defaults(composition):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_set_null_flavour(composition):
     null_flavour = rm.NullFlavour(value="unknown", code="253", terminology="openehr")
     composition[
@@ -251,3 +264,16 @@ def test_set_null_flavour(composition):
         ]
         == ""
     )
+
+
+@pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize(
+    "web_template_path", ["./tests/resources/complex_template.json"]
+)
+def test_build(composition, xml, xml_mapper):
+    build(composition, xml, xml_mapper)
+    assert flatten(composition) == {
+        "test/context/case_identification/patient_pseudonym": "0000",
+        "test/histopathology/result_group/laboratory_test_result/any_event:0/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",
+        "test/histopathology/result_group/laboratory_test_result/any_event:1/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",
+    }

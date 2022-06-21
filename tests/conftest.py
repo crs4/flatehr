@@ -12,11 +12,12 @@ from flatehr.ingest import (
     MultiThreadedIngester,
 )
 from flatehr.converters import ValueConverter
+from flatehr.mappers import DestPath, SourcePath, XPathMapping
 
 
 @pytest.fixture
-def web_template_json():
-    with open("tests/resources/web_template.json") as f_obj:
+def web_template_json(web_template_path):
+    with open(web_template_path) as f_obj:
         return json.load(f_obj)
 
 
@@ -63,3 +64,25 @@ def template_node(path, template):
 @pytest.fixture
 def xml():
     return "tests/resources/test.xml"
+
+
+@pytest.fixture
+def complex_template():
+    return "tests/resources/complex_template.json"
+
+
+@pytest.fixture
+def xml_mapper():
+    return XPathMapping(
+        {
+            SourcePath("//Identifier"): DestPath(
+                "test/context/case_identification/patient_pseudonym/",
+            ),
+            SourcePath("//Event[@eventtype='Histopathology']"): DestPath(
+                "test/histopathology/result_group/laboratory_test_result/any_event/"
+            ),
+            SourcePath("//Dataelement_58_2"): DestPath(
+                "test/histopathology/result_group/laboratory_test_result/any_event/invasion_front/anatomical_pathology_finding/digital_imaging_invasion_front/availability_invasion_front_digital_imaging/"
+            ),
+        }
+    )

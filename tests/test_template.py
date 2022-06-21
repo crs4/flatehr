@@ -8,6 +8,7 @@ from flatehr.template import Template
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 def test_factory(template):
     assert isinstance(template, Template)
 
@@ -34,6 +35,7 @@ def test_factory(template):
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
 @pytest.mark.parametrize(
     "path,expected_attrs",
     [

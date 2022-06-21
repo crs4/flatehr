@@ -120,7 +120,8 @@ class CompositionNode(Node, BaseCompositionNode):
 
             if missing_child_template.inf_cardinality:
                 cardinality = (
-                    len(cast(list, last_node[f"{missing_child_template._id}:*"])) - 1
+                    len(cast(list, last_node.get(f"{missing_child_template._id}:*")))
+                    - 1
                 )
                 if cardinality < 0:
                     missing_child = CompositionNode(missing_child_template, last_node)
@@ -144,7 +145,8 @@ class CompositionNode(Node, BaseCompositionNode):
 
     def add(self, path: str) -> str:
         parent = cast(
-            "CompositionNode", self._get_or_create_node(os.path.dirname(path))
+            "CompositionNode",
+            self._get_or_create_node(os.path.dirname(path.rstrip("/"))),
         )
         node = CompositionNode(self.template.get(path), parent)
         return str(node)
