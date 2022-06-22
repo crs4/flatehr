@@ -45,13 +45,6 @@ class TemplateFactory:
 
 @dataclass
 class TemplateNode(Node, BaseTemplateNode):
-    #  rm_type: str
-    #  aql_path: str
-    #  required: bool
-    #  inf_cardinality: bool
-    #  annotations: Optional[Dict[str, Any]] = None
-    #  inputs: Optional[Dict[str, Any]] = None
-
     def get(self, path: str) -> BaseTemplateNode:
         return cast(TemplateNode, super().get(remove_cardinality(path)))
 
