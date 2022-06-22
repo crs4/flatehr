@@ -28,6 +28,7 @@ class MetaFactory:
     def register(self, backend):
         def _inner(func, *args, **kwargs):
             self._registry[backend] = func
+            return func
 
         return _inner
 
