@@ -98,14 +98,14 @@ class CompositionNode(Node, BaseCompositionNode):
         if not isinstance(nodes, list):
             nodes = [nodes]
         for node in nodes:
-            if not node.template.is_leaf:
-                raise NotaLeaf(f"{path} is not a leaf")
-            # @fixme: not work in case of abstract classes
-            # if not isinstance(value, get_model_class(node.template.rm_type)):
-            #     raise IncompatibleDataType(
-            #         f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
-            #     )
-            node.value = value
+            if node.template.is_leaf:
+
+                # @fixme: not work in case of abstract classes
+                # if not isinstance(value, get_model_class(node.template.rm_type)):
+                #     raise IncompatibleDataType(
+                #         f"Expected value as instance of {node.template.rm_type}, found {type(value)} instead"
+                #     )
+                node.value = value
 
     def _get_or_create_node(self, path: str) -> "CompositionNode":
         if not path:
