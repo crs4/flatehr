@@ -6,6 +6,7 @@ from lxml import etree
 from pipe import chain, map, sort
 
 from flatehr.converters import Converter
+from flatehr.rm import NullFlavour
 from flatehr.rm.models import DVText, RMObject
 
 SourcePath = NewType("SourcePath", str)
@@ -27,7 +28,13 @@ class XPathMapping(Mapping):
         converter: Optional[Converter] = None,
     ) -> None:
         self._mapping = mapping
-        self._convert = converter.convert if converter else lambda _, v: DVText(value=v)
+        self._convert = (
+            converter.convert
+            if converter
+            else lambda _, v: DVText(value=v)
+            if v
+            else NullFlavour.get_default()
+        )
 
     def get_values(
         self, input_: Union[IO, str]
