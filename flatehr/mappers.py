@@ -57,9 +57,10 @@ class XPathMapping(Mapping):
             | map(
                 lambda el: (
                     el[1],
-                    None
-                    if len(el[2].getchildren())
-                    else self._convert(el[1], el[2].text),
+                    self._convert(el[1], el[2].text)
+                    #  None
+                    #  if len(el[2].getchildren())
+                    #  else self._convert(el[1], el[2].text),
                 )
             )
         )
