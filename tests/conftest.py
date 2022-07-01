@@ -75,13 +75,13 @@ def complex_template():
 def xml_mapper():
     return XPathMapping(
         {
-            SourcePath("//Identifier"): DestPath(
+            SourcePath("//ns:Identifier/text()"): DestPath(
                 "test/context/case_identification/patient_pseudonym/",
             ),
-            SourcePath("//Event[@eventtype='Histopathology']"): DestPath(
+            SourcePath("//ns:Event[@eventtype='Histopathology']"): DestPath(
                 "test/histopathology/result_group/laboratory_test_result/any_event/"
             ),
-            SourcePath("//Dataelement_58_2"): DestPath(
+            SourcePath("//ns:Dataelement_58_2/text()"): DestPath(
                 "test/histopathology/result_group/laboratory_test_result/any_event/invasion_front/anatomical_pathology_finding/digital_imaging_invasion_front/availability_invasion_front_digital_imaging/"
             ),
         }

@@ -1,8 +1,9 @@
 import abc
 from itertools import repeat
-from typing import Dict, IO, Iterator, NewType, Optional, Tuple, Union
+from typing import IO, Dict, Iterator, NewType, Optional, Tuple, Union
 
 from lxml import etree
+from lxml.etree import _Element
 from pipe import chain, map, sort
 
 from flatehr.converters import Converter
@@ -42,7 +43,10 @@ class XPathMapping(Mapping):
         self, input_: Union[IO, str]
     ) -> Iterator[Tuple[DestPath, Optional[RMObject]]]:
         tree = etree.parse(input_)
+
         ns = tree.getroot().nsmap
+        ns["ns"] = ns.pop(None)
+
         elements = (
             list(self._mapping.items())
             | map(
@@ -50,17 +54,23 @@ class XPathMapping(Mapping):
                     zip(
                         repeat(items[0]),
                         repeat(items[1]),
-                        tree.findall(items[0], namespaces=ns),
+                        tree.xpath(items[0], namespaces=ns),
                     )
                 )
             )
             | chain
-            | sort(lambda el: el[2].sourceline)
+            | sort(
+                lambda el: el[2].sourceline
+                if isinstance(el[2], _Element)
+                else el[2].getparent().sourceline
+            )
             | map(
                 lambda el: (
                     el[1],
-                    self._convert(
-                        el[1], el[2].text.strip() if self._strip_text else el[2].text
+                    None
+                    if isinstance(el[2], _Element)
+                    else self._convert(
+                        el[1], el[2].strip() if self._strip_text else el[2]
                     )
                     #  None
                     #  if len(el[2].getchildren())
