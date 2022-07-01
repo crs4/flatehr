@@ -4,6 +4,7 @@
 import pytest
 
 from flatehr.mappers import XPathMapping
+from flatehr.rm import NullFlavour
 from flatehr.rm.models import DVText
 
 
@@ -19,15 +20,16 @@ from flatehr.rm.models import DVText
 def test_xpath_mapper(mapping, xml):
     xpath_mapping = XPathMapping(mapping)
     values = list(xpath_mapping.get_values(xml))
-    assert values == [
-        ("test/laboratory_test_result/any_event", None),
+    expected_values = [
+        ("test/laboratory_test_result/any_event", NullFlavour.get_default()),
         (
             "test/laboratory_test_result/any_event/specimen/material_type/",
             DVText(value="Tumor tissue"),
         ),
-        ("test/laboratory_test_result/any_event", None),
+        ("test/laboratory_test_result/any_event", NullFlavour.get_default()),
         (
             "test/laboratory_test_result/any_event/specimen/material_type/",
             DVText(value="Other"),
         ),
     ]
+    assert values == expected_values

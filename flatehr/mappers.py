@@ -26,8 +26,10 @@ class XPathMapping(Mapping):
         self,
         mapping: Dict[SourcePath, DestPath],
         converter: Optional[Converter] = None,
+        strip_text: bool = True,
     ) -> None:
         self._mapping = mapping
+        self._strip_text = strip_text
         self._convert = (
             converter.convert
             if converter
@@ -57,7 +59,9 @@ class XPathMapping(Mapping):
             | map(
                 lambda el: (
                     el[1],
-                    self._convert(el[1], el[2].text)
+                    self._convert(
+                        el[1], el[2].text.strip() if self._strip_text else el[2].text
+                    )
                     #  None
                     #  if len(el[2].getchildren())
                     #  else self._convert(el[1], el[2].text),
