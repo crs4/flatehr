@@ -33,15 +33,6 @@ def test_create_dv_text(composition):
     assert flat == {path: text}
 
 
-@pytest.mark.parametrize("backend", template_factory.backends())
-@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
-def test_not_a_leaf(composition):
-    text = "ok"
-    path = "test/context"
-    with pytest.raises(NotaLeaf):
-        composition[path] = ""
-
-
 @pytest.mark.skip("TBF")
 @pytest.mark.parametrize("backend", template_factory.backends())
 @pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
