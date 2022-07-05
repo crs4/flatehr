@@ -258,8 +258,8 @@ def test_set_null_flavour(composition):
 @pytest.mark.parametrize(
     "web_template_path", ["./tests/resources/complex_template.json"]
 )
-def test_build(composition, xml, xml_mapper):
-    build(composition, xml, xml_mapper)
+def test_build(composition, xml, xml_mapper, converter):
+    build(composition, xml_mapper, converter)
     assert flatten(composition) == {
         "test/context/case_identification/patient_pseudonym": "0000",
         "test/histopathology/result_group/laboratory_test_result/any_event:0/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",

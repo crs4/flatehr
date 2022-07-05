@@ -2,14 +2,14 @@ import abc
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, NewType, Optional, Tuple, Union
 
 from pipe import map
 
 from flatehr.rm import RMObject
 
-
 WebTemplate = Dict[str, Union[str, bool, int, float]]
+TemplatePath = NewType("TemplatePath", str)
 
 
 class Template:
@@ -82,11 +82,11 @@ def to_string(
     node: TemplateNode,
     relative_to: Optional[TemplateNode] = None,
     wildcard: bool = False,
-) -> str:
+) -> TemplatePath:
     nodes = (
         node.ancestors + (node,) if relative_to is None else relative_to.walk_to(node)
     )
     path = "/".join(
         nodes | map(lambda n: f"{n._id}:*" if n.inf_cardinality and wildcard else n._id)
     )
-    return path
+    return TemplatePath(path)

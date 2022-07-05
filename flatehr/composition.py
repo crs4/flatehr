@@ -1,12 +1,15 @@
 import abc
 import logging
-from dataclasses import dataclass
 import os
 import re
-from typing import Dict, IO, List, Optional, Union
+from dataclasses import dataclass
+from typing import IO, Dict, List, Optional, Union
 
+from pipe import map
+
+from flatehr.converters import Converter
 from flatehr.rm import NullFlavour, RMObject
-from flatehr.mappers import Mapping
+from flatehr.sources import Source, Value
 from flatehr.template import Template, TemplateNode
 
 logger = logging.getLogger(__name__)
@@ -146,13 +149,15 @@ class InvalidDefault(Exception):
     ...
 
 
-def build(
-    composition: Composition,
-    source: Union[str, IO],
-    mapper: Mapping,
-):
-    for path, value in mapper.get_values(source):
-        if value is None:
-            composition.add(path)
-        else:
+def build(composition: Composition, source: Source, converter: Converter):
+    def populate_composition(composition, path, value):
+        if value:
             composition[path] = value
+        else:
+            composition.add(path)
+
+    list(
+        source.iter()
+        | map(lambda m: (m.template_node, converter.convert(m.template_node, m.value)))
+        | map(lambda el: populate_composition(composition, *el))
+    )
