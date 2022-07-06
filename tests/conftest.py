@@ -12,8 +12,7 @@ from flatehr.ingest import (
     MultiThreadedIngester,
 )
 from flatehr.template import TemplatePath
-from flatehr.converters import ValueConverter
-from flatehr.sources import XPath, XPathSource
+from flatehr.integration.sources import XPath, XPathSource
 
 
 @pytest.fixture

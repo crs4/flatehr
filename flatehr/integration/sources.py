@@ -1,12 +1,10 @@
 import abc
 from itertools import repeat
 from typing import (
-    Any,
     IO,
+    Generic,
     Iterator,
-    NamedTuple,
     NewType,
-    Optional,
     Sequence,
     Union,
 )
@@ -15,24 +13,19 @@ from lxml import etree
 from lxml.etree import _Element
 from pipe import chain, map, sort
 
+from flatehr.integration import K, V, Message
+
 
 XPath = NewType("XPath", str)
-Value = Any
-Key = NewType("Key", str)
 
 
-class Message(NamedTuple):
-    key: Key
-    value: Optional[Value] = None
-
-
-class Source(abc.ABC):
+class Source(abc.ABC, Generic[K, V]):
     @abc.abstractmethod
-    def iter() -> Iterator[Message]:
+    def iter() -> Iterator[Message[K, V]]:
         ...
 
 
-class XPathSource(Source):
+class XPathSource(Source[XPath, str]):
     def __init__(
         self,
         paths: Sequence[XPath],
@@ -41,7 +34,7 @@ class XPathSource(Source):
         self._paths = paths
         self._input = _input
 
-    def iter(self) -> Iterator[Message]:
+    def iter(self) -> Iterator[Message[XPath, str]]:
         tree = etree.parse(self._input)
 
         ns = tree.getroot().nsmap
