@@ -1,15 +1,39 @@
 import abc
-from typing import Dict
+from typing import Dict, Iterator
 
-from flatehr.rm import RMObject
-from flatehr.sources import Value
-from flatehr.template import TemplateNode
+from flatehr.composition import Composition
+from flatehr.sources import Key, Message
+from flatehr.template import Template, TemplateNode, TemplatePath
+from pipe import map
 
 
 class Converter(abc.ABC):
     @abc.abstractmethod
-    def convert(self, template_node: TemplateNode, value: Value) -> RMObject:
+    def convert(
+        self, mapping_iterator: Iterator[Message], composition: Composition
+    ) -> Composition:
         ...
+
+
+class BasicConverter(Converter):
+    def __init__(self, mapping: Dict[Key, TemplatePath]):
+        self._mapping = mapping
+
+    def convert(
+        self, mapping_iterator: Iterator[Message], composition: Composition
+    ) -> Composition:
+        def populate_composition(composition, path, value):
+            if value:
+                composition[path] = value
+            else:
+                composition.add(path)
+
+        list(
+            mapping_iterator
+            | map(lambda message: (self._mapping[message.key], message.value))
+            | map(lambda path_value: populate_composition(composition, *path_value))
+        )
+        return composition
 
 
 class ValueConverter(Converter):
