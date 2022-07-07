@@ -3,7 +3,7 @@ from typing import Generic, Hashable, Optional, TypeVar
 
 
 K = TypeVar("K", bound=Hashable, contravariant=True)
-V = TypeVar("V")
+V = TypeVar("V", contravariant=True)
 
 
 @dataclass

@@ -2,10 +2,14 @@ import abc
 from itertools import repeat
 from typing import (
     IO,
+    Dict,
     Generic,
     Iterator,
     NewType,
+    Optional,
     Sequence,
+    Tuple,
+    TypeVar,
     Union,
 )
 
@@ -17,15 +21,16 @@ from flatehr.integration import K, V, Message
 
 
 XPath = NewType("XPath", str)
+T = TypeVar("T")
 
 
-class Source(abc.ABC, Generic[K, V]):
+class Source(abc.ABC, Generic[T]):
     @abc.abstractmethod
-    def iter() -> Iterator[Message[K, V]]:
+    def __call__() -> Iterator[T]:
         ...
 
 
-class XPathSource(Source[XPath, str]):
+class XPathSource(Source[Tuple[XPath, Optional[str]]]):
     def __init__(
         self,
         paths: Sequence[XPath],
@@ -33,11 +38,11 @@ class XPathSource(Source[XPath, str]):
     ) -> None:
         self._paths = paths
         self._input = _input
+        self._tree = etree.parse(self._input)
 
-    def iter(self) -> Iterator[Message[XPath, str]]:
-        tree = etree.parse(self._input)
+    def __call__(self) -> Iterator[Tuple[XPath, Optional[str]]]:
 
-        ns = tree.getroot().nsmap
+        ns = self._tree.getroot().nsmap
         ns["ns"] = ns.pop(None)
 
         mappings = (
@@ -46,7 +51,7 @@ class XPathSource(Source[XPath, str]):
                 lambda path: list(
                     zip(
                         repeat(path),
-                        tree.xpath(path, namespaces=ns),
+                        self._tree.xpath(path, namespaces=ns),
                     )
                 )
             )
@@ -56,12 +61,7 @@ class XPathSource(Source[XPath, str]):
                 if isinstance(el[1], _Element)
                 else el[1].getparent().sourceline
             )
-            | map(
-                lambda el: Message(
-                    key=el[0],
-                    value=None if isinstance(el[1], _Element) else el[1],
-                )
-            )
+            | map(lambda el: (el[0], None if isinstance(el[1], _Element) else el[1]))
         )
         for mapping in mappings:
             yield mapping

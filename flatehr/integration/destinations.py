@@ -1,9 +1,11 @@
 import abc
-from typing import Generic, Iterator
+import logging
+from typing import Generic, Iterator, NewType
 
 from pipe import map
 
 from flatehr.composition import Composition
+from flatehr.http import OpenEHRClient
 from flatehr.rm import RMObject
 from flatehr.integration import K, Message, V
 from flatehr.template import TemplatePath
@@ -11,26 +13,21 @@ from flatehr.template import TemplatePath
 
 class Destination(abc.ABC, Generic[K, V]):
     @abc.abstractmethod
-    def process(self, messages: Iterator[Message[K, V]]):
+    def __call__(self, messages: Iterator[Message[K, V]]):
         ...
 
 
-class CompositionEndpoint(Destination[TemplatePath, RMObject]):
-    def __init__(self, composition: Composition):
-        self._composition = composition
+EhrId = NewType("EhrId", str)
+logger = logging.getLogger()
 
-    def convert(self, messages: Iterator[Message[TemplatePath, RMObject]]):
-        def populate_composition(composition, path, value):
-            if value:
-                composition[path] = value
+
+class CompositionEndpoint(Destination[EhrId, Composition]):
+    def __init__(self, client: OpenEHRClient) -> None:
+        self._client = client
+
+    def __call__(self, messages: Iterator[Message[EhrId, Composition]]):
+        for message in messages:
+            if message.key and message.value:
+                self._client.post_composition(message.value, message.key)
             else:
-                composition.add(path)
-
-        list(
-            messages
-            | map(
-                lambda message: populate_composition(
-                    self._composition, message.key, message.value
-                )
-            )
-        )
+                logger.debug("skipping message %s", message)

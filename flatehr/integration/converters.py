@@ -1,31 +1,65 @@
 import abc
-from typing import Dict, Generic, Hashable, TypeVar
-from flatehr.integration.sources import XPath
+from typing import (
+    Dict,
+    Generic,
+    Hashable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+)
 
+from pipe import map
+
+from flatehr.composition import Composition
+from flatehr.integration import K, Message, V
+from flatehr.integration.sources import XPath
 from flatehr.rm import RMObject
 from flatehr.rm.models import DVText
-from flatehr.integration import K, V, Message
-from flatehr.template import TemplateNode, TemplatePath
+from flatehr.template import TemplatePath
+from pipe import Pipe
 
 
-L = TypeVar("L", bound=Hashable, contravariant=True)
-W = TypeVar("W", contravariant=True)
+@Pipe
+def xpath_to_template_path(
+    xpath_values: Iterator[Tuple[XPath, str]], mapping: Dict[XPath, TemplatePath]
+) -> Iterator[Tuple[TemplatePath, str]]:
+    for xpath, value in xpath_values:
+        template_path = TemplatePath(mapping[xpath])
+        yield (template_path, value)
 
 
-class Converter(abc.ABC, Generic[K, V, L, W]):
-    @abc.abstractmethod
-    def convert(self, message: Message[K, V]) -> Message[L, W]:
-        ...
+@Pipe
+def populate(
+    path_values: Iterator[Tuple[TemplatePath, RMObject]], composition: Composition
+) -> Iterator[Composition]:
+    for path_value in path_values:
+        path, value = path_value
+        if value:
+            composition[path] = value
+        else:
+            composition.add(path)
+
+    yield composition
 
 
-class XPath2TemplatePath(Converter[XPath, str, TemplatePath, RMObject]):
-    def __init__(self, mapping: Dict[XPath, TemplatePath]):
-        self._mapping = mapping
+@Pipe
+def remove_dash(
+    template_paths: Iterator[Tuple[TemplatePath, str]],
+    _filter: Optional[Set[TemplatePath]] = None,
+) -> Iterator[Tuple[TemplatePath, str]]:
+    def _remove_dash(value: str):
+        try:
+            return value.split("-", 1)[1].strip()
+        except IndexError:
+            return value
 
-    def convert(self, message: Message[XPath, str]) -> Message[TemplatePath, RMObject]:
-        template_path = self._mapping[message.key]
-        value = DVText(value=message.value)
-        return Message(template_path, value)
+    for tpath, value in template_paths:
+        process: bool = True if _filter is None else (tpath in _filter)
+        if process:
+            yield (tpath, _remove_dash(value))
 
 
 #  class ValueConverter(Converter):
@@ -42,19 +76,7 @@ class XPath2TemplatePath(Converter[XPath, str, TemplatePath, RMObject]):
 #              raise ConversionFailed(f"{type(self)} failed with value {value}") from ex
 #
 #
-#  class DashValueConverter(Converter):
-#      def __init__(self, *node_ids: str):
-#          self._node_ids = node_ids
-#
-#      def convert(self, template_node: TemplateNode, value: Value) -> Value:
-#          if template_node._id in self._node_ids:
-#              try:
-#                  return Value(value.split("-", 1)[1].strip())
-#              except IndexError:
-#                  return value
-#          raise ConversionFailed(f"{type(self)} cannot map value {value}")
-#
-#
+
 #  class InputBasedConverter(Converter):
 #      def convert(self, template_node: TemplateNode, value: Value) -> Value:
 #          if not template_node.inputs or "list" not in template_node.inputs[0]:
