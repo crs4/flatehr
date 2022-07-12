@@ -3,7 +3,7 @@ from functools import singledispatch
 from typing import Dict
 
 from deepdiff import DeepDiff
-from flatehr.composition import Composition
+from flatehr.core import Composition
 from flatehr.rm import NullFlavour
 
 from flatehr.rm.models import (

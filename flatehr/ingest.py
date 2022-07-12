@@ -10,7 +10,7 @@ from typing import Iterable, Tuple
 import tqdm
 from tqdm.contrib.concurrent import thread_map
 
-from .flat import Composition, diff
+from flatehr.core import Composition
 from .http import HTTPException, OpenEHRClient
 
 logger = logging.getLogger()

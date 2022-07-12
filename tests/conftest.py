@@ -11,7 +11,7 @@ from flatehr.ingest import (
     Ingester,
     MultiThreadedIngester,
 )
-from flatehr.template import TemplatePath
+from flatehr.core import TemplatePath
 from flatehr.integration.sources import XPath, XPathSource
 
 
@@ -74,17 +74,10 @@ def complex_template():
 @pytest.fixture
 def xml_mapper(template, xml):
     return XPathSource(
-        template,
-        {
-            XPath("//ns:Identifier/text()"): TemplatePath(
-                "test/context/case_identification/patient_pseudonym/",
-            ),
-            XPath("//ns:Event[@eventtype='Histopathology']"): TemplatePath(
-                "test/histopathology/result_group/laboratory_test_result/any_event/"
-            ),
-            XPath("//ns:Dataelement_58_2/text()"): TemplatePath(
-                "test/histopathology/result_group/laboratory_test_result/any_event/invasion_front/anatomical_pathology_finding/digital_imaging_invasion_front/availability_invasion_front_digital_imaging/"
-            ),
-        },
+        [
+            XPath("//ns:Identifier/text()"),
+            XPath("//ns:Event[@eventtype='Histopathology']"),
+            XPath("//ns:Dataelement_58_2/text()"),
+        ],
         xml,
     )

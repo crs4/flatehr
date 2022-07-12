@@ -3,19 +3,110 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union, cast
 
+from pipe import map
 
 from flatehr.rm import NullFlavour, RMObject
-from flatehr.template import Template, TemplateNode
+
 
 logger = logging.getLogger(__name__)
+WebTemplate = Dict[str, Union[str, bool, int, float]]
+TemplatePath = str
+
+
+@dataclass
+class _Node(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def children(self) -> List["_Node"]:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def parent(self) -> "_Node":
+        ...
+
+    @property
+    @abc.abstractmethod
+    def path(self) -> Tuple["_Node", ...]:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def ancestors(self) -> Tuple["_Node", ...]:
+        ...
+
+    @property
+    @abc.abstractmethod
+    def is_leaf(self) -> bool:
+        ...
+
+    @abc.abstractmethod
+    def walk_to(self, dest: "_Node") -> "_Node":
+        ...
+
+    @abc.abstractmethod
+    def get(self, path) -> "_Node":
+        ...
+
+    @property
+    @abc.abstractmethod
+    def leaves(self) -> List["_Node"]:
+        ...
+
+
+class Template:
+    def __init__(self, root: "TemplateNode"):
+        self._root = root
+
+    @property
+    def root(self) -> "TemplateNode":
+        return self._root
+
+    def __getitem__(self, path: str) -> "TemplateNode":
+        path = os.path.relpath(path, self.root._id)
+        return cast(TemplateNode, self.root.get(path))
+
+
+@dataclass
+class TemplateNode(_Node, abc.ABC):
+    _id: str
+    rm_type: str
+    aql_path: str
+    required: bool
+    inf_cardinality: bool
+    annotations: Tuple[Dict[str, str], ...] = ()
+    inputs: Tuple[Dict[str, str], ...] = ()
+
+    @property
+    @abc.abstractmethod
+    def default(self) -> RMObject:
+        ...
+
+
+def remove_cardinality(path: str) -> str:
+    return re.sub(r"(:[0-9]+)", "", path)
+
+
+def to_string(
+    node: TemplateNode,
+    relative_to: Optional[TemplateNode] = None,
+    wildcard: bool = False,
+) -> TemplatePath:
+    nodes = (
+        node.ancestors + (node,) if relative_to is None else relative_to.walk_to(node)
+    )
+    path = "/".join(
+        nodes | map(lambda n: f"{n._id}:*" if n.inf_cardinality and wildcard else n._id)
+    )
+    return TemplatePath(path)
 
 
 class Composition:
     def __init__(
         self,
-        template: Template,
+        template: "Template",
         root: "CompositionNode",
         metadata: Optional[Dict[str, Union[str, int]]] = None,
     ):
@@ -28,7 +119,7 @@ class Composition:
         return self._root
 
     @property
-    def template(self) -> Template:
+    def template(self) -> "Template":
         return self._template
 
     def __getitem__(
@@ -48,13 +139,6 @@ class Composition:
     def _remove_root_path(self, path: str) -> str:
         return re.sub(f"(\/?{self._root._id}/)", "", path)
 
-    def as_flat(self):
-        flat = {}
-        for leaf in self._root.leaves:
-            if leaf.template.is_leaf:
-                flat.update(leaf.as_flat())
-        return flat
-
     def set_defaults(self):
         for path in self.get_required_leaves():
             try:
@@ -70,17 +154,14 @@ class Composition:
 
 
 @dataclass
-class CompositionNode(abc.ABC):
-    template: TemplateNode
+class CompositionNode(_Node, abc.ABC):
+    template: "TemplateNode"
     value: Optional[RMObject] = None
     null_flavour: Optional[NullFlavour] = None
 
     def __post_init__(self):
         self._id = self.template._id
 
-    @property
-    @abc.abstractmethod
-    def path(self) -> str:
         ...
 
     @abc.abstractmethod
@@ -91,43 +172,14 @@ class CompositionNode(abc.ABC):
     def __setitem__(self, path, value: Union[RMObject, "CompositionNode"]):
         ...
 
-    @property
-    @abc.abstractmethod
-    def leaves(self) -> List["CompositionNode"]:
-        ...
-
-    @property
-    @abc.abstractmethod
-    def parent(self):
-        ...
-
-    @parent.setter
+    @_Node.parent.setter
     @abc.abstractmethod
     def parent(self, value: "CompositionNode"):
-        ...
-
-    @property
-    @abc.abstractmethod
-    def children(self):
         ...
 
     @abc.abstractmethod
     def add(self, path: str) -> str:
         ...
-
-    def as_flat(self):
-        flat = {}
-        if self.template.is_leaf:
-
-            value = self.value
-            if value is None:
-                raise AttributeError(f"value and null_flavour of {self} not set")
-
-            flat.update(value.to_flat(f"{self.path.strip('/')}"))
-        else:
-            for leaf in self.leaves:
-                flat.update(leaf.as_flat())
-        return flat
 
     @abc.abstractmethod
     def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
@@ -144,17 +196,3 @@ class IncompatibleDataType(Exception):
 
 class InvalidDefault(Exception):
     ...
-
-
-#  def build(composition: Composition, source: Source, converter: Converter):
-#      def populate_composition(composition, path, value):
-#          if value:
-#              composition[path] = value
-#          else:
-#              composition.add(path)
-#
-#      list(
-#          source.iter()
-#          | map(lambda m: (m.template_node, converter.convert(m.template_node, m.value)))
-#          | map(lambda el: populate_composition(composition, *el))
-#      )

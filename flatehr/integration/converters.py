@@ -18,7 +18,7 @@ from flatehr.integration import K, Message, V
 from flatehr.integration.sources import XPath
 from flatehr.rm import RMObject
 from flatehr.rm.models import DVText
-from flatehr.template import TemplatePath
+from flatehr.template import Template, TemplatePath
 from pipe import Pipe
 
 
@@ -60,6 +60,30 @@ def remove_dash(
         process: bool = True if _filter is None else (tpath in _filter)
         if process:
             yield (tpath, _remove_dash(value))
+
+
+@Pipe
+def get_value_from_default(
+    template_paths: Iterator[Tuple[TemplatePath, str]],
+    template: Template,
+    _filter: Optional[Set[TemplatePath]] = None,
+) -> Iterator[Tuple[TemplatePath, str]]:
+    for tpath, value in template_paths:
+        if value:
+            template_node = template[tpath]
+            if not template_node.inputs or "list" not in template_node.inputs[0]:
+                continue
+            value_from_inputs = None
+            value_list = template_node.inputs[0]["list"]
+            for item in value_list:
+                label = item["label"].lower()
+                value_lower = value.lower()
+                if label == value_lower:
+                    value_from_inputs = item["value"]
+                    break
+            if value_from_inputs is None:
+                continue
+            yield tpath, value_from_inputs
 
 
 #  class ValueConverter(Converter):

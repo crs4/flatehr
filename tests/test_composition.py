@@ -6,7 +6,7 @@ import logging
 import pytest
 from flatehr import rm
 
-from flatehr.composition import Composition, IncompatibleDataType, NotaLeaf, build
+from flatehr.core import Composition, IncompatibleDataType, NotaLeaf
 from flatehr.factory import composition_factory, template_factory
 from flatehr.flat import flatten
 from flatehr.rm.models import CodePhrase
@@ -254,14 +254,14 @@ def test_set_null_flavour(composition):
     )
 
 
-@pytest.mark.parametrize("backend", template_factory.backends())
-@pytest.mark.parametrize(
-    "web_template_path", ["./tests/resources/complex_template.json"]
-)
-def test_build(composition, xml, xml_mapper, converter):
-    build(composition, xml_mapper, converter)
-    assert flatten(composition) == {
-        "test/context/case_identification/patient_pseudonym": "0000",
-        "test/histopathology/result_group/laboratory_test_result/any_event:0/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",
-        "test/histopathology/result_group/laboratory_test_result/any_event:1/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",
-    }
+#  @pytest.mark.parametrize("backend", template_factory.backends())
+#  @pytest.mark.parametrize(
+#      "web_template_path", ["./tests/resources/complex_template.json"]
+#  )
+#  def test_build(composition, xml, xml_mapper, converter):
+#      build(composition, xml_mapper, converter)
+#      assert flatten(composition) == {
+#          "test/context/case_identification/patient_pseudonym": "0000",
+#          "test/histopathology/result_group/laboratory_test_result/any_event:0/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",
+#          "test/histopathology/result_group/laboratory_test_result/any_event:1/invasion_front/anatomical_pathology_finding:0/digital_imaging_invasion_front/availability_invasion_front_digital_imaging": "Can be generated",
+#      }

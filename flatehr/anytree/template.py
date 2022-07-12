@@ -2,14 +2,12 @@ import logging
 from dataclasses import dataclass
 from typing import cast
 
-
 from flatehr.anytree._node import Node
-from flatehr.composition import InvalidDefault
+from flatehr.core import InvalidDefault, Template
+from flatehr.core import TemplateNode as BaseTemplateNode
+from flatehr.core import WebTemplate, remove_cardinality
 from flatehr.factory import template_factory
 from flatehr.rm import RMObject, get_model_class
-from flatehr.template import Template
-from flatehr.template import TemplateNode as BaseTemplateNode
-from flatehr.template import WebTemplate, remove_cardinality
 
 logger = logging.getLogger("flatehr")
 

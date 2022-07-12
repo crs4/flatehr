@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from typing import Tuple, cast, Union, List
+from typing import Tuple, cast
 
 import anytree
 
@@ -43,3 +43,6 @@ class Node(anytree.NodeMixin):
     def walk_to(self, dest: "Node") -> Tuple["Node", ...]:
         upwards, common, downwards = self._walker.walk(self, dest)
         return (upwards + (common,) + downwards)[1:]
+
+    def find_descendants(self, _id: str):
+        ...

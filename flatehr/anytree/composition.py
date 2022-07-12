@@ -6,12 +6,11 @@ import anytree
 from pipe import chain, map, traverse
 
 from flatehr.anytree._node import Node, NodeNotFound
-from flatehr.composition import Composition
-from flatehr.composition import CompositionNode as BaseCompositionNode
-from flatehr.composition import NotaLeaf
+from flatehr.core import Composition
+from flatehr.core import CompositionNode as BaseCompositionNode
+from flatehr.core import NotaLeaf, Template, TemplateNode, to_string
 from flatehr.factory import composition_factory
 from flatehr.rm import RMObject
-from flatehr.template import Template, TemplateNode, to_string
 
 logger = logging.getLogger(__name__)
 

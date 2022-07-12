@@ -4,7 +4,7 @@
 import pytest
 
 from flatehr import template_factory
-from flatehr.template import Template
+from flatehr.core import Template
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())

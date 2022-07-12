@@ -1,8 +1,7 @@
 import abc
 from typing import Generic, List, TypeVar
 
-from flatehr.composition import Composition
-from flatehr.template import Template
+from flatehr.core import Composition, Template
 
 T = TypeVar("T", Template, Composition)
 

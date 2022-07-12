@@ -1,30 +1,33 @@
 import logging
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Optional, cast
 from uuid import uuid4
 
 import requests
-from requests.auth import HTTPBasicAuth
+from requests.auth import HTTPBasicAuth, AuthBase
 
-from .flat import Composition
+from flatehr.core import Composition
 
 logger = logging.getLogger()
 
 
-def post(address, json, auth: "Auth" = None, headers=None) -> "Response":
+def post(address, json, auth: Optional["Auth"], headers=None) -> "Response":
     resp = requests.post(address, json=json, auth=auth, headers=headers)
     try:
         resp.raise_for_status()
     except requests.exceptions.HTTPError as ex:
         raise HTTPException(resp.text, ex.args) from ex
-    return resp
+    return cast(Response, resp)
 
 
-def get(address, params=None, auth: "Auth" = None, headers=None) -> "Response":
-    return requests.get(address, params=params, auth=auth, headers=headers)
+def get(
+    address, params=None, auth: Optional["Auth"] = None, headers=None
+) -> "Response":
+    resp = requests.get(address, params=params, auth=auth, headers=headers)
+    return cast(Response, resp)
 
 
-class Auth:
+class Auth(AuthBase):
     ...
 
 
@@ -49,7 +52,7 @@ class HTTPException(Exception):
 @dataclass
 class OpenEHRClient:
     address: str
-    auth: Auth = None
+    auth: Optional[Auth] = None
     dry_run: bool = False
     _composition_base_path: str = "ehrbase/rest/ecis/v1/composition"
 
