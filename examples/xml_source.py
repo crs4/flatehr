@@ -13,7 +13,7 @@ from flatehr.integration.converters import (
     get_value_kwargs,
     populate,
     remove_dash,
-    xpath_to_template_path,
+    remap_to_template_path,
 )
 from flatehr.integration.sources import XPathSource
 
@@ -50,7 +50,7 @@ value_mapping = {
 }
 list(
     xpath_value_map()
-    | xpath_to_template_path(xpath_mapping)
+    | remap_to_template_path(xpath_mapping)
     | remove_dash()
     | get_value_kwargs(value_mapping)
     | get_value_from_default(template)

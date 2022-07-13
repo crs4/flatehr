@@ -9,21 +9,17 @@ from typing import (
 
 
 from flatehr.core import Composition
-from flatehr.integration.sources import XPath
 from flatehr.rm import RMObject, get_model_class
 from flatehr.core import Template, TemplatePath
 from pipe import Pipe
 
-from flatehr.rm.models import DVText
-
 
 @Pipe
-def xpath_to_template_path(
-    xpath_values: Iterator[Tuple[XPath, str]], mapping: Dict[XPath, TemplatePath]
+def remap_to_template_path(
+    key_values: Iterator[Tuple[str, str]], mapping: Dict[str, TemplatePath]
 ) -> Iterator[Tuple[TemplatePath, str]]:
-    for xpath, value in xpath_values:
-        template_path = TemplatePath(mapping[xpath])
-        yield (template_path, value)
+    for key, value in key_values:
+        yield (TemplatePath(mapping[key]), value)
 
 
 @Pipe
@@ -105,53 +101,3 @@ def create_rm_objects(
             template_node = template[tpath]
             rm_class = get_model_class(template_node.rm_type)
             yield tpath, rm_class(**value)
-
-
-#  class ValueConverter(Converter):
-#      def __init__(self, mappings: Dict[str, str], passthrough: bool = False):
-#          self._mappings = mappings
-#          self._passthrough = passthrough
-#
-#      def convert(self, template_node: TemplateNode, value: Value) -> Value:
-#          try:
-#              return Value(self._mappings[template_node._id])
-#          except KeyError as ex:
-#              if self._passthrough:
-#                  return value
-#              raise ConversionFailed(f"{type(self)} failed with value {value}") from ex
-#
-#
-
-#  class InputBasedConverter(Converter):
-#      def convert(self, template_node: TemplateNode, value: Value) -> Value:
-#          if not template_node.inputs or "list" not in template_node.inputs[0]:
-#              raise ConversionFailed(f"{type(self)} cannot map value {value}")
-#          value_from_inputs = None
-#          value_list = template_node.inputs[0]["list"]
-#          for item in value_list:
-#              label = item["label"].lower()
-#              value_lower = value.lower()
-#              if label == value_lower:
-#                  value_from_inputs = item["value"]
-#                  break
-#          if value_from_inputs is None:
-#              raise RuntimeError(f"invalid value {value} for node {template_node}")
-#          return Value(value_from_inputs)
-#
-#
-#  class MultiConverter(Converter):
-#      def __init__(self, *mappers: Converter):
-#          self._mappers = mappers
-#
-#      def convert(self, template_node: TemplateNode, value: Value) -> Value:
-#          for mapper in self._mappers:
-#              try:
-#                  value = mapper.convert(template_node, value)
-#                  #  break
-#              except ConversionFailed:
-#                  ...
-#          return value
-#
-#
-#  class ConversionFailed(Exception):
-#      ...
