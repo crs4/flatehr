@@ -11,8 +11,6 @@ from flatehr.ingest import (
     Ingester,
     MultiThreadedIngester,
 )
-from flatehr.core import TemplatePath
-from flatehr.integration.sources import XPath, XPathSource
 
 
 @pytest.fixture
@@ -47,11 +45,6 @@ def ingester(request) -> Ingester:
 
 
 @pytest.fixture
-def value_mapper():
-    return ValueConverter({}, True)
-
-
-@pytest.fixture
 def template(backend, web_template_json):
     return template_factory(backend, web_template_json).get()
 
@@ -69,15 +62,3 @@ def xml():
 @pytest.fixture
 def complex_template():
     return "tests/resources/complex_template.json"
-
-
-@pytest.fixture
-def xml_mapper(template, xml):
-    return XPathSource(
-        [
-            XPath("//ns:Identifier/text()"),
-            XPath("//ns:Event[@eventtype='Histopathology']"),
-            XPath("//ns:Dataelement_58_2/text()"),
-        ],
-        xml,
-    )
