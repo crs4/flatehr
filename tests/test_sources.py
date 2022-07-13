@@ -3,7 +3,7 @@
 
 import pytest
 
-from flatehr.integration import xpath_value_map
+from flatehr.helpers import xpath_value_map
 
 
 @pytest.mark.parametrize(

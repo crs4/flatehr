@@ -1,18 +1,106 @@
 import logging
 import os
-from typing import List, Optional, Union, cast
+from dataclasses import dataclass
+from typing import List, Optional, Tuple, Union, cast
 
 import anytree
 from pipe import chain, map, traverse
 
-from flatehr.anytree._node import Node, NodeNotFound
 from flatehr.core import Composition
 from flatehr.core import CompositionNode as BaseCompositionNode
-from flatehr.core import NotaLeaf, Template, TemplateNode, to_string
-from flatehr.factory import composition_factory
-from flatehr.rm import RMObject
+from flatehr.core import InvalidDefault, Template
+from flatehr.core import TemplateNode as BaseTemplateNode
+from flatehr.core import WebTemplate, remove_cardinality, to_string
+from flatehr.factory import composition_factory, template_factory
+from flatehr.rm import RMObject, get_model_class
+
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class NodeNotFound(Exception):
+    msg: str
+    node: "Node"
+    child: str
+
+
+class NodeAlreadyExists(Exception):
+    ...
+
+
+@dataclass
+class Node(anytree.NodeMixin):
+    _id: str
+
+    def __post_init__(self):
+        self._resolver = anytree.Resolver("_id")
+        self._walker = anytree.Walker()
+
+    def get(self, path: str) -> "Node":
+
+        try:
+            return (
+                self._resolver.glob(self, path)
+                if "*" in path
+                else self._resolver.get(self, path)
+            )
+        except anytree.ChildResolverError as ex:
+            raise NodeNotFound(f"node: {self}, path {path}", ex.node, ex.child) from ex
+
+    def __str__(self) -> str:
+        return self.separator.join([cast(Node, n)._id for n in super().path])
+
+    def walk_to(self, dest: "Node") -> Tuple["Node", ...]:
+        upwards, common, downwards = self._walker.walk(self, dest)
+        return (upwards + (common,) + downwards)[1:]
+
+    def find(self, _id: str):
+        return anytree.search.findall(self, filter_=lambda n: n._id == _id)
+
+
+@template_factory.register("anytree")
+class TemplateFactory:
+    def __init__(self, web_template: WebTemplate):
+        self._web_template = web_template
+
+    def get(self) -> Template:
+        def _recursive_create(web_template_el):
+            _node = TemplateNode(
+                _id=web_template_el["id"],
+                rm_type=web_template_el["rmType"],
+                required=web_template_el["min"] == 1,
+                inf_cardinality=web_template_el["max"] == -1,
+                annotations=web_template_el.get("annotations", ()),
+                inputs=web_template_el.get("inputs", ()),
+                aql_path=web_template_el.get("aqlPath"),
+            )
+
+            children = []
+            for child in web_template_el.get("children", []):
+                children.append(_recursive_create(child))
+            _node.children = children
+
+            return _node
+
+        tree = self._web_template["tree"]
+        node = _recursive_create(tree)
+        return Template(node)
+
+
+@dataclass
+class TemplateNode(Node, BaseTemplateNode):
+    def get(self, path: str) -> BaseTemplateNode:
+        return cast(TemplateNode, super().get(remove_cardinality(path)))
+
+    @property
+    def default(self) -> RMObject:
+        try:
+            value = self.inputs[0]["defaultValue"]
+        except (IndexError, KeyError) as ex:
+            raise InvalidDefault(f"path {self} has no valid default") from ex
+
+        return get_model_class(self.rm_type)(value=value)
 
 
 @composition_factory.register("anytree")
