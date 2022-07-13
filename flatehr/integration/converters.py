@@ -1,17 +1,47 @@
 from collections import defaultdict
-from typing import (
-    Dict,
-    Iterator,
-    Optional,
-    Set,
-    Tuple,
-)
+from itertools import repeat
+from typing import Dict, IO, Iterator, Optional, Sequence, Set, Tuple
 
+from lxml import etree
+from lxml.etree import _Element
+from pipe import Pipe, chain, map, sort
 
-from flatehr.core import Composition
+from flatehr.core import Composition, Template, TemplatePath
 from flatehr.rm import RMObject, get_model_class
-from flatehr.core import Template, TemplatePath
-from pipe import Pipe
+
+XPath = str
+
+
+def xpath_value_map(
+    paths: Sequence[XPath], _input: IO
+) -> Iterator[Tuple[XPath, Optional[str]]]:
+    paths = paths
+    _input = _input
+    tree = etree.parse(_input)
+
+    ns = tree.getroot().nsmap
+    ns["ns"] = ns.pop(None)
+
+    mappings = (
+        paths
+        | map(
+            lambda path: list(
+                zip(
+                    repeat(path),
+                    tree.xpath(path, namespaces=ns),
+                )
+            )
+        )
+        | chain
+        | sort(
+            lambda el: el[1].sourceline
+            if isinstance(el[1], _Element)
+            else el[1].getparent().sourceline
+        )
+        | map(lambda el: (el[0], None if isinstance(el[1], _Element) else el[1]))
+    )
+    for mapping in mappings:
+        yield mapping
 
 
 @Pipe

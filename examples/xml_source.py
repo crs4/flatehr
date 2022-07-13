@@ -14,8 +14,8 @@ from flatehr.integration.converters import (
     populate,
     remove_dash,
     remap_to_template_path,
+    xpath_value_map,
 )
-from flatehr.integration.sources import XPathSource
 
 xpath_mapping = {
     "//ns:Dataelement_49_1/text()": "test/lab_result_details/result_group/laboratory_test_result/any_event/test_name",
@@ -26,16 +26,13 @@ xml_file = open("../tests/resources/test.xml", "r")
 client = OpenEHRClient("http://ehr.base", dry_run=True)
 
 
-xpath_value_map = XPathSource(list(xpath_mapping.keys()), xml_file)
-
-
 template = template_factory(
     "anytree", json.load(open("../tests/resources/web_template.json", "r"))
 ).get()
 composition = composition_factory("anytree", template).get()
 
-
-ehr_id = dict(xpath_value_map())["//ns:Identifier/text()"]
+xpath_values = list(xpath_value_map(tuple(xpath_mapping.keys()), xml_file))
+ehr_id = dict(xpath_values)["//ns:Identifier/text()"]
 
 value_mapping = {
     "test/context/setting": {
@@ -49,7 +46,7 @@ value_mapping = {
     }
 }
 list(
-    xpath_value_map()
+    xpath_values
     | remap_to_template_path(xpath_mapping)
     | remove_dash()
     | get_value_kwargs(value_mapping)
