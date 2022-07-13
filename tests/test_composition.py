@@ -8,7 +8,7 @@ from flatehr import rm
 
 from flatehr.core import Composition, IncompatibleDataType, NotaLeaf
 from flatehr.factory import composition_factory, template_factory
-from flatehr.flat import flatten
+from flatehr.serializers import flat
 from flatehr.rm.models import CodePhrase
 
 logging.basicConfig(level=logging.DEBUG)
@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.DEBUG)
 def test_factory(composition, template):
     assert isinstance(composition, Composition)
     assert composition.template == template
-    assert flatten(composition) == {}
+    assert flat(composition) == {}
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
@@ -29,8 +29,8 @@ def test_create_dv_text(composition):
     path = "test/context/status"
     composition[path] = rm.DVText(value=text)
 
-    flat = flatten(composition)
-    assert flat == {path: text}
+    flat_dv_text = flat(composition)
+    assert flat_dv_text == {path: text}
 
 
 @pytest.mark.skip("TBF")
@@ -49,21 +49,21 @@ def test_composition_add_multiple_instances(composition):
 
     composition[f"{path}/test_name"] = rm.DVText(value="test-0")
 
-    assert flatten(composition) == {f"{path}:0/test_name": "test-0"}
+    assert flat(composition) == {f"{path}:0/test_name": "test-0"}
 
     composition[f"{path}/test_name"] = rm.DVText(value="test-0-0")
-    assert flatten(composition) == {f"{path}:0/test_name": "test-0-0"}
+    assert flat(composition) == {f"{path}:0/test_name": "test-0-0"}
 
     composition.add(path)
     composition[f"{path}/test_name"] = rm.DVText(value="test-1")
 
-    assert flatten(composition) == {
+    assert flat(composition) == {
         f"{path}:0/test_name": "test-0-0",
         f"{path}:1/test_name": "test-1",
     }
 
     composition[f"{path}:0/test_name"] = rm.DVText(value="test-0-0-0")
-    assert flatten(composition) == {
+    assert flat(composition) == {
         f"{path}:0/test_name": "test-0-0-0",
         f"{path}:1/test_name": "test-1",
     }
@@ -91,8 +91,8 @@ def test_composition_create_code_phrase(composition):
     assert value.terminology_id.value == terminology
     assert value.code_string == code
 
-    flat = flatten(composition)
-    assert flat == {
+    flat_code_phrase = flat(composition)
+    assert flat_code_phrase == {
         f"{path}|code": code,
         f"{path}|terminology": terminology,
     }
@@ -116,8 +116,8 @@ def test_composition_create_dv_coded_text(composition):
     assert dv_coded_text.defining_code.code_string == code
     assert dv_coded_text.defining_code.terminology_id.value == terminology
 
-    flat = flatten(composition)
-    assert flat == {
+    flat_dv_coded_text = flat(composition)
+    assert flat_dv_coded_text == {
         f"{path}|code": code,
         f"{path}|terminology": terminology,
         f"{path}|value": text,
@@ -133,8 +133,8 @@ def test_composition_create_dv_datetime(composition):
     dt = composition[path]
     assert isinstance(dt, rm.DVDateTime)
 
-    flat = flatten(composition)
-    assert flat == {f"{path}": dt.value}
+    flat_dv_datetime = flat(composition)
+    assert flat_dv_datetime == {f"{path}": dt.value}
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
@@ -147,8 +147,8 @@ def test_composition_create_party_identified(composition):
     assert isinstance(party_identified, rm.PartyIdentified)
     assert party_identified.name == name
 
-    flat = flatten(composition)
-    assert flat == {f"{path}|name": name}
+    flat_party = flat(composition)
+    assert flat_party == {f"{path}|name": name}
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
@@ -166,8 +166,8 @@ def test_composition_to_flat(composition):
         terminology_id={"value": terminology}, code_string=code
     )
 
-    flat = flatten(composition)
-    assert flat == {
+    flat_composition = flat(composition)
+    assert flat_composition == {
         f"{path_status}": text,
         f"{path_lang}|code": code,
         f"{path_lang}|terminology": terminology,
@@ -185,8 +185,11 @@ def test_composition_set_all(composition):
 
     path_lang = "test/language"
 
-    flat = flatten(composition)
-    assert flat == {f"{path_lang}|code": code, f"{path_lang}|terminology": terminology}
+    flat_composition = flat(composition)
+    assert flat_composition == {
+        f"{path_lang}|code": code,
+        f"{path_lang}|terminology": terminology,
+    }
 
     path_lab_test_result = (
         "test/lab_result_details/result_group/laboratory_test_result/any_event"
@@ -196,7 +199,7 @@ def test_composition_set_all(composition):
         composition.add(path_lab_test_result)
 
     composition["**/test_name"] = rm.DVText(value="test_name")
-    assert flatten(composition) == {
+    assert flat(composition) == {
         f"{path_lang}|code": code,
         f"{path_lang}|terminology": terminology,
         f"{path_lab_test_result}:0/test_name": "test_name",
@@ -216,8 +219,11 @@ def test_composition_set_defaults(composition):
     #  composition.set_all("composer", value="test")
 
     composition.set_defaults()
-    flat = flatten(composition)
-    assert "test/targeted_therapy_start/start_of_targeted_therapy/from_event" in flat
+    flat_composition = flat(composition)
+    assert (
+        "test/targeted_therapy_start/start_of_targeted_therapy/from_event"
+        in flat_composition
+    )
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
@@ -227,27 +233,27 @@ def test_set_null_flavour(composition):
     composition[
         "/test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/"
     ] = null_flavour
-    flat = flatten(composition)
+    flat_composition = flat(composition)
     assert (
-        flat[
+        flat_composition[
             "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|value"
         ]
         == null_flavour.value
     )
     assert (
-        flat[
+        flat_composition[
             "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|code"
         ]
         == null_flavour.code
     )
     assert (
-        flat[
+        flat_composition[
             "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy/_null_flavour|terminology"
         ]
         == null_flavour.terminology
     )
     assert (
-        flat[
+        flat_composition[
             "test/targeted_therapy_start/start_of_targeted_therapy/date_of_start_of_targeted_therapy"
         ]
         == ""
