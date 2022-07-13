@@ -6,7 +6,7 @@ from typing import Dict
 import clize
 from anytree import RenderTree
 
-from flatehr.template import TemplateNode
+from flatehr.core import TemplateNode
 from flatehr.factory import template_factory
 
 logger = logging.getLogger()
@@ -46,22 +46,19 @@ def main(
     *,
     template: (str, "t"),
     aql_path: bool = False,
-    ancestors: (bool, "a") = False,
 ):
     with open(template, "r") as f_obj:
         template_dict = json.load(f_obj)
 
     template = template_factory("anytree", template_dict).get()
-    if aql_path:
-        web_template_node = convert_aql_path_to_flat_id(template, node_id)
-    else:
-        web_template_node = template.root.walk_to(node_id)
-    if ancestors:
-        for ancestor in web_template_node.ancestors:
-            print(ancestor)
-    print(web_template_node)
-    #  _node = TemplateNode(row.node)
-    #  print("%s%s (required %s)" % (row.pre, _node.path, _node.required))
+    #  if aql_path:
+    #      nodes = convert_aql_path_to_flat_id(template.root, node_id)
+    #  else:
+    nodes = template.root.find(node_id)
+
+    for n in nodes:
+        path = "/".join([a._id for a in n.ancestors] + [node_id])
+        print(path)
 
 
 if __name__ == "__main__":

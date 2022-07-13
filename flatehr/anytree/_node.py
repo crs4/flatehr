@@ -44,5 +44,5 @@ class Node(anytree.NodeMixin):
         upwards, common, downwards = self._walker.walk(self, dest)
         return (upwards + (common,) + downwards)[1:]
 
-    def find_descendants(self, _id: str):
-        ...
+    def find(self, _id: str):
+        return anytree.search.findall(self, filter_=lambda n: n._id == _id)

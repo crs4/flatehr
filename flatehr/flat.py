@@ -20,7 +20,7 @@ logger = logging.getLogger("flatehr")
 
 @singledispatch
 def flatten(*args) -> Dict:
-    ...
+    raise NotImplementedError()
 
 
 @flatten.register

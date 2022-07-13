@@ -20,7 +20,7 @@ from pipe import chain, map, sort
 from flatehr.integration import K, V, Message
 
 
-XPath = NewType("XPath", str)
+XPath = str
 T = TypeVar("T")
 
 

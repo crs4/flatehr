@@ -3,38 +3,38 @@ import logging
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 from pipe import map
 
 from flatehr.rm import NullFlavour, RMObject
 
-
 logger = logging.getLogger(__name__)
 WebTemplate = Dict[str, Union[str, bool, int, float]]
 TemplatePath = str
 
+TNode = TypeVar("TNode", bound="_Node")
 
-@dataclass
+
 class _Node(abc.ABC):
     @property
     @abc.abstractmethod
-    def children(self) -> List["_Node"]:
+    def children(self: TNode) -> List[TNode]:
         ...
 
     @property
     @abc.abstractmethod
-    def parent(self) -> "_Node":
+    def parent(self: TNode) -> TNode:
         ...
 
     @property
     @abc.abstractmethod
-    def path(self) -> Tuple["_Node", ...]:
+    def path(self: TNode) -> Tuple[TNode, ...]:
         ...
 
     @property
     @abc.abstractmethod
-    def ancestors(self) -> Tuple["_Node", ...]:
+    def ancestors(self: TNode) -> Tuple[TNode, ...]:
         ...
 
     @property
@@ -43,16 +43,20 @@ class _Node(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def walk_to(self, dest: "_Node") -> "_Node":
+    def walk_to(self, dest: TNode) -> TNode:
         ...
 
     @abc.abstractmethod
-    def get(self, path) -> "_Node":
+    def get(self: TNode, path: str) -> TNode:
         ...
 
     @property
     @abc.abstractmethod
-    def leaves(self) -> List["_Node"]:
+    def leaves(self: TNode) -> List[TNode]:
+        ...
+
+    @abc.abstractmethod
+    def find(self: TNode, _id: str) -> Sequence[TNode]:
         ...
 
 
