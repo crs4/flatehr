@@ -1,27 +1,41 @@
+import re
 from collections import defaultdict
 from itertools import repeat
-from typing import Dict, IO, Iterator, Optional, Sequence, Set, Tuple
+from typing import IO, Any, Dict, Iterator, Optional, Sequence, Set, Tuple
 
 from lxml import etree
 from lxml.etree import _Element
-from pipe import Pipe, chain, map, sort
+from pipe import Pipe, chain, groupby, map, sort
 
 from flatehr.core import Composition, Template, TemplatePath
-from flatehr.rm import RMObject, get_model_class
 
 XPath = str
 
 
 def xpath_value_map(
-    paths: Sequence[XPath], _input: IO
+    paths: Sequence[XPath], _input: IO, group_by: Optional[XPath] = None
 ) -> Iterator[Tuple[XPath, Optional[str]]]:
-    paths = paths
+    def get_xml_element(xpath_result):
+        return (
+            xpath_result
+            if isinstance(xpath_result, _Element)
+            else xpath_result.getparent()
+        )
+
     _input = _input
     tree = etree.parse(_input)
+    ns_func = etree.FunctionNamespace(None)
 
-    ns = tree.getroot().nsmap
+    def first(context):
+        return context.context_node[0]
+
+    ns_func["first"] = first
+
+    root = tree.getroot()
+    ns = root.nsmap
     ns["ns"] = ns.pop(None)
 
+    group_by = group_by or re.sub("{.*}", "", f"ancestor::ns:{root.tag}")
     mappings = (
         paths
         | map(
@@ -33,101 +47,10 @@ def xpath_value_map(
             )
         )
         | chain
-        | sort(
-            lambda el: el[1].sourceline
-            if isinstance(el[1], _Element)
-            else el[1].getparent().sourceline
-        )
+        | sort(lambda el: get_xml_element(el[1]).sourceline)
+        #  | groupby(lambda el: get_xml_element(el[1]).xpath(group_by, namespaces=ns)[0])
         | map(lambda el: (el[0], None if isinstance(el[1], _Element) else el[1]))
     )
+
     for mapping in mappings:
         yield mapping
-
-
-@Pipe
-def remap_to_template_path(
-    key_values: Iterator[Tuple[str, str]], mapping: Dict[str, TemplatePath]
-) -> Iterator[Tuple[TemplatePath, str]]:
-    for key, value in key_values:
-        yield (TemplatePath(mapping[key]), value)
-
-
-@Pipe
-def populate(
-    path_values: Iterator[Tuple[TemplatePath, RMObject]], composition: Composition
-) -> Iterator[Composition]:
-    for path_value in list(path_values):
-        path, value = path_value
-        if value:
-            composition[path] = value
-        else:
-            composition.add(path)
-
-    yield composition
-
-
-@Pipe
-def remove_dash(
-    template_paths: Iterator[Tuple[TemplatePath, str]],
-    _filter: Optional[Set[TemplatePath]] = None,
-) -> Iterator[Tuple[TemplatePath, str]]:
-    def _remove_dash(value: str):
-        try:
-            return value.split("-", 1)[1].strip()
-        except IndexError:
-            return value
-
-    for tpath, value in template_paths:
-        process: bool = True if _filter is None else (tpath in _filter)
-        if process:
-            yield (tpath, _remove_dash(value))
-
-
-@Pipe
-def get_value_from_default(
-    template_paths: Iterator[Tuple[TemplatePath, str]],
-    template: Template,
-) -> Iterator[Tuple[TemplatePath, str]]:
-    for tpath, value in template_paths:
-        if value:
-            template_node = template[tpath]
-            if not template_node.inputs or "list" not in template_node.inputs[0]:
-                yield (tpath, value)
-                continue
-            value_from_inputs = None
-            value_list = template_node.inputs[0]["list"]
-            for item in value_list:
-                label = item["label"].lower()
-                value_lower = value.lower()
-                if label == value_lower:
-                    value_from_inputs = item["value"]
-                    break
-            if value_from_inputs is None:
-                yield (tpath, value)
-            else:
-                yield tpath, value_from_inputs
-
-
-@Pipe
-def get_value_kwargs(
-    tpath_map: Iterator[Tuple[TemplatePath, str]],
-    mapping: Optional[Dict[TemplatePath, Dict[str, Dict]]] = None,
-) -> Iterator[Tuple[TemplatePath, Dict]]:
-    _mapping = defaultdict(lambda: {})
-    if mapping:
-        _mapping.update(mapping)
-    for tpath, value in tpath_map:
-        yield tpath, _mapping[tpath].get(value, {"value": value})
-
-
-@Pipe
-def create_rm_objects(
-    template_paths: Iterator[Tuple[TemplatePath, Dict]],
-    template: Template,
-) -> Iterator[Tuple[TemplatePath, RMObject]]:
-
-    for tpath, value in template_paths:
-        if value:
-            template_node = template[tpath]
-            rm_class = get_model_class(template_node.rm_type)
-            yield tpath, rm_class(**value)

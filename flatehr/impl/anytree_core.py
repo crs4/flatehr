@@ -1,10 +1,11 @@
+from itertools import repeat
 import logging
 import os
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, cast
 
 import anytree
-from pipe import chain, map, traverse
+from pipe import chain, filter, map, tee, traverse
 
 from flatehr.core import Composition
 from flatehr.core import CompositionNode as BaseCompositionNode
@@ -12,8 +13,6 @@ from flatehr.core import InvalidDefault, Template
 from flatehr.core import TemplateNode as BaseTemplateNode
 from flatehr.core import WebTemplate, remove_cardinality, to_string
 from flatehr.factory import composition_factory, template_factory
-from flatehr.rm import RMObject, get_model_class
-
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +70,7 @@ class TemplateFactory:
                 rm_type=web_template_el["rmType"],
                 required=web_template_el["min"] == 1,
                 inf_cardinality=web_template_el["max"] == -1,
+                in_context=web_template_el.get("inContext", False),
                 annotations=web_template_el.get("annotations", ()),
                 inputs=web_template_el.get("inputs", ()),
                 aql_path=web_template_el.get("aqlPath"),
@@ -94,13 +94,15 @@ class TemplateNode(Node, BaseTemplateNode):
         return cast(TemplateNode, super().get(remove_cardinality(path)))
 
     @property
-    def default(self) -> RMObject:
+    def default(self) -> str:
         try:
-            value = self.inputs[0]["defaultValue"]
+            return self.inputs[0]["defaultValue"]
         except (IndexError, KeyError) as ex:
             raise InvalidDefault(f"path {self} has no valid default") from ex
 
-        return get_model_class(self.rm_type)(value=value)
+    #  @fixme to complete...
+    def json(self):
+        return {"inputs": self.inputs}
 
 
 @composition_factory.register("anytree")
@@ -127,46 +129,125 @@ class CompositionNode(Node, BaseCompositionNode):
         Node.__init__(self, _id=_id)
         BaseCompositionNode.__init__(self, template)
         Node.parent.fset(self, parent)
+        self._ctx: Dict[str, Dict[str, str]] = {}
 
     def get(self, path) -> "CompositionNode":
         return cast(CompositionNode, Node.get(self, path))
 
-    def __getitem__(self, path: str) -> Union[List[RMObject], RMObject]:
+    def __getitem__(self, path: str) -> Union[List[Dict], Dict]:
         nodes = self.get(path)
         return (
             [node.value for node in nodes] if isinstance(nodes, list) else nodes.value
         )
 
-    def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
-        not_leaves = anytree.iterators.preorderiter.PreOrderIter(
-            self,
-            filter_=lambda node: not node.template.is_leaf,
-        )
-        missing_required = (
-            not_leaves
+    #  def get_required_leaves(missing_required = self, _id: Optional[str] = None) -> List[str]:
+    def set_defaults(self):
+        def _set_defaults(node, path, inputs):
+            #  try:
+            #      existing_values = node[path].values
+            #  except NodeNotFound:
+            #      ...
+            #  else:
+            #      if existing_values:
+            #          return
+
+            values = {}
+            for input_ in inputs:
+                if "defaultValue" in input_:
+                    values[
+                        f"{'|' + input_['suffix'] if 'suffix' in input_ else ''}"
+                    ] = input_["defaultValue"]
+                    if "terminology" in input_:
+                        values["|terminology"] = input_["terminology"]
+
+            node[path] = values
+
+        list(
+            self.descendants
             | map(
-                lambda node: anytree.iterators.preorderiter.PreOrderIter(
-                    node.template,
-                    stop=lambda n: not n.required if n != node.template else False,
-                    filter_=lambda n: n.is_leaf
-                    and n.required
-                    and (n._id == _id if _id else True),
+                lambda n: (
+                    n,
+                    set(
+                        [
+                            child._id
+                            for child in n.template.children
+                            if child.required and not child.in_context
+                        ]
+                    )
+                    - set(
+                        [
+                            remove_cardinality(child._id)
+                            for child in n.children
+                            if child.template.required and not child.template.in_context
+                        ]
+                    ),
                 )
+            )
+            | filter(lambda n_set: len(n_set[1]))
+            | map(lambda n_set: list(zip(repeat(n_set[0], len(n_set[1])), n_set[1])))
+            | chain
+            | map(
+                lambda n_path: (
+                    n_path[0],
+                    list(
+                        anytree.iterators.preorderiter.PreOrderIter(
+                            n_path[0].template.get(str(n_path[1])),
+                            stop=lambda n: not n.required,
+                            filter_=lambda n: n.is_leaf
+                            and not n.in_context
+                            and n.required
+                            #  and (n._id == self._id),
+                        )
+                    ),
+                ),
+            )
+            | map(
+                lambda n_path: list(zip(repeat(n_path[0], len(n_path[1])), n_path[1]))
             )
             | chain
-        )
-        missing_required_leaves = (
-            missing_required
             | map(
-                lambda template: os.path.relpath(
-                    to_string(template, wildcard=True), self._id
+                lambda n_path: (
+                    _set_defaults(
+                        n_path[0],
+                        os.path.relpath(
+                            str(n_path[1]),
+                            remove_cardinality(str(n_path[0])),
+                        ),
+                        n_path[1].inputs,
+                    )
                 )
             )
-            | traverse
         )
-        return list(missing_required_leaves)
 
-    def __setitem__(self, path, value: RMObject):
+        #  not_leaves = anytree.iterators.preorderiter.PreOrderIter(
+        #      self, filter_=lambda node: not node.template.is_leaf
+        #  )
+        #  missing_required = (
+        #      not_leaves
+        #      | map(
+        #          lambda node: anytree.iterators.preorderiter.PreOrderIter(
+        #              node.template,
+        #              stop=lambda n: not n.required if n != node.template else False,
+        #              filter_=lambda n: n.is_leaf
+        #              and n.required
+        #              and (n._id == _id if _id else True),
+        #          )
+        #      )
+        #      | chain
+        #  )
+        #  missing_required_leaves = (
+        #      missing_required
+        #      | map(
+        #          lambda template: os.path.relpath(
+        #              to_string(template, wildcard=True), self._id
+        #          )
+        #      )
+        #      | traverse
+        #  )
+        #  return list(missing_required_leaves)
+        #
+
+    def __setitem__(self, path, value: Union[Dict, "CompositionNode"]):
 
         if path.startswith("**"):
             _id = os.path.basename(path)

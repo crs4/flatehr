@@ -15,6 +15,9 @@ pipe = "^2.0"
 Pynject = "^0.4.1"
 pydantic = "1.9.0"
 lxml = "^4.9.0"
+Jinja2 = "^3.1.2"
+jq = "^1.2.2"
+python-dateutil = "^2.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"

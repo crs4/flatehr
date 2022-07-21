@@ -11,7 +11,7 @@ import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 from flatehr.core import Composition
-from .http import HTTPException, OpenEHRClient
+from flatehr.http import HTTPException, OpenEHRClient
 
 logger = logging.getLogger()
 

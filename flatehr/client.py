@@ -1,3 +1,4 @@
+import json
 import logging
 from dataclasses import dataclass
 from typing import Dict, Optional, cast
@@ -6,7 +7,7 @@ from uuid import uuid4
 import requests
 from requests.auth import HTTPBasicAuth, AuthBase
 
-from flatehr.core import Composition
+from flatehr.core import Composition, flat
 
 logger = logging.getLogger()
 
@@ -56,13 +57,20 @@ class OpenEHRClient:
     dry_run: bool = False
     _composition_base_path: str = "ehrbase/rest/ecis/v1/composition"
 
-    def post_composition(self, composition: Composition, ehr_id: str) -> str:
+    def post_composition(
+        self,
+        composition: Composition,
+        ehr_id: str,
+        ctx: Optional[Dict[str, str]] = None,
+    ) -> str:
+        flat_composition = flat(composition, ctx)
+        print(json.dumps(flat_composition, indent=4))
         if not self.dry_run:
             # @fixme how template id is retrieved
-            template_id = composition.web_template.path.strip("/")
+            template_id = composition.template.root._id.strip("/")
             resp = post(
                 f"{self.address}/{self._composition_base_path}?format=FLAT&ehrId={ehr_id}&templateId={template_id}",
-                composition.as_flat(),
+                flat_composition,
                 self.auth,
                 headers={"Prefer": "return=representation"},
             )

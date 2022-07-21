@@ -7,13 +7,35 @@ from typing import Dict, List, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 from pipe import map
 
-from flatehr.rm import NullFlavour, RMObject
 
 logger = logging.getLogger(__name__)
 WebTemplate = Dict[str, Union[str, bool, int, float]]
 TemplatePath = str
 
 TNode = TypeVar("TNode", bound="_Node")
+
+
+@dataclass
+class NullFlavour:
+    # place_holder is a workaround for ehrbase expecting value even in case of NullFlavour
+    # (at least for some data types)
+    value: str
+    code: str
+    terminology: str
+    place_holder: str = ""
+
+    @staticmethod
+    def get_default(place_holder=""):
+        return NullFlavour("unknown", "253", "openehr", place_holder)
+
+    def to_flat(self, path: str) -> Dict:
+        flat = {}
+        flat[f"{path}/_null_flavour|value"] = self.value
+        flat[f"{path}/_null_flavour|code"] = self.code
+        flat[f"{path}/_null_flavour|terminology"] = self.terminology
+
+        flat[path] = self.place_holder
+        return flat
 
 
 class _Node(abc.ABC):
@@ -80,12 +102,17 @@ class TemplateNode(_Node, abc.ABC):
     aql_path: str
     required: bool
     inf_cardinality: bool
+    in_context: bool
     annotations: Tuple[Dict[str, str], ...] = ()
     inputs: Tuple[Dict[str, str], ...] = ()
 
     @property
     @abc.abstractmethod
-    def default(self) -> RMObject:
+    def default(self) -> str:
+        ...
+
+    @abc.abstractmethod
+    def json(self) -> Dict:
         ...
 
 
@@ -132,7 +159,7 @@ class Composition:
         path = path.replace(self._root._id, "", 1).strip("/")
         return self._root[path]
 
-    def __setitem__(self, path, value: Union[RMObject, "CompositionNode"]):
+    def __setitem__(self, path, value: Union[Dict, "CompositionNode"]):
         path = self._remove_root_path(path)
         self._root[path] = value
 
@@ -144,23 +171,25 @@ class Composition:
         return re.sub(f"(\/?{self._root._id}/)", "", path)
 
     def set_defaults(self):
-        for path in self.get_required_leaves():
-            try:
-                self[path] = self.template[path].default
-            except InvalidDefault as ex:
-                logger.error(ex)
+        self.root.set_defaults()
 
-    def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
-        return [
-            os.path.join(self._root._id, path)
-            for path in self._root.get_required_leaves(_id)
-        ]
+    #      for path in self.get_required_leaves():
+    #          try:
+    #              self[path] = self.template[path].default
+    #          except InvalidDefault as ex:
+    #              logger.error(ex)
+    #
+    #  def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+    #      return [
+    #          os.path.join(self._root._id, path)
+    #          for path in self._root.get_required_leaves(_id)
+    #      ]
 
 
 @dataclass
 class CompositionNode(_Node, abc.ABC):
     template: "TemplateNode"
-    value: Optional[RMObject] = None
+    value: Optional[Dict] = None
     null_flavour: Optional[NullFlavour] = None
 
     def __post_init__(self):
@@ -173,7 +202,7 @@ class CompositionNode(_Node, abc.ABC):
         ...
 
     @abc.abstractmethod
-    def __setitem__(self, path, value: Union[RMObject, "CompositionNode"]):
+    def __setitem__(self, path, value: Union[Dict, "CompositionNode"]):
         ...
 
     @_Node.parent.setter
@@ -185,8 +214,12 @@ class CompositionNode(_Node, abc.ABC):
     def add(self, path: str) -> str:
         ...
 
+    #  @abc.abstractmethod
+    #  def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+    #      ...
+
     @abc.abstractmethod
-    def get_required_leaves(self, _id: Optional[str] = None) -> List[str]:
+    def set_defaults(self):
         ...
 
 
@@ -200,3 +233,19 @@ class IncompatibleDataType(Exception):
 
 class InvalidDefault(Exception):
     ...
+
+
+def flat(
+    composition: Composition, ctx: Optional[Dict[str, Dict[str, str]]] = None
+) -> Dict[str, str]:
+    dct = {}
+    value_dicts = {
+        str(leaf): leaf.value
+        for leaf in composition.root.leaves
+        if leaf.value is not None
+    }
+    value_dicts.update(ctx or {})
+    for _id, suffixes in value_dicts.items():
+        for suffix, value in suffixes.items():
+            dct[_id + suffix] = value
+    return dct

@@ -60,6 +60,9 @@ def main(
         path = "/".join([a._id for a in n.ancestors] + [node_id])
         print(path)
 
+    for pre, _, node in RenderTree(nodes[0]):
+        print("%s%s(%s)" % (pre, node._id, node.rm_type))
+
 
 if __name__ == "__main__":
     clize.run(main)
