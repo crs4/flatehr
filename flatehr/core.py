@@ -16,26 +16,42 @@ TNode = TypeVar("TNode", bound="_Node")
 
 
 @dataclass
-class NullFlavour:
+class NullFlavour(Dict):
     # place_holder is a workaround for ehrbase expecting value even in case of NullFlavour
     # (at least for some data types)
     value: str
     code: str
     terminology: str
-    place_holder: str = ""
+    place_holder: Optional[str] = None
 
     @staticmethod
     def get_default(place_holder=""):
         return NullFlavour("unknown", "253", "openehr", place_holder)
 
-    def to_flat(self, path: str) -> Dict:
-        flat = {}
-        flat[f"{path}/_null_flavour|value"] = self.value
-        flat[f"{path}/_null_flavour|code"] = self.code
-        flat[f"{path}/_null_flavour|terminology"] = self.terminology
-
-        flat[path] = self.place_holder
+    def _as_dict(self) -> Dict:
+        flat = {
+            "/_null_flavour|value": self.value,
+            "/_null_flavour|code": self.code,
+            "/_null_flavour|terminology": self.terminology,
+        }
+        if self.place_holder is not None:
+            flat[""] = self.place_holder
         return flat
+
+    def __getitem__(self, k):
+        return self._as_dict()[k]
+
+    def __setitem__(self, k, v):
+        raise NotImplementedError()
+
+    def items(self):
+        return self._as_dict().items()
+
+    def keys(self):
+        return self._as_dict().keys()
+
+    def values(self):
+        return self._as_dict().values()
 
 
 class _Node(abc.ABC):

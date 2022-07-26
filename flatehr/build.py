@@ -13,7 +13,7 @@ from jinja2 import Environment
 from pyaml import yaml
 
 from flatehr.client import BasicAuth, OpenEHRClient
-from flatehr.core import Composition, Template, TemplatePath
+from flatehr.core import Composition, NullFlavour, Template, TemplatePath
 from flatehr.factory import composition_factory, template_factory
 from flatehr.helpers import xpath_value_map
 
@@ -27,7 +27,13 @@ Ctx = Dict
 def main(input_file: str, template_file: str, conf_file: str):
     conf = yaml.safe_load(open(conf_file, "r"))
     paths = [
-        Path(k, v["maps_to"], v.get("suffixes", {}), v.get("value_map", {}))
+        Path(
+            k,
+            v.get("maps_to", []),
+            v.get("suffixes", {}),
+            v.get("value_map", {}),
+            NullFlavour(**v["null_flavor"]) if "null_flavor" in v else None,
+        )
         if isinstance(v, dict)
         else Path(k, [], {"": v})
         for k, v in conf["paths"].items()
@@ -55,6 +61,10 @@ class Path:
     maps_to: Sequence[SourceKey]
     suffixes: Dict[Suffix, CodeStr] = dataclasses.field(default_factory=lambda: {})
     value_map: Dict = dataclasses.field(default_factory=lambda: {})
+    null_flavor: Optional[NullFlavour] = None
+
+    def __hash__(self) -> int:
+        return hash(self._id)
 
 
 @dataclass
@@ -62,6 +72,7 @@ class ValueDict(dict):
     template: Template
     path: Path
     value_map: Dict[str, Dict[str, str]] = dataclasses.field(default_factory=dict)
+    null_flavor: Optional[NullFlavour] = None
 
     def __post_init__(self):
         self._dict: Dict[str, str] = {}
@@ -76,26 +87,35 @@ class ValueDict(dict):
         if self.completed():
             self._populate_dict()
 
-    def __getitem__(self, value):
+    def __getitem__(self, key):
         if not self.completed():
+            if self.null_flavor:
+                return self.null_flavor[key]
             raise ValuesNotReady()
-        return self._dict[value]
+
+        return self._dict[key]
 
     def __setitem__(self, k, v):
         raise NotImplementedError()
 
     def keys(self):
         if not self.completed():
+            if self.null_flavor:
+                return self.null_flavor.keys()
             raise ValuesNotReady()
         return self._dict.keys()
 
     def values(self):
         if not self.completed():
+            if self.null_flavor:
+                return self.null_flavor.values()
             raise ValuesNotReady()
         return self._dict.values()
 
     def items(self):
         if not self.completed():
+            if self.null_flavor:
+                return self.null_flavor.items()
             raise ValuesNotReady()
         return self._dict.items()
 
@@ -141,7 +161,9 @@ def build_composition(
             inverse_mappings[source].append(path)
 
         if not path.maps_to:
-            value_dict = ValueDict(composition.template, path, path.value_map)
+            value_dict = ValueDict(
+                composition.template, path, path.value_map, path.null_flavor
+            )
             if path._id.startswith("ctx/"):
                 ctx[path._id] = value_dict
             else:
@@ -151,9 +173,12 @@ def build_composition(
         list(inverse_mappings.keys()), input_file
     )
 
+    consumed_paths = []
     for source_key, source_value in source_kvs:
         _paths = inverse_mappings[source_key]
         for path in _paths:
+            if "*" in path._id:
+                continue
 
             if not path.suffixes:
                 composition.add(path._id)
@@ -173,8 +198,19 @@ def build_composition(
                         ctx[path._id] = value_dicts[0]
                     else:
                         composition[path._id] = value_dicts[0]
+
                 for vd in value_dicts:
-                    vd.add_source_key_value(source_key, source_value)
+                    if source_value:
+                        vd.add_source_key_value(source_key, source_value)
+            consumed_paths.append(path)
+
+    for path in set([p for p in paths if not p._id.startswith("ctx")]) - set(
+        consumed_paths
+    ):
+        if path.null_flavor is not None:
+            composition[path._id] = path.null_flavor
+        elif not path.maps_to:
+            composition[path._id] = {k: v for k, v in path.suffixes.items()}
 
     if set_missing_required_to_default:
         composition.set_defaults()

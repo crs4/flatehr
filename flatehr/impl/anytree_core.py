@@ -140,16 +140,8 @@ class CompositionNode(Node, BaseCompositionNode):
             [node.value for node in nodes] if isinstance(nodes, list) else nodes.value
         )
 
-    #  def get_required_leaves(missing_required = self, _id: Optional[str] = None) -> List[str]:
     def set_defaults(self):
         def _set_defaults(node, path, inputs):
-            #  try:
-            #      existing_values = node[path].values
-            #  except NodeNotFound:
-            #      ...
-            #  else:
-            #      if existing_values:
-            #          return
 
             values = {}
             for input_ in inputs:
@@ -195,8 +187,7 @@ class CompositionNode(Node, BaseCompositionNode):
                             stop=lambda n: not n.required,
                             filter_=lambda n: n.is_leaf
                             and not n.in_context
-                            and n.required
-                            #  and (n._id == self._id),
+                            and n.required,
                         )
                     ),
                 ),
@@ -219,50 +210,22 @@ class CompositionNode(Node, BaseCompositionNode):
             )
         )
 
-        #  not_leaves = anytree.iterators.preorderiter.PreOrderIter(
-        #      self, filter_=lambda node: not node.template.is_leaf
-        #  )
-        #  missing_required = (
-        #      not_leaves
-        #      | map(
-        #          lambda node: anytree.iterators.preorderiter.PreOrderIter(
-        #              node.template,
-        #              stop=lambda n: not n.required if n != node.template else False,
-        #              filter_=lambda n: n.is_leaf
-        #              and n.required
-        #              and (n._id == _id if _id else True),
-        #          )
-        #      )
-        #      | chain
-        #  )
-        #  missing_required_leaves = (
-        #      missing_required
-        #      | map(
-        #          lambda template: os.path.relpath(
-        #              to_string(template, wildcard=True), self._id
-        #          )
-        #      )
-        #      | traverse
-        #  )
-        #  return list(missing_required_leaves)
-        #
-
     def __setitem__(self, path, value: Union[Dict, "CompositionNode"]):
 
-        if path.startswith("**"):
-            _id = os.path.basename(path)
+        #  if path.startswith("**"):
+        #      _id = os.path.basename(path)
+        #
+        #      missing_required_parents = (
+        #          self.get_required_leaves(_id)
+        #          | map(lambda path: self._get_or_create_node(os.path.dirname(path)))
+        #      ) | traverse
+        #      list(
+        #          missing_required_parents
+        #          | map(lambda node: node.__setitem__(os.path.basename(path), value))
+        #      )
+        #      return
 
-            missing_required_parents = (
-                self.get_required_leaves(_id)
-                | map(lambda path: self._get_or_create_node(os.path.dirname(path)))
-            ) | traverse
-            list(
-                missing_required_parents
-                | map(lambda node: node.__setitem__(os.path.basename(path), value))
-            )
-            return
-
-        nodes = self._get_or_create_node(path)
+        nodes = self._get_or_create_node(path, not "*" in path)
         if not isinstance(nodes, list):
             nodes = [nodes]
         for node in nodes:
@@ -275,7 +238,9 @@ class CompositionNode(Node, BaseCompositionNode):
                 #     )
                 node.value = value
 
-    def _get_or_create_node(self, path: str) -> "CompositionNode":
+    def _get_or_create_node(
+        self, path: str, append_to_last_occurence: bool = True
+    ) -> "CompositionNode":
         if not path:
             return self
         try:
@@ -284,26 +249,52 @@ class CompositionNode(Node, BaseCompositionNode):
             last_node = cast(CompositionNode, ex.node)
             missing_child_template = last_node.template.get(ex.child)
 
-            if missing_child_template.inf_cardinality:
-                cardinality = (
-                    len(cast(list, last_node.get(f"{missing_child_template._id}:*")))
-                    - 1
-                )
-                if cardinality < 0:
-                    missing_child = CompositionNode(missing_child_template, last_node)
-                else:
-                    missing_child = last_node.get(
-                        f"{missing_child_template._id}:{cardinality}"
+            if append_to_last_occurence:
+                if missing_child_template.inf_cardinality:
+                    cardinality = (
+                        len(
+                            cast(list, last_node.get(f"{missing_child_template._id}:*"))
+                        )
+                        - 1
                     )
-            else:
-                missing_child = CompositionNode(missing_child_template, last_node)
+                    if cardinality < 0:
+                        missing_child = CompositionNode(
+                            missing_child_template, last_node
+                        )
+                    else:
+                        missing_child = last_node.get(
+                            f"{missing_child_template._id}:{cardinality}"
+                        )
+                else:
+                    missing_child = CompositionNode(missing_child_template, last_node)
 
-            remaining_path = path.replace(
-                to_string(missing_child_template, relative_to=self.template),
-                "",
-                1,
-            ).strip(self.separator)
-            return missing_child._get_or_create_node(remaining_path)
+                remaining_path = path.replace(
+                    to_string(missing_child_template, relative_to=self.template),
+                    "",
+                    1,
+                ).strip(self.separator)
+                return missing_child._get_or_create_node(
+                    remaining_path, append_to_last_occurence
+                )
+            else:
+                last_wildcard_idx = path.rindex("*")
+                try:
+                    slash_after_wildcard_idx = path.index("/", last_wildcard_idx)
+                except ValueError:
+                    slash_after_wildcard_idx = len(path) - 1
+
+                _path = path[:slash_after_wildcard_idx]
+                remaining_path = path[slash_after_wildcard_idx:].strip("/")
+                try:
+                    wildcard_nodes = self._resolver.glob(self, _path)
+                except anytree.ChildResolverError as ex:
+                    wildcard_nodes = []
+
+                nodes = [
+                    wildcard_node._get_or_create_node(remaining_path)
+                    for wildcard_node in wildcard_nodes
+                ]
+                return nodes
 
     @property
     def parent(self) -> "CompositionNode":
