@@ -32,3 +32,6 @@ build-backend = "poetry.core.masonry.api"
 enable = true
 style = "semver"
 
+[tool.poetry.scripts]
+flatehr = "flatehr.cli.entrypoint:main"
+

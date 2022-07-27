@@ -3,7 +3,6 @@ import logging
 import re
 from typing import Dict
 
-import clize
 from anytree import RenderTree
 
 from flatehr.core import TemplateNode
@@ -42,12 +41,12 @@ def get_elements_by_id(composition: Dict, _id: str) -> Dict:
 
 
 def main(
-    node_id,
+    node_id: str,
     *,
-    template: (str, "t"),
+    template_file: str,
     aql_path: bool = False,
 ):
-    with open(template, "r") as f_obj:
+    with open(template_file, "r") as f_obj:
         template_dict = json.load(f_obj)
 
     template = template_factory("anytree", template_dict).get()
@@ -62,7 +61,3 @@ def main(
 
     for pre, _, node in RenderTree(nodes[0]):
         print("%s%s(%s)" % (pre, node._id, node.rm_type))
-
-
-if __name__ == "__main__":
-    clize.run(main)

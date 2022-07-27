@@ -24,7 +24,7 @@ CodeStr = str
 Ctx = Dict
 
 
-def main(input_file: str, template_file: str, conf_file: str):
+def main(input_file: str, *, template_file: str, conf_file: str):
     conf = yaml.safe_load(open(conf_file, "r"))
     paths = [
         Path(
@@ -222,11 +222,6 @@ def date_isoformat(date: str) -> str:
 
 
 if __name__ == "__main__":
-    import argparse
+    import defopt
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input")
-    parser.add_argument("-t", dest="template", required=True)
-    parser.add_argument("-c", dest="conf", required=True)
-    args = parser.parse_args()
-    main(args.input, args.template, args.conf)
+    defopt.run(main)
