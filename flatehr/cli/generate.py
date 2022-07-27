@@ -15,7 +15,7 @@ from pyaml import yaml
 from flatehr.client import BasicAuth, OpenEHRClient
 from flatehr.core import Composition, NullFlavour, Template, TemplatePath
 from flatehr.factory import composition_factory, template_factory
-from flatehr.readers import xpath_value_map
+from flatehr.sources.xml import xpath_value_map
 
 
 SourceKey = str
