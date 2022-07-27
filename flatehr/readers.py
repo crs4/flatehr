@@ -1,13 +1,11 @@
 import re
-from collections import defaultdict
 from itertools import repeat
-from typing import IO, Any, Dict, Iterator, Optional, Sequence, Set, Tuple
+from typing import IO, Iterator, Optional, Sequence, Tuple
 
 from lxml import etree
 from lxml.etree import _Element
-from pipe import Pipe, chain, groupby, map, sort
+from pipe import chain, map, sort
 
-from flatehr.core import Composition, Template, TemplatePath
 
 XPath = str
 
@@ -48,7 +46,6 @@ def xpath_value_map(
         )
         | chain
         | sort(lambda el: get_xml_element(el[1]).sourceline)
-        #  | groupby(lambda el: get_xml_element(el[1]).xpath(group_by, namespaces=ns)[0])
         | map(lambda el: (el[0], None if isinstance(el[1], _Element) else el[1]))
     )
 
