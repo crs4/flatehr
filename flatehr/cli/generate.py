@@ -15,7 +15,7 @@ from pyaml import yaml
 
 from flatehr.core import Composition, NullFlavour, Template, TemplatePath, flat
 from flatehr.factory import composition_factory, template_factory
-from flatehr.sources.xml import xpath_value_map
+from flatehr.sources.xml import XPathSource
 
 SourceKey = str
 Suffix = str
@@ -160,18 +160,33 @@ class ValuesNotReady(Exception):
     ...
 
 
-def from_xml(input_file: str, *, template_file: str, conf_file: str):
+def from_xml(
+    input_file: str,
+    *,
+    template_file: str,
+    conf_file: str,
+    relative_root: Optional[str] = None,
+):
 
     conf = _get_conf(conf_file)
-    source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = xpath_value_map(
-        list(conf.inverse_mappings.keys()), open(input_file, "r")
+    xpath_source = XPathSource(
+        open(input_file, "r"), list(conf.inverse_mappings.keys())
     )
-    composition, ctx, ehr_id = build_composition(
-        conf,
-        template_file,
-        source_kvs,
+    relative_root_elements = (
+        xpath_source.get_elements(f"//ns:{relative_root}")
+        if relative_root
+        else [xpath_source.root]
     )
-    print(ehr_id, json.dumps(flat(composition, ctx)))
+    for el in relative_root_elements:
+        xpath_source.relative_root = el
+
+        source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = xpath_source.iter()
+        composition, ctx, ehr_id = build_composition(
+            conf,
+            template_file,
+            source_kvs,
+        )
+        print(ehr_id, json.dumps(flat(composition, ctx)))
 
 
 def build_composition(
@@ -270,4 +285,4 @@ def _get_conf(conf_file: str) -> Config:
 if __name__ == "__main__":
     import defopt
 
-    defopt.run({"generate": [from_xml]})
+    defopt.run([from_xml])
