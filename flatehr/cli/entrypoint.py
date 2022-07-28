@@ -7,4 +7,4 @@ from flatehr.cli import inspect_template
 
 
 def main():
-    defopt.run({"generate": generate.main, "inspect": inspect_template.main})
+    defopt.run({"generate": [generate.from_xml], "inspect": inspect_template.main})

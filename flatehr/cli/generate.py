@@ -5,18 +5,17 @@ import dataclasses
 import json
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterator, List, Optional, Sequence, TextIO, Tuple
+from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
+from uuid import uuid4
 
 import jq
 from dateutil.parser import parse as parse_date
 from jinja2 import Environment
 from pyaml import yaml
 
-from flatehr.client import BasicAuth, OpenEHRClient
-from flatehr.core import Composition, NullFlavour, Template, TemplatePath
+from flatehr.core import Composition, NullFlavour, Template, TemplatePath, flat
 from flatehr.factory import composition_factory, template_factory
 from flatehr.sources.xml import xpath_value_map
-
 
 SourceKey = str
 Suffix = str
@@ -24,35 +23,53 @@ CodeStr = str
 Ctx = Dict
 
 
-def main(input_file: str, *, template_file: str, conf_file: str):
-    conf = yaml.safe_load(open(conf_file, "r"))
-    paths = [
-        Path(
-            k,
-            v.get("maps_to", []),
-            v.get("suffixes", {}),
-            v.get("value_map", {}),
-            NullFlavour(**v["null_flavor"]) if "null_flavor" in v else None,
-        )
-        if isinstance(v, dict)
-        else Path(k, [], {"": v})
-        for k, v in conf["paths"].items()
-    ]
+class Config:
+    def __init__(
+        self,
+        paths: Dict,
+        ehr_id: Dict,
+        set_missing_required_to_default: bool = True,
+    ):
+        self._ehr_id = EhrId(set(ehr_id.get("maps_to", [])), ehr_id["value"])
+        self._set_missing_required_to_default = set_missing_required_to_default
+        self._paths = [
+            Path(
+                k,
+                v.get("maps_to", []),
+                v.get("suffixes", {}),
+                v.get("value_map", {}),
+                NullFlavour(**v["null_flavor"]) if "null_flavor" in v else None,
+            )
+            if isinstance(v, dict)
+            else Path(k, [], {"": v})
+            for k, v in paths.items()
+        ]
+        self._inverse_mappings: Dict[SourceKey, List[Path]] = defaultdict(lambda: [])
+        for path in self._paths:
+            for map_to in path.maps_to:
+                self._inverse_mappings[map_to].append(path)
 
-    template_fn = template_factory("anytree", json.load(open(template_file, "r"))).get()
-    composition = composition_factory("anytree", template_fn).get()
-    composition, ctx = build_composition(
-        composition,
-        paths,
-        open(input_file, "r"),
-        conf.get("set_missing_required_to_default", True),
-    )
-    client = OpenEHRClient(
-        "http://localhost:8089", BasicAuth("ehrbase-user", "SuperSecretPassword")
-    )
-    ehr_id = client.create_ehr()
-    print(ehr_id)
-    client.post_composition(composition, ehr_id, ctx)
+    @property
+    def inverse_mappings(self):
+        return self._inverse_mappings
+
+    @property
+    def paths(self):
+        return self._paths
+
+    @property
+    def set_missing_required_to_default(self) -> bool:
+        return self._set_missing_required_to_default
+
+    @property
+    def ehr_id(self) -> "EhrId":
+        return self._ehr_id
+
+
+@dataclass
+class EhrId:
+    maps_to: Set[SourceKey]
+    value: CodeStr
 
 
 @dataclass
@@ -143,23 +160,35 @@ class ValuesNotReady(Exception):
     ...
 
 
-def build_composition(
-    composition: Composition,
-    paths: Sequence[Path],
-    input_file: TextIO,
-    set_missing_required_to_default: bool = True,
-) -> Tuple[Composition, Ctx]:
+def from_xml(input_file: str, *, template_file: str, conf_file: str):
 
-    inverse_mappings: Dict[SourceKey, List[Path]] = defaultdict(lambda: [])
+    conf = _get_conf(conf_file)
+    source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = xpath_value_map(
+        list(conf.inverse_mappings.keys()), open(input_file, "r")
+    )
+    composition, ctx, ehr_id = build_composition(
+        conf,
+        template_file,
+        source_kvs,
+    )
+    print(ehr_id, json.dumps(flat(composition, ctx)))
+
+
+def build_composition(
+    conf: Config,
+    template_file: str,
+    source_kvs: Iterator[Tuple[SourceKey, Optional[str]]],
+) -> Tuple[Composition, Ctx, str]:
+
+    template = template_factory("anytree", json.load(open(template_file, "r"))).get()
+    composition = composition_factory("anytree", template).get()
+
     pending_value_dicts: Dict[
         Tuple[SourceKey, TemplatePath], List[ValueDict]
     ] = defaultdict(lambda: [])
 
     ctx = {}
-    for path in paths:
-        for source in path.maps_to:
-            inverse_mappings[source].append(path)
-
+    for path in conf.paths:
         if not path.maps_to:
             value_dict = ValueDict(
                 composition.template, path, path.value_map, path.null_flavor
@@ -169,13 +198,14 @@ def build_composition(
             else:
                 composition[path._id] = value_dict
 
-    source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = xpath_value_map(
-        list(inverse_mappings.keys()), input_file
-    )
-
     consumed_paths = []
+    ehr_id_kvs = {}
     for source_key, source_value in source_kvs:
-        _paths = inverse_mappings[source_key]
+
+        if source_key in conf.ehr_id.maps_to:
+            ehr_id_kvs[source_key] = source_value
+
+        _paths = conf.inverse_mappings[source_key]
         for path in _paths:
             if "*" in path._id:
                 continue
@@ -204,7 +234,7 @@ def build_composition(
                         vd.add_source_key_value(source_key, source_value)
             consumed_paths.append(path)
 
-    for path in set([p for p in paths if not p._id.startswith("ctx")]) - set(
+    for path in set([p for p in conf.paths if not p._id.startswith("ctx")]) - set(
         consumed_paths
     ):
         if path.null_flavor is not None:
@@ -212,16 +242,32 @@ def build_composition(
         elif not path.maps_to:
             composition[path._id] = {k: v for k, v in path.suffixes.items()}
 
-    if set_missing_required_to_default:
+    if conf.set_missing_required_to_default:
         composition.set_defaults()
-    return composition, ctx
+
+    env = Environment()
+    env.globals["random_ehr_id"] = uuid4
+    t = env.from_string(conf._ehr_id.value)
+    ehr_id = t.render(maps_to=conf.ehr_id.maps_to)
+    return composition, ctx, ehr_id
 
 
 def date_isoformat(date: str) -> str:
     return parse_date(date).isoformat()
 
 
+def _get_conf(conf_file: str) -> Config:
+    conf_kwargs = yaml.safe_load(open(conf_file, "r"))
+    return Config(
+        paths=conf_kwargs["paths"],
+        ehr_id=conf_kwargs["ehr_id"],
+        set_missing_required_to_default=conf_kwargs.get(
+            "set_missing_required_to_default", True
+        ),
+    )
+
+
 if __name__ == "__main__":
     import defopt
 
-    defopt.run(main)
+    defopt.run({"generate": [from_xml]})
