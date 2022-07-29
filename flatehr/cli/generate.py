@@ -15,6 +15,7 @@ from pyaml import yaml
 
 from flatehr.core import Composition, NullFlavour, Template, TemplatePath, flat
 from flatehr.factory import composition_factory, template_factory
+from flatehr.sources.base import FlatDictSource
 from flatehr.sources.xml import XPathSource
 
 SourceKey = str
@@ -158,6 +159,18 @@ class ValueDict(dict):
 
 class ValuesNotReady(Exception):
     ...
+
+
+def from_flat_json(json_: str, *, template_file: str, conf_file: str):
+    source = FlatDictSource(json.loads(json_))
+    conf = _get_conf(conf_file)
+    source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = source.iter()
+    composition, ctx, ehr_id = build_composition(
+        conf,
+        template_file,
+        source_kvs,
+    )
+    print(ehr_id, json.dumps(flat(composition, ctx)))
 
 
 def from_xml(
