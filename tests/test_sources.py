@@ -3,7 +3,7 @@
 
 import pytest
 
-from flatehr.helpers import xpath_value_map
+from flatehr.sources.xml import XPathSource
 
 
 @pytest.mark.parametrize(
@@ -19,6 +19,6 @@ from flatehr.helpers import xpath_value_map
 )
 def test_xpath_mapper(expected_values, xml):
     paths = set([v[0] for v in expected_values])
-    xpath_source = xpath_value_map([p for p in paths], xml)
-    values = tuple(xpath_source)
+    xpath_source = XPathSource(xml, [p for p in paths])
+    values = tuple(xpath_source.iter())
     assert values == expected_values
