@@ -1,4 +1,3 @@
-import re
 from itertools import repeat
 from typing import IO, Iterator, Optional, Sequence, Tuple
 

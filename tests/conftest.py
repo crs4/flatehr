@@ -27,8 +27,13 @@ def template_node(path, template):
 
 
 @pytest.fixture
-def xml():
-    return "tests/resources/test.xml"
+def xml_source():
+    return "tests/resources/source.xml"
+
+
+@pytest.fixture
+def json_source():
+    return "tests/resources/source.json"
 
 
 @pytest.fixture
