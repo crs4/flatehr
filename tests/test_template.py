@@ -17,18 +17,21 @@ def test_factory(template):
     assert template.root.aql_path == ""
     assert template.root.required
     assert template.root.inf_cardinality == False
-    assert len(template.root.children) == 7
+    assert len(template.root.children) == 8
 
     children = template.root.children
-    assert [child._id for child in children] == [
-        "context",
-        "lab_result_details",
-        "category",
-        "language",
-        "territory",
-        "composer",
-        "targeted_therapy_start",
-    ]
+    assert set([child._id for child in children]) == set(
+        [
+            "context",
+            "lab_result_details",
+            "category",
+            "language",
+            "territory",
+            "composer",
+            "targeted_therapy_start",
+            "patient_data",
+        ]
+    )
     context = children[0]
     report_id = context.children[0]
     assert report_id._id == "report_id"

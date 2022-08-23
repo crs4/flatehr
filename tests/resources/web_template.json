@@ -108,6 +108,575 @@
         ]
       },
       {
+        "id": "patient_data",
+        "name": "Patient data",
+        "localizedName": "Patient data",
+        "rmType": "SECTION",
+        "nodeId": "openEHR-EHR-SECTION.demographics_rcp.v1",
+        "min": 0,
+        "max": 1,
+        "localizedNames": {
+          "en": "Patient data"
+        },
+        "localizedDescriptions": {
+          "en": "Patient demographics heading  (AoMRC)."
+        },
+        "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']",
+        "children": [
+          {
+            "id": "gender",
+            "name": "Gender",
+            "localizedName": "Gender",
+            "rmType": "EVALUATION",
+            "nodeId": "openEHR-EHR-EVALUATION.gender.v1",
+            "min": 1,
+            "max": 1,
+            "localizedNames": {
+              "en": "Gender"
+            },
+            "localizedDescriptions": {
+              "en": "Details about the gender of an individual."
+            },
+            "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.gender.v1]",
+            "children": [
+              {
+                "id": "biological_sex",
+                "name": "Biological sex",
+                "localizedName": "Biological sex",
+                "rmType": "DV_CODED_TEXT",
+                "nodeId": "at0019",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Biological sex"
+                },
+                "localizedDescriptions": {
+                  "en": "The sex of an individual determined by anatomical characteristics observed and registered at birth."
+                },
+                "annotations": {
+                  "comment": "For example: 'Male', 'Female', 'Intersex'. Coding with a terminology is recommended, where possible. Use the element 'Comment' or the SLOT 'Details' if needed to register more specific details of the individuals gender.",
+                  "Data model label": "SEX",
+                  "XSD type": "tag",
+                  "XSD label": "Dataelement_85_1"
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.gender.v1]/data[at0002]/items[at0019,'Biological sex']/value",
+                "inputs": [
+                  {
+                    "suffix": "code",
+                    "type": "CODED_TEXT",
+                    "list": [
+                      {
+                        "value": "8532",
+                        "label": "FEMALE",
+                        "localizedLabels": {
+                          "en": ""
+                        }
+                      },
+                      {
+                        "value": "8507",
+                        "label": "MALE",
+                        "localizedLabels": {
+                          "en": ""
+                        }
+                      },
+                      {
+                        "value": "NS_8521",
+                        "label": "OTHER",
+                        "localizedLabels": {
+                          "en": ""
+                        }
+                      }
+                    ],
+                    "terminology": "omop_vocabulary"
+                  }
+                ]
+              },
+              {
+                "id": "language",
+                "name": "Language",
+                "rmType": "CODE_PHRASE",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.gender.v1]/language",
+                "inContext": true
+              },
+              {
+                "id": "encoding",
+                "name": "Encoding",
+                "rmType": "CODE_PHRASE",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.gender.v1]/encoding",
+                "inContext": true
+              },
+              {
+                "id": "subject",
+                "name": "Subject",
+                "rmType": "PARTY_PROXY",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.gender.v1]/subject",
+                "inputs": [
+                  {
+                    "suffix": "id",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "id_scheme",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "id_namespace",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "name",
+                    "type": "TEXT"
+                  }
+                ],
+                "inContext": true
+              }
+            ],
+            "termBindings": {
+              "SNOMED-CT": {
+                "value": "[SNOMED-CT::886731000000109]",
+                "terminologyId": "SNOMED-CT"
+              }
+            }
+          },
+          {
+            "id": "primary_diagnosis",
+            "name": "Primary diagnosis",
+            "localizedName": "Primary diagnosis",
+            "rmType": "EVALUATION",
+            "nodeId": "openEHR-EHR-EVALUATION.problem_diagnosis.v1",
+            "min": 1,
+            "max": 1,
+            "localizedNames": {
+              "en": "Primary diagnosis"
+            },
+            "localizedDescriptions": {
+              "en": "Details about a single identified health condition, injury, disability or any other issue which impacts on the physical, mental and/or social well-being of an individual."
+            },
+            "annotations": {
+              "comment": "Clear delineation between the scope of a problem versus a diagnosis is not easy to achieve in practice. For the purposes of clinical documentation with this archetype, problem and diagnosis are regarded as a continuum, with increasing levels of detail and supportive evidence usually providing weight towards the label of 'diagnosis'."
+            },
+            "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']",
+            "children": [
+              {
+                "id": "primary_diagnosis",
+                "name": "Primary diagnosis",
+                "localizedName": "Primary diagnosis",
+                "rmType": "DV_CODED_TEXT",
+                "nodeId": "at0002",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Primary diagnosis"
+                },
+                "localizedDescriptions": {
+                  "en": "Identification of the problem or diagnosis, by name."
+                },
+                "annotations": {
+                  "comment": "Coding of the name of the problem or diagnosis with a terminology is preferred, where possible."
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/data[at0001]/items[at0002,'Primary diagnosis']/value",
+                "inputs": [
+                  {
+                    "suffix": "code",
+                    "type": "CODED_TEXT",
+                    "list": [
+                      {
+                        "value": "44803809",
+                        "label": "Colorectal cancer",
+                        "localizedLabels": {
+                          "en": ""
+                        }
+                      }
+                    ],
+                    "defaultValue": "44803809",
+                    "terminology": "omop_vocabulary"
+                  }
+                ]
+              },
+              {
+                "id": "date_of_diagnosis",
+                "name": "Date of diagnosis",
+                "localizedName": "Date of diagnosis",
+                "rmType": "DV_DATE_TIME",
+                "nodeId": "at0003",
+                "min": 0,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Date of diagnosis"
+                },
+                "localizedDescriptions": {
+                  "en": "Estimated or actual date/time the diagnosis or problem was recognised by a healthcare professional."
+                },
+                "annotations": {
+                  "comment": "Partial dates are acceptable. If the subject of care is under the age of one year, then the complete date or a minimum of the month and year is necessary to enable accurate age calculations - for example, if used to drive decision support. Data captured/imported as \"Age at time of clinical recognition\" should be converted to a date using the subject's date of birth.",
+                  "Data model label": "DATE_DIAGNOSIS",
+                  "XSD type": "tag",
+                  "XSD label": "Dataelement_51_3"
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/data[at0001]/items[at0003,'Date of diagnosis']/value",
+                "inputs": [
+                  {
+                    "type": "DATETIME"
+                  }
+                ]
+              },
+              {
+                "id": "diagnosis_timing",
+                "name": "Diagnosis timing",
+                "localizedName": "Diagnosis timing",
+                "rmType": "CLUSTER",
+                "nodeId": "openEHR-EHR-CLUSTER.timing_nondaily.v1",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Diagnosis timing"
+                },
+                "localizedDescriptions": {
+                  "en": "Structured information about the intended timing pattern for a therapeutic or diagnostic activity occurring over days, weeks, months or years."
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Diagnosis timing']",
+                "children": [
+                  {
+                    "id": "primary_diagnosis",
+                    "name": "Primary diagnosis",
+                    "localizedName": "Primary diagnosis",
+                    "rmType": "CLUSTER",
+                    "nodeId": "at0006",
+                    "min": 0,
+                    "max": -1,
+                    "localizedNames": {
+                      "en": "Primary diagnosis"
+                    },
+                    "localizedDescriptions": {
+                      "en": "The activity should take place in relation to a specific named event."
+                    },
+                    "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Diagnosis timing']/items[at0006,'Primary diagnosis']",
+                    "children": [
+                      {
+                        "id": "age_at_diagnosis",
+                        "name": "Age at diagnosis",
+                        "localizedName": "Age at diagnosis",
+                        "rmType": "DV_DURATION",
+                        "nodeId": "at0009",
+                        "min": 1,
+                        "max": 1,
+                        "localizedNames": {
+                          "en": "Age at diagnosis"
+                        },
+                        "localizedDescriptions": {
+                          "en": "The period of time before or after the named event when the activity should take place. Negative durations can be used to signify that the activity should be taken before a known event."
+                        },
+                        "annotations": {
+                          "Data element label": "AGE_AT_PRIMARY_DIAGNOSIS",
+                          "comment": "For example: '3 days after onset of menstruation = menstrual onset + 3 days', '2 weeks prior to admission= admission -2 weeks'.",
+                          "XSD type": "tag",
+                          "XSD label": "Dataelement_3_1"
+                        },
+                        "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Diagnosis timing']/items[at0006,'Primary diagnosis']/items[at0009,'Age at diagnosis']/value",
+                        "inputs": [
+                          {
+                            "suffix": "year",
+                            "type": "INTEGER",
+                            "validation": {
+                              "range": {
+                                "minOp": ">=",
+                                "min": 0,
+                                "maxOp": "<=",
+                                "max": 1000
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "termBindings": {
+                  "SNOMED-CT": {
+                    "value": "[SNOMED-CT::886731000000109]",
+                    "terminologyId": "SNOMED-CT"
+                  }
+                }
+              },
+              {
+                "id": "language",
+                "name": "Language",
+                "rmType": "CODE_PHRASE",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/language",
+                "inContext": true
+              },
+              {
+                "id": "encoding",
+                "name": "Encoding",
+                "rmType": "CODE_PHRASE",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/encoding",
+                "inContext": true
+              },
+              {
+                "id": "subject",
+                "name": "Subject",
+                "rmType": "PARTY_PROXY",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Primary diagnosis']/subject",
+                "inputs": [
+                  {
+                    "suffix": "id",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "id_scheme",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "id_namespace",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "name",
+                    "type": "TEXT"
+                  }
+                ],
+                "inContext": true
+              }
+            ],
+            "termBindings": {
+              "SNOMED-CT": {
+                "value": "[SNOMED-CT::886731000000109]",
+                "terminologyId": "SNOMED-CT"
+              }
+            }
+          },
+          {
+            "id": "metastasis_diagnosis",
+            "name": "Metastasis diagnosis",
+            "localizedName": "Metastasis diagnosis",
+            "rmType": "EVALUATION",
+            "nodeId": "openEHR-EHR-EVALUATION.problem_diagnosis.v1",
+            "min": 0,
+            "max": 1,
+            "localizedNames": {
+              "en": "Metastasis diagnosis"
+            },
+            "localizedDescriptions": {
+              "en": "Details about a single identified health condition, injury, disability or any other issue which impacts on the physical, mental and/or social well-being of an individual."
+            },
+            "annotations": {
+              "comment": "Clear delineation between the scope of a problem versus a diagnosis is not easy to achieve in practice. For the purposes of clinical documentation with this archetype, problem and diagnosis are regarded as a continuum, with increasing levels of detail and supportive evidence usually providing weight towards the label of 'diagnosis'."
+            },
+            "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']",
+            "children": [
+              {
+                "id": "metastasis_diagnosis",
+                "name": "Metastasis diagnosis",
+                "localizedName": "Metastasis diagnosis",
+                "rmType": "DV_CODED_TEXT",
+                "nodeId": "at0002",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Metastasis diagnosis"
+                },
+                "localizedDescriptions": {
+                  "en": "Identification of the problem or diagnosis, by name."
+                },
+                "annotations": {
+                  "comment": "Coding of the name of the problem or diagnosis with a terminology is preferred, where possible."
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/data[at0001]/items[at0002,'Metastasis diagnosis']/value",
+                "inputs": [
+                  {
+                    "suffix": "code",
+                    "type": "CODED_TEXT",
+                    "list": [
+                      {
+                        "value": "36769180",
+                        "label": "Metastasis",
+                        "localizedLabels": {
+                          "en": ""
+                        }
+                      }
+                    ],
+                    "defaultValue": "36769180",
+                    "terminology": "omop_vocabulary"
+                  }
+                ]
+              },
+              {
+                "id": "metastasis_diagnosis2",
+                "name": "Metastasis diagnosis",
+                "localizedName": "Metastasis diagnosis",
+                "rmType": "CLUSTER",
+                "nodeId": "openEHR-EHR-CLUSTER.timing_nondaily.v1",
+                "min": 1,
+                "max": 1,
+                "localizedNames": {
+                  "en": "Metastasis diagnosis"
+                },
+                "localizedDescriptions": {
+                  "en": "Structured information about the intended timing pattern for a therapeutic or diagnostic activity occurring over days, weeks, months or years."
+                },
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Metastasis diagnosis']",
+                "children": [
+                  {
+                    "id": "metastasis_diagnosis",
+                    "name": "Metastasis diagnosis",
+                    "localizedName": "Metastasis diagnosis",
+                    "rmType": "CLUSTER",
+                    "nodeId": "at0006",
+                    "min": 1,
+                    "max": 1,
+                    "localizedNames": {
+                      "en": "Metastasis diagnosis"
+                    },
+                    "localizedDescriptions": {
+                      "en": "The activity should take place in relation to a specific named event."
+                    },
+                    "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Metastasis diagnosis']/items[at0006,'Metastasis diagnosis']",
+                    "children": [
+                      {
+                        "id": "from_event",
+                        "name": "From event",
+                        "localizedName": "From event",
+                        "rmType": "DV_TEXT",
+                        "nodeId": "at0005",
+                        "min": 1,
+                        "max": 1,
+                        "localizedNames": {
+                          "en": "From event"
+                        },
+                        "localizedDescriptions": {
+                          "en": "The name of the event that triggers the activity to take place."
+                        },
+                        "annotations": {
+                          "comment": "This element is intended for events that can occur at variable dates, such as onset of menstruation, and not for doses or activities that are conditional on a different varable. If required, the event name can be coded using a terminology, which could potentially be used to trigger an application to set a concrete date for the activity."
+                        },
+                        "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Metastasis diagnosis']/items[at0006,'Metastasis diagnosis']/items[at0005,'From event']/value",
+                        "inputs": [
+                          {
+                            "type": "TEXT",
+                            "defaultValue": "Primary diagnosis"
+                          }
+                        ]
+                      },
+                      {
+                        "id": "time_of_recurrence",
+                        "name": "Time of recurrence",
+                        "localizedName": "Time of recurrence",
+                        "rmType": "DV_DURATION",
+                        "nodeId": "at0009",
+                        "min": 1,
+                        "max": 1,
+                        "localizedNames": {
+                          "en": "Time of recurrence"
+                        },
+                        "localizedDescriptions": {
+                          "en": "The period of time before or after the named event when the activity should take place. Negative durations can be used to signify that the activity should be taken before a known event."
+                        },
+                        "annotations": {
+                          "comment": "For example: '3 days after onset of menstruation = menstrual onset + 3 days', '2 weeks prior to admission= admission -2 weeks'.",
+                          "Data model label": "TIME_OF_RECURRENCE_RELATIVE",
+                          "XSD type": "tag",
+                          "XSD label": "Dataelement_4_3"
+                        },
+                        "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/data[at0001]/items[openEHR-EHR-CLUSTER.timing_nondaily.v1,'Metastasis diagnosis']/items[at0006,'Metastasis diagnosis']/items[at0009,'Time of recurrence']/value",
+                        "inputs": [
+                          {
+                            "suffix": "week",
+                            "type": "INTEGER",
+                            "validation": {
+                              "range": {
+                                "minOp": ">=",
+                                "min": 0,
+                                "maxOp": "<=",
+                                "max": 1000
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "termBindings": {
+                  "SNOMED-CT": {
+                    "value": "[SNOMED-CT::886731000000109]",
+                    "terminologyId": "SNOMED-CT"
+                  }
+                }
+              },
+              {
+                "id": "language",
+                "name": "Language",
+                "rmType": "CODE_PHRASE",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/language",
+                "inContext": true
+              },
+              {
+                "id": "encoding",
+                "name": "Encoding",
+                "rmType": "CODE_PHRASE",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/encoding",
+                "inContext": true
+              },
+              {
+                "id": "subject",
+                "name": "Subject",
+                "rmType": "PARTY_PROXY",
+                "min": 1,
+                "max": 1,
+                "aqlPath": "/content[openEHR-EHR-SECTION.demographics_rcp.v1,'Patient data']/items[openEHR-EHR-EVALUATION.problem_diagnosis.v1,'Metastasis diagnosis']/subject",
+                "inputs": [
+                  {
+                    "suffix": "id",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "id_scheme",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "id_namespace",
+                    "type": "TEXT"
+                  },
+                  {
+                    "suffix": "name",
+                    "type": "TEXT"
+                  }
+                ],
+                "inContext": true
+              }
+            ],
+            "termBindings": {
+              "SNOMED-CT": {
+                "value": "[SNOMED-CT::886731000000109]",
+                "terminologyId": "SNOMED-CT"
+              }
+            }
+          }
+        ],
+        "termBindings": {
+          "SNOMED-CT": {
+            "value": "[SNOMED-CT::886731000000109]",
+            "terminologyId": "SNOMED-CT"
+          }
+        }
+      },
+      {
         "id": "lab_result_details",
         "name": "Lab result details",
         "localizedName": "Lab result details",
