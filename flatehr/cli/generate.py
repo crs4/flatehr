@@ -5,6 +5,7 @@ import dataclasses
 import json
 from collections import defaultdict
 from dataclasses import dataclass
+import os
 from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
 from uuid import uuid4
 
@@ -15,6 +16,7 @@ from pyaml import yaml
 
 from flatehr.core import Composition, NullFlavour, Template, TemplatePath, flat
 from flatehr.factory import composition_factory, template_factory
+from flatehr.sources.json import JsonPathSource
 from flatehr.sources.xml import XPathSource
 
 SourceKey = str
@@ -160,6 +162,29 @@ class ValuesNotReady(Exception):
     ...
 
 
+def from_file(
+    input_file: str,
+    *,
+    template_file: str,
+    conf_file: str,
+    relative_root: Optional[str] = None,
+):
+    handlers = {".xml": from_xml, ".json": from_json}
+    ext = os.path.splitext(input_file)[1]
+    try:
+        handler = handlers[ext]
+    except KeyError:
+        raise RuntimeError(
+            f"file {input_file} not supported, Supported types: {list(handlers.keys())}"
+        )
+    return handler(
+        input_file,
+        template_file=template_file,
+        conf_file=conf_file,
+        relative_root=relative_root,
+    )
+
+
 def from_xml(
     input_file: str,
     *,
@@ -187,6 +212,26 @@ def from_xml(
             source_kvs,
         )
         print(ehr_id, json.dumps(flat(composition, ctx)))
+
+
+def from_json(
+    input_file: str,
+    *,
+    template_file: str,
+    conf_file: str,
+):
+
+    conf = _get_conf(conf_file)
+    jsonpath_source = JsonPathSource(
+        open(input_file, "r"), list(conf.inverse_mappings.keys())
+    )
+    source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = jsonpath_source.iter()
+    composition, ctx, ehr_id = build_composition(
+        conf,
+        template_file,
+        source_kvs,
+    )
+    print(ehr_id, json.dumps(flat(composition, ctx)))
 
 
 def build_composition(
@@ -285,4 +330,4 @@ def _get_conf(conf_file: str) -> Config:
 if __name__ == "__main__":
     import defopt
 
-    defopt.run([from_xml])
+    defopt.run([from_file])
