@@ -17,24 +17,20 @@ def test_factory(template):
     assert template.root.aql_path == ""
     assert template.root.required
     assert template.root.inf_cardinality == False
-    assert len(template.root.children) == 8
+    assert len(template.root.children) == 4
 
     children = template.root.children
     assert set([child._id for child in children]) == set(
         [
             "context",
-            "lab_result_details",
+            "histopathology",
             "category",
-            "language",
-            "territory",
-            "composer",
-            "targeted_therapy_start",
             "patient_data",
         ]
     )
     context = children[0]
     report_id = context.children[0]
-    assert report_id._id == "report_id"
+    assert report_id._id == "case_identification"
 
 
 @pytest.mark.parametrize("backend", template_factory.backends())
@@ -52,18 +48,6 @@ def test_factory(template):
                 "aql_path": "/context",
                 "annotations": (),
                 "inputs": (),
-            },
-        ),
-        (
-            "test/context/start_time",
-            {
-                "_id": "start_time",
-                "rm_type": "DV_DATE_TIME",
-                "required": True,
-                "inf_cardinality": False,
-                "aql_path": "/context/start_time",
-                "annotations": (),
-                "inputs": [{"type": "DATETIME"}],
             },
         ),
     ],
