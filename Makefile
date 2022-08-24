@@ -11,7 +11,7 @@ $(INSTALL_STAMP): poetry.lock
 .PHONY: test
 test: $(INSTALL_STAMP)
 	poetry run pytest tests
-	tests/test_cli.sh
+	poetry run tests/test_cli.sh
 
 .PHONY: clean
 clean:
