@@ -3,7 +3,7 @@
 Generated compositions are formatted according to the [flat (simSDT) format](https://specifications.openehr.org/releases/ITS-REST/latest/simplified_data_template.html). 
 
 
-**TL;DR:** it allows to populate compositions mapping source key-values (for example a XPATH and its relative values) to a simSDT path. 
+**TL;DR:** it allows to populate compositions mapping key-values generated from a source (for example a XPATH and its relative values from an xml file) to simSDT paths. 
 The mapping is configured via a **yaml** file.
 See the [examples section](#Examples) for more details.
 
@@ -72,6 +72,8 @@ $ poetry shell
  * set null flavour when some mapping is missing
  * set missing required values to the default value (defined in the web template)
 
+## Architecture
+![architecture](./docs/architecture.png)
 ## Examples
 Here is an excerpt from *tests/resources/json_conf.yaml*. It maps the source *tests/resources/source.json* to a composition defined by the template *tests/resources/web_template.json* (see also *template.opt* and *template.zip* in the same directory) 
 It uses the jsonpath syntax adopted by [jsonpath-ng](https://github.com/h2non/jsonpath-ng) library.
