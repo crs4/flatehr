@@ -170,6 +170,17 @@ def from_file(
     relative_root: Optional[str] = None,
     skip_ehr_id: bool = False,
 ):
+    """
+    Generates composition(s) from a file. xml and json sources supported.
+    Prints on stdout an external ehr id (if flag --skip-ehr-id is not set) and the flat composition.
+    If --relative-root is set, as many compositions are generated as keys with the given value exists in the source.
+
+    :param input_file: source file
+    :param template_file: web template path
+    :param conf_file: yaml configuration path
+    :param relative_root: id for the root(s) that maps 1:1 to composition
+    :param skip_ehr_id: if set, ehr_id is not printed
+    """
     handlers = {".xml": from_xml, ".json": from_json}
     ext = os.path.splitext(input_file)[1]
     try:
