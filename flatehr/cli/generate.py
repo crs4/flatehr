@@ -168,6 +168,7 @@ def from_file(
     template_file: str,
     conf_file: str,
     relative_root: Optional[str] = None,
+    skip_ehr_id: bool = False,
 ):
     handlers = {".xml": from_xml, ".json": from_json}
     ext = os.path.splitext(input_file)[1]
@@ -182,6 +183,7 @@ def from_file(
         template_file=template_file,
         conf_file=conf_file,
         relative_root=relative_root,
+        skip_ehr_id=skip_ehr_id,
     )
 
 
@@ -191,6 +193,7 @@ def from_xml(
     template_file: str,
     conf_file: str,
     relative_root: Optional[str] = None,
+    skip_ehr_id: bool = False,
 ):
 
     conf = _get_conf(conf_file)
@@ -211,7 +214,7 @@ def from_xml(
             template_file,
             source_kvs,
         )
-        print(ehr_id, json.dumps(flat(composition, ctx)))
+        _print_output(composition, ctx, None if skip_ehr_id else ehr_id)
 
 
 def from_json(
@@ -219,6 +222,8 @@ def from_json(
     *,
     template_file: str,
     conf_file: str,
+    relative_root: Optional[str] = None,
+    skip_ehr_id: bool = False,
 ):
 
     conf = _get_conf(conf_file)
@@ -231,7 +236,15 @@ def from_json(
         template_file,
         source_kvs,
     )
-    print(ehr_id, json.dumps(flat(composition, ctx)))
+    _print_output(composition, ctx, None if skip_ehr_id else ehr_id)
+
+
+def _print_output(composition, ctx, ehr_id=None):
+    flat_comp = json.dumps(flat(composition, ctx))
+    if ehr_id:
+        print(ehr_id, flat_comp)
+    else:
+        print(flat_comp)
 
 
 def build_composition(
