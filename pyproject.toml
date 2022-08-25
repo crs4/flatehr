@@ -19,6 +19,8 @@ Jinja2 = "^3.1.2"
 jq = "^1.2.2"
 python-dateutil = "^2.8.2"
 jsonpath-ng = "^1.5.3"
+defopt = "^6.4.0"
+pyaml = "^21.10.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
