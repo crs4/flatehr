@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flatehr"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 description = ""
 authors = ["Mauro Del Rio <mauro@crs4.it>"]
 
