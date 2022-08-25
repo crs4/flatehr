@@ -1,0 +1,68 @@
+
+ehr_id:
+  maps_to: []
+  value : "{{ random_ehr_id() }}"
+
+paths:
+  ctx/language: en
+  ctx/territory:
+    maps_to:
+      - "//ns:Location/@name"
+    suffixes:
+      "|code": "{{ value_map[maps_to[0]]  }}"
+      "|terminology" : "ISO_3166-1"
+    value_map:
+      test: IT
+      le test: FR
+
+  ctx/composer_name: test
+  ctx/subject|name : "42112"
+  ctx/encoding|code : UTF-8
+  ctx/encoding|terminology : IANA_character-sets
+  ctx/time:
+    maps_to:
+      - (//ns:Event[@eventtype='Histopathology'])[first()]/@name
+    suffixes:
+      "": "{{ date_isoformat(maps_to[0]) }}"
+
+  test/histopathology/result_group/laboratory_test_result/any_event:
+    maps_to:
+      - "//ns:Event[@eventtype='Histopathology']"
+
+  test/histopathology/result_group/laboratory_test_result/any_event:*/test_name:
+    maps_to: []
+    suffixes: 
+      "": "Histopathology"
+
+
+  test/patient_data/primary_diagnosis/primary_diagnosis:
+    maps_to: []
+    suffixes:
+      "/_null_flavour|code" : "253"
+      "/_null_flavour|terminology" : "openehr"
+      "/_null_flavour|value" : "unknown"
+
+  test/patient_data/primary_diagnosis/diagnosis_timing/primary_diagnosis/age_at_diagnosis:
+    maps_to:
+      - "//ns:Dataelement_3_1/text()"
+    suffixes:
+      "": "P{{ maps_to[0] }}Y"
+
+  test/patient_data/gender/biological_sex:
+    maps_to:
+     - "//ns:Dataelement_85_1/text()"
+    suffixes:
+      "|code":
+        value: '.inputs[0].list[] | select (.label == "{{ maps_to[0] | upper }}") | .value'
+        jq: true
+      "|value" : "{{ maps_to[0] | upper }}"
+      "|terminology" :
+        value: '.inputs[0].terminology'
+        jq: true
+    null_flavor:
+      value: unknown
+      code: 253
+      terminology: openehr
+
+set_missing_required_to_default: true
+

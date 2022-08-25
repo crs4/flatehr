@@ -1,0 +1,357 @@
+{
+  "BHImport": {
+    "@xmlns": "http://registry.samply.de/schemata/import_v1",
+    "Mdr": {
+      "URL": "https://mdr.osse-register.de/v3/api/mdr",
+      "Namespace": "urn:ccdg"
+    },
+    "BHPatient": {
+      "Identifier": {
+        "@encrypted": "false",
+        "#text": "0000"
+      },
+      "Locations": {
+        "Location": {
+          "@name": "test",
+          "BasicData": {
+            "Form": {
+              "@name": "form_28_ver-27",
+              "Dataelement_31_3": {
+                "@name": "CT",
+                "#text": "Not done"
+              },
+              "Dataelement_30_3": {
+                "@name": "MRI",
+                "#text": "Not Done"
+              },
+              "Dataelement_63_4": {
+                "@name": "Lung imaging",
+                "#text": "Not done"
+              },
+              "Dataelement_61_5": {
+                "@name": "Liver imaging",
+                "#text": "Not done"
+              },
+              "Dataelement_88_1": {
+                "@name": "Colonoscopy",
+                "#text": "Not done"
+              },
+              "Dataelement_14_3": {
+                "@name": "Microsatellite instability",
+                "#text": "Not done"
+              },
+              "Dataelement_87_1": {
+                "@name": "BRAF, PIC3CA, HER2 mutation status",
+                "#text": "Not done"
+              },
+              "Dataelement_15_2": {
+                "@name": "Mismatch repair gene expression",
+                "#text": "Not done"
+              },
+              "Dataelement_25_3": {
+                "@name": "NRAS exon 4 (codons 117 or 146)",
+                "#text": "Not done"
+              },
+              "Dataelement_24_4": {
+                "@name": "NRAS exon 3 (codons 59 or 61)",
+                "#text": "Not done"
+              },
+              "Dataelement_23_5": {
+                "@name": "NRAS exon 2 (codons 12 or 13)",
+                "#text": "Not done"
+              },
+              "Dataelement_22_4": {
+                "@name": "KRAS exon 4 (codons 117 or 146) mutation status",
+                "#text": "Not done"
+              },
+              "Dataelement_21_5": {
+                "@name": "KRAS exon 3 (codons 59 or 61)",
+                "#text": "Not done"
+              },
+              "Dataelement_20_3": {
+                "@name": "KRAS exon 2 (codons 12 or 13)",
+                "#text": "Not done"
+              },
+              "Dataelement_3_1": {
+                "@name": "Age at diagnosis (rounded to years)",
+                "#text": "63"
+              },
+              "Dataelement_51_3": {
+                "@name": "Date of diagnosis",
+                "#text": "2001-11-11"
+              },
+              "Dataelement_85_1": {
+                "@name": "Biological sex",
+                "#text": "male"
+              },
+              "Dataelement_2_2": {
+                "@name": "Participation in clinical study",
+                "#text": "FALSE"
+              },
+              "Dataelement_7_2": {
+                "@name": "Overall survival status",
+                "#text": "1"
+              },
+              "Dataelement_6_3": {
+                "@name": "Timestamp of last update of vital status",
+                "#text": "2001-11-11"
+              },
+              "Dataelement_5_2": {
+                "@name": "Vital status",
+                "#text": "UNKNOWN"
+              }
+            }
+          },
+          "Events": {
+            "Event": [
+              {
+                "@eventtype": "Histopathology",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form2": {
+                    "@name": "form_34_ver-22",
+                    "Dataelement_68_2": {
+                      "@name": "Localization of metastasis",
+                      "Value": "Brain"
+                    },
+                    "Dataelement_92_1": {
+                      "@name": "Localization of primary tumor",
+                      "#text": "C 18.0 - Caecum"
+                    },
+                    "Dataelement_91_1": {
+                      "@name": "Morphology",
+                      "#text": "Adenocarcinoma"
+                    },
+                    "Dataelement_57_3": {
+                      "@name": "Availability digital imaging",
+                      "#text": "Can be generated"
+                    },
+                    "Dataelement_58_2": {
+                      "@name": "Availability invasion front digital imaging",
+                      "#text": "Can be generated"
+                    },
+                    "Dataelement_73_3": {
+                      "@name": "UICC version",
+                      "#text": "6th edition"
+                    },
+                    "Dataelement_70_2": {
+                      "@name": "Stage",
+                      "#text": "0"
+                    },
+                    "Dataelement_71_1": {
+                      "@name": "Primary Tumor",
+                      "#text": "T0"
+                    },
+                    "Dataelement_77_1": {
+                      "@name": "Regional lymph nodes",
+                      "#text": "N0"
+                    },
+                    "Dataelement_75_1": {
+                      "@name": "Distant metastasis",
+                      "#text": "M0"
+                    },
+                    "Dataelement_83_1": {
+                      "@name": "Grade",
+                      "#text": "G1"
+                    },
+                    "Dataelement_53_3": {
+                      "@name": "WHO version",
+                      "#text": "3rd edition"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Histopathology",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form2": {
+                    "@name": "form_34_ver-22",
+                    "Dataelement_68_2": {
+                      "@name": "Localization of metastasis",
+                      "Value": "Body"
+                    },
+                    "Dataelement_92_1": {
+                      "@name": "Localization of primary tumor",
+                      "#text": "C 18.0 - Caecum"
+                    },
+                    "Dataelement_91_1": {
+                      "@name": "Morphology",
+                      "#text": "Adenocarcinoma"
+                    },
+                    "Dataelement_57_3": {
+                      "@name": "Availability digital imaging",
+                      "#text": "Can be generated"
+                    },
+                    "Dataelement_58_2": {
+                      "@name": "Availability invasion front digital imaging",
+                      "#text": "Can be generated"
+                    },
+                    "Dataelement_73_3": {
+                      "@name": "UICC version",
+                      "#text": "6th edition"
+                    },
+                    "Dataelement_70_2": {
+                      "@name": "Stage",
+                      "#text": "0"
+                    },
+                    "Dataelement_71_1": {
+                      "@name": "Primary Tumor",
+                      "#text": "T0"
+                    },
+                    "Dataelement_77_1": {
+                      "@name": "Regional lymph nodes",
+                      "#text": "N0"
+                    },
+                    "Dataelement_75_1": {
+                      "@name": "Distant metastasis",
+                      "#text": "M0"
+                    },
+                    "Dataelement_83_1": {
+                      "@name": "Grade",
+                      "#text": "G1"
+                    },
+                    "Dataelement_53_3": {
+                      "@name": "WHO version",
+                      "#text": "3rd edition"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Pharmacotherapy",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form3": {
+                    "@name": "form_33_ver-10",
+                    "Dataelement_10_2": {
+                      "@name": "Date of start of pharamacotherapy",
+                      "#text": "1"
+                    },
+                    "Dataelement_11_2": {
+                      "@name": "Date of end of pharamcotherapy",
+                      "#text": "1"
+                    },
+                    "Dataelement_81_3": {
+                      "@name": "Other pharmacotherapy scheme",
+                      "#text": "Test"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Response to therapy",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form4": {
+                    "@name": "form_31_ver-2",
+                    "Dataelement_34_1": {
+                      "@name": "Date response was obtained in weeks since initial diagnosis",
+                      "#text": "1"
+                    },
+                    "Dataelement_33_1": {
+                      "@name": "Specific response",
+                      "#text": "Complete response"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Sample",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form1": {
+                    "@name": "form_35_ver-6",
+                    "Dataelement_56_2": {
+                      "@name": "Sample ID",
+                      "#text": "1"
+                    },
+                    "Dataelement_54_2": {
+                      "@name": "Material type",
+                      "#text": "Tumor tissue"
+                    },
+                    "Dataelement_55_2": {
+                      "@name": "Preservation mode",
+                      "#text": "FFPE"
+                    },
+                    "Dataelement_89_3": {
+                      "@name": "Year of sample collection",
+                      "#text": "2001"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Sample",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form1": {
+                    "@name": "form_35_ver-6",
+                    "Dataelement_56_2": {
+                      "@name": "Sample ID",
+                      "#text": "1"
+                    },
+                    "Dataelement_54_2": {
+                      "@name": "Material type",
+                      "#text": "Other"
+                    },
+                    "Dataelement_55_2": {
+                      "@name": "Preservation mode",
+                      "#text": "FFPE"
+                    },
+                    "Dataelement_89_3": {
+                      "@name": "Year of sample collection",
+                      "#text": "2001"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Surgery",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form": {
+                    "@name": "form_32_ver-8",
+                    "Dataelement_9_2": {
+                      "@name": "Surgery radicality",
+                      "#text": "R0"
+                    },
+                    "Dataelement_8_3": {
+                      "@name": "Time difference between initial diagnosis and surgery",
+                      "#text": "1"
+                    },
+                    "Dataelement_93_1": {
+                      "@name": "Location of the tumor",
+                      "#text": "C 18.0 - Cecum"
+                    },
+                    "Dataelement_49_1": {
+                      "@name": "Surgery type",
+                      "#text": "Abdomino-perineal resection"
+                    }
+                  }
+                }
+              },
+              {
+                "@eventtype": "Targeted Therapy",
+                "@name": "11/11/2011",
+                "LogitudinalData": {
+                  "Form6": {
+                    "@name": "form_30_ver-3",
+                    "Dataelement_36_1": {
+                      "@name": "Date of end of targeted therapy",
+                      "#text": "1"
+                    },
+                    "Dataelement_35_3": {
+                      "@name": "Date of start of targeted therapy",
+                      "#text": "1"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,60 @@
+#run:
+# flatehr generate from-flat-json '{"report_id": "some_report_id", "location": "Italy", "composer": "G. House", "patient_firstname": "John" ,"patient_lastname":"Doe", "test_name": "hiccup removal" }' -t tests/resources/web_template.json -c tests/resources/mapping.yaml
+set_missing_required_to_default: true
+
+ehr_id:
+  maps_to: []
+  value : "{{ random_ehr_id() }}"
+
+paths:
+  "test/context/report_id":
+    maps_to:
+      - "report_id"
+    suffixes:
+      "": "{{ maps_to[0] }}"
+
+  "ctx/language": "en"
+  "ctx/composer_name":
+    maps_to:
+      - "composer"
+    suffixes:
+      "": "{{ maps_to[0] }}"
+
+  "ctx/subject|name" :
+    maps_to:
+      - "patient_firstname"
+      - "patient_lastname"
+    suffixes:
+      "": "{{ maps_to[0] }} {{ maps_to[1] }}"
+
+  "test/lab_result_details/result_group/laboratory_test_result/any_event/test_name":
+    maps_to:
+      - "test_name"
+    suffixes:
+      "": "{{ maps_to[0] }}"
+
+
+    
+
+
+  "ctx/encoding|code" : "UTF-8"
+  "ctx/encoding|terminology" : "IANA_character-sets"
+  "ctx/territory":
+    maps_to:
+      - "location"
+    suffixes:
+      "|code": "{{ value_map[maps_to[0]]  }}"
+      "|terminology" : "ISO_3166-1"
+    value_map:
+      Italy: IT
+
+
+  # "crc_cohort_rev/histopathology/result_group/cancer_diagnosis/localization_of_primary_tumor":
+  #   maps_to:
+  #     - "//ns:Dataelement_92_1/text()"
+  #   suffixes:
+  #     "|code":
+  #       value: '.inputs[0].list[] | select (.label | startswith("{{ maps_to[0].split("-")[1].strip().replace("C", "C ", 1) }}")) | .value'
+  #       jq: true
+  #
+  #
