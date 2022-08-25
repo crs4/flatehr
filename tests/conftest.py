@@ -1,45 +1,41 @@
 import json
-from typing import Iterable
 
 import pytest
 
-from flatehr.flat import Composition, WebTemplateNode
-from flatehr.http import OpenEHRClient
-from flatehr.ingest import (
-    BasicIngester,
-    EHRCompositionMapping,
-    Ingester,
-    MultiThreadedIngester,
-)
+from flatehr import template_factory, composition_factory
 
 
 @pytest.fixture
-def web_template_json():
-    with open("tests/resources/web_template.json") as f_obj:
+def web_template_json(web_template_path):
+    with open(web_template_path) as f_obj:
         return json.load(f_obj)
 
 
 @pytest.fixture
-def composition(web_template_json):
-    web_template = WebTemplateNode.create(web_template_json)
-    return Composition(web_template)
+def composition(template, backend):
+    return composition_factory(backend, template).get()
 
 
 @pytest.fixture
-def client() -> OpenEHRClient:
-    return OpenEHRClient("http://localhost:8080", dry_run=True)
+def template(backend, web_template_json):
+    return template_factory(backend, web_template_json).get()
 
 
 @pytest.fixture
-def ehr_composition_mapping(
-    composition, n_compositions
-) -> Iterable[EHRCompositionMapping]:
-    def _ehr_composition_mapping(n_compositions):
-        return [EHRCompositionMapping(composition, i) for i in range(n_compositions)]
-
-    return _ehr_composition_mapping
+def template_node(path, template):
+    return template[path]
 
 
-@pytest.fixture(params=[BasicIngester, MultiThreadedIngester])
-def ingester(request) -> Ingester:
-    return request.param(client=OpenEHRClient("localhost:8080", dry_run=True))
+@pytest.fixture
+def xml_source():
+    return "tests/resources/source.xml"
+
+
+@pytest.fixture
+def json_source():
+    return "tests/resources/source.json"
+
+
+@pytest.fixture
+def complex_template():
+    return "tests/resources/complex_template.json"
