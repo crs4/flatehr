@@ -65,7 +65,7 @@ $ poetry shell
 
 ## Features
  * N:N mappings between source keys and flat paths
- * source keys order preserved
+ * source keys order preserved, helpful for properly managed multiple cardinality RM objects
  * render values using jinja templates
  * use a value map to converts the source values
  * retrieve values from the web template using jq
@@ -108,7 +108,7 @@ paths:
       test: IT
       le test: FR
 
-  test/histopathology/result_group/laboratory_test_result/any_event: #non leaf path with infinite cardinality can be mapped, they are increased when mapping occurs
+  test/histopathology/result_group/laboratory_test_result/any_event: #non leaf path with multiple cardinality can be mapped, they are increased when mapping occurs
     maps_to:
       - "$..Event[?(@.@eventtype == 'Histopathology')]"
 
