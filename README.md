@@ -114,3 +114,11 @@ paths:
 
 
 ```
+
+For more exaustive examples, see *tests/test_cli.sh*.
+
+
+## Ingesting
+From parallel ingesting multiple sources to an openEHR istance, take a look at *scripts/ingest.sh*.
+
+
