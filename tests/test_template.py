@@ -55,3 +55,63 @@ def test_factory(template):
 def test_attrs(template_node, expected_attrs):
     for k, v in expected_attrs.items():
         assert getattr(template_node, k) == v
+
+
+@pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
+@pytest.mark.parametrize(
+    "expected_conf_skeleton",
+    [
+        """paths:
+  ctx/category: #  required
+    maps_to: []
+    suffixes:
+      |code:
+  ctx/encoding: #  required
+    maps_to: []
+  ctx/language: #  required
+    maps_to: []
+  ctx/subject: #  required
+    maps_to: []
+    suffixes:
+      |id:
+      |id_scheme:
+      |id_namespace:
+      |name:
+  ctx/time: #  required
+    maps_to: []
+  test/context/case_identification/participation_in_clinical_study: # NOT required
+    maps_to: []
+  test/context/case_identification/patient_pseudonym: #  required
+    maps_to: []
+  test/histopathology/result_group/laboratory_test_result/any_event/test_name: #  required
+    maps_to: []
+  test/patient_data/gender/biological_sex: #  required
+    maps_to: []
+    suffixes:
+      |code:
+  test/patient_data/metastasis_diagnosis/metastasis_diagnosis2/metastasis_diagnosis/from_event: #  required
+    maps_to: []
+  test/patient_data/metastasis_diagnosis/metastasis_diagnosis2/metastasis_diagnosis/time_of_recurrence: #  required
+    maps_to: []
+    suffixes:
+      |week:
+  test/patient_data/metastasis_diagnosis/metastasis_diagnosis: #  required
+    maps_to: []
+    suffixes:
+      |code:
+  test/patient_data/primary_diagnosis/date_of_diagnosis: # NOT required
+    maps_to: []
+  test/patient_data/primary_diagnosis/diagnosis_timing/primary_diagnosis/age_at_diagnosis: #  required
+    maps_to: []
+    suffixes:
+      |year:
+  test/patient_data/primary_diagnosis/primary_diagnosis: #  required
+    maps_to: []
+    suffixes:
+      |code:"""
+    ],
+)
+def test_conf_skeleton(template, expected_conf_skeleton):
+    conf_skeleton = template.get_conf_skeleton()
+    assert conf_skeleton == expected_conf_skeleton

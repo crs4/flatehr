@@ -258,6 +258,11 @@ def _print_output(composition, ctx, ehr_id=None):
         print(flat_comp)
 
 
+def skeleton(template_file: str):
+    template = template_factory("anytree", json.load(open(template_file, "r"))).get()
+    print(template.get_conf_skeleton())
+
+
 def build_composition(
     conf: Config,
     template_file: str,
