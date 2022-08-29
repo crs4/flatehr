@@ -1,5 +1,6 @@
 INSTALL_STAMP := .install.stamp
 TEST_STAMP := .test.stamp
+REPORTS := docs/reports
 
 
 .PHONY: install
@@ -13,30 +14,30 @@ $(INSTALL_STAMP): poetry.lock
 test: $(TEST_STAMP) 
 
 $(TEST_STAMP): $(INSTALL_STAMP) tests flatehr
-	poetry run pytest --junitxml=reports/junit/junit.xml tests
+	poetry run pytest --junitxml=$(REPORTS)/junit/junit.xml tests
 	poetry run tests/test_cli.sh
 	touch $(TEST_STAMP)
 
 .PHONY: badges
-badges: reports/tests-badge.svg reports/coverage-badge.svg
+badges: $(REPORTS)/tests-badge.svg $(REPORTS)/coverage-badge.svg
 
-reports/tests-badge.svg: $(TEST_STAMP)
-	genbadge tests -o reports/tests-badge.svg
+$(REPORTS)/tests-badge.svg: $(TEST_STAMP)
+	genbadge tests -i $(REPORTS)/junit/junit.xml  -o $(REPORTS)/tests-badge.svg
 
-reports/coverage-badge.svg: $(TEST_STAMP) coverage
-	genbadge coverage -o reports/coverage-badge.svg
+$(REPORTS)/coverage-badge.svg: $(TEST_STAMP) coverage
+	genbadge coverage -i $(REPORTS)/coverage/coverage.xml -o $(REPORTS)/coverage-badge.svg
 
 .PHONY: clean
 clean:
 	rm -rf $(INSTALL_STAMP)
 	rm -rf $(TEST_STAMP)
-	rm -rf reports
+	rm -rf $(REPORTS)
 
 .PHONY: coverage
-coverage: reports/coverage
+coverage: $(REPORTS)/coverage.xml
 
-reports/coverage:
+$(REPORTS)/coverage.xml:
 	coverage run --source=flatehr/ -m pytest
 	coverage report
-	coverage xml -o reports/coverage/coverage.xml
+	coverage xml -o $(REPORTS)/coverage/coverage.xml
 
