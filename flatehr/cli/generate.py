@@ -122,7 +122,7 @@ def date_isoformat(date: str) -> str:
     return parse_date(date).isoformat()
 
 
-def _get_conf(conf_file: str) -> Config:
+def conf_from_file(conf_file: str) -> Config:
     conf_kwargs = yaml.safe_load(open(conf_file, "r"))
     return Config(
         paths=conf_kwargs["paths"],
