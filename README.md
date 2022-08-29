@@ -27,6 +27,15 @@ Main command:
 $ poetry run flatehr -h
 ```
 
+### Configuration Generation
+
+For generating the configuration skeleton from a template, run:
+```
+$ flatehr generate skeleton path/to/web_template
+```
+
+### Composition Generation
+
 For generating a composition, use this subcommand:
 ```
 $ poetry run flatehr generate from-file -h
@@ -73,6 +82,7 @@ $ poetry shell
  * retrieve values from the web template using jq
  * set null flavour when some mapping is missing
  * set missing required values to the default value (defined in the web template)
+ * automatic configuration skeleton generation
 
 ## Architecture
 ![architecture](./docs/architecture.png)
