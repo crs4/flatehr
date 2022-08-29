@@ -16,3 +16,9 @@ test: $(INSTALL_STAMP)
 .PHONY: clean
 clean:
 	rm -rf $(INSTALL_STAMP)
+
+.PHONY: coverage
+coverage:
+	coverage run --source=flatehr/ -m pytest
+	coverage report
+
