@@ -1,4 +1,5 @@
 # FLATEHR
+[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
 [![CI](https://github.com/crs4/flatehr/actions/workflows/main.yaml/badge.svg)](https://github.com/crs4/flatehr/actions/workflows/main.yaml)
 ![test](./reports/tests-badge.svg)
 ![coverage](./reports/coverage-badge.svg)
