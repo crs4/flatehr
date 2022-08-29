@@ -158,11 +158,10 @@ class ValuesNotReady(Exception):
 
 def build_composition(
     conf: Config,
-    template_file: str,
+    template: Template,
     source_kvs: Iterator[Tuple[SourceKey, Optional[str]]],
 ) -> Tuple[Composition, Ctx, str]:
 
-    template = template_factory("anytree", json.load(open(template_file, "r"))).get()
     composition = composition_factory("anytree", template).get()
 
     pending_value_dicts: Dict[

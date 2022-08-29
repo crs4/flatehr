@@ -60,7 +60,8 @@ def from_xml(
     skip_ehr_id: bool = False,
 ):
 
-    conf = _get_conf(conf_file)
+    conf = conf_from_file(conf_file)
+    template = template_factory("anytree", json.load(open(template_file, "r"))).get()
     xpath_source = XPathSource(
         open(input_file, "r"), list(conf.inverse_mappings.keys())
     )
@@ -75,7 +76,7 @@ def from_xml(
         source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = xpath_source.iter()
         composition, ctx, ehr_id = build_composition(
             conf,
-            template_file,
+            template,
             source_kvs,
         )
         _print_output(composition, ctx, None if skip_ehr_id else ehr_id)
@@ -90,14 +91,15 @@ def from_json(
     skip_ehr_id: bool = False,
 ):
 
-    conf = _get_conf(conf_file)
+    conf = conf_from_file(conf_file)
+    template = template_factory("anytree", json.load(open(template_file, "r"))).get()
     jsonpath_source = JsonPathSource(
         open(input_file, "r"), list(conf.inverse_mappings.keys())
     )
     source_kvs: Iterator[Tuple[SourceKey, Optional[str]]] = jsonpath_source.iter()
     composition, ctx, ehr_id = build_composition(
         conf,
-        template_file,
+        template,
         source_kvs,
     )
     _print_output(composition, ctx, None if skip_ehr_id else ehr_id)
