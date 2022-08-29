@@ -19,13 +19,16 @@ $(TEST_STAMP): $(INSTALL_STAMP) tests flatehr
 	touch $(TEST_STAMP)
 
 .PHONY: badges
-badges: $(REPORTS)/tests-badge.svg $(REPORTS)/coverage-badge.svg
+badges: $(REPORTS)/tests-badge.svg $(REPORTS)/coverage-badge.svg $(REPORTS)/flake8-badge.svg
 
 $(REPORTS)/tests-badge.svg: $(TEST_STAMP)
 	genbadge tests -i $(REPORTS)/junit/junit.xml  -o $(REPORTS)/tests-badge.svg
 
 $(REPORTS)/coverage-badge.svg: $(TEST_STAMP) coverage
 	genbadge coverage -i $(REPORTS)/coverage/coverage.xml -o $(REPORTS)/coverage-badge.svg
+
+$(REPORTS)/flake8-badge.svg: $(TEST_STAMP) docs/reports/flake8stats.txt
+	genbadge flake8 -i docs/reports/flake8stats.txt -o $(REPORTS)/flake8-badge.svg
 
 .PHONY: clean
 clean:
@@ -41,3 +44,5 @@ $(REPORTS)/coverage.xml:
 	coverage report
 	coverage xml -o $(REPORTS)/coverage/coverage.xml
 
+docs/reports/flake8stats.txt:
+	flake8 flatehr/ --exit-zero  --statistics --tee --output-file $(REPORTS)/flake8stats.txt
