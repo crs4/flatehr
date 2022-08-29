@@ -6,6 +6,7 @@ import io
 import json
 import pytest
 from flatehr.cli.generate import from_file
+from flatehr.cli.inspect_template import main as inspect
 
 
 @pytest.mark.parametrize(
@@ -34,3 +35,12 @@ def test_from_file(input_file, template_file, conf_file, expected_composition):
         )
     stdout = f.getvalue()
     assert json.loads(stdout) == expected_composition
+
+
+@pytest.mark.parametrize("template_file", ("tests/resources/web_template.json",))
+def test_inspect(template_file, expected_inspect):
+    f = io.StringIO()
+    with redirect_stdout(f):
+        inspect(template_file, aql_path=True, inputs=True)
+    stdout = f.getvalue()
+    assert stdout == expected_inspect

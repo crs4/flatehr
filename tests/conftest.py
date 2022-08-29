@@ -56,3 +56,9 @@ def source_kvs():
 def expected_composition():
     with open("tests/resources/expected_composition.json") as f:
         return json.load(f)
+
+
+@pytest.fixture
+def expected_inspect():
+    with open("tests/resources/expected_inspect.txt") as f:
+        return f.read()
