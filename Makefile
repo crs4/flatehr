@@ -18,10 +18,13 @@ $(TEST_STAMP): $(INSTALL_STAMP) tests flatehr
 	touch $(TEST_STAMP)
 
 .PHONY: badges
-badges: reports/tests-badge.svg
+badges: reports/tests-badge.svg reports/coverage-badge.svg
 
 reports/tests-badge.svg: $(TEST_STAMP)
 	genbadge tests -o reports/tests-badge.svg
+
+reports/coverage-badge.svg: $(TEST_STAMP) coverage
+	genbadge coverage -o reports/coverage-badge.svg
 
 .PHONY: clean
 clean:
@@ -30,7 +33,10 @@ clean:
 	rm -rf reports
 
 .PHONY: coverage
-coverage:
+coverage: reports/coverage
+
+reports/coverage:
 	coverage run --source=flatehr/ -m pytest
 	coverage report
+	coverage xml -o reports/coverage/coverage.xml
 
