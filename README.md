@@ -1,5 +1,5 @@
 # FLATEHR
-[![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
+![Python](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 [![CI](https://github.com/crs4/flatehr/actions/workflows/main.yaml/badge.svg)](https://github.com/crs4/flatehr/actions/workflows/main.yaml)
 ![test](./docs/reports/tests-badge.svg)
 ![coverage](./docs/reports/coverage-badge.svg)
@@ -16,7 +16,6 @@ See the [examples section](#Examples) for more details.
 ## Installation
 Dependencies:
  * [Poetry](https://python-poetry.org/)
- * Python >=3.8
 
 For installing run:
 
