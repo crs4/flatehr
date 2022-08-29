@@ -19,7 +19,6 @@
       - name: workaround
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-
       - uses: actions/checkout@v3.0.1
         with:
           fetch-depth: '0'
@@ -41,8 +40,24 @@
       runs-on: ubuntu-latest
       if: github.event_name == 'push'
       needs: test
+      env:
+        POETRY_VIRTUALENVS_CREATE: false
 
       steps:
+        - name: workaround
+          run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+        - uses: actions/checkout@v3.0.1
+          with:
+            fetch-depth: '0'
+
+        - uses: actions/setup-python@v2
+          with:
+            python-version: '3.8'
+
+        - name: install deps
+          run: pip install poetry
+
         - name: badges
           run: make badges
 
