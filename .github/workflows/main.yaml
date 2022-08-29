@@ -2,7 +2,7 @@
 
   on:
     push:
-      branches: [ master, develop ]
+      branches: [ master, develop, test/test_cli ]
     pull_request:
       branches: [ master, develop ]
 
@@ -33,6 +33,15 @@
 
       - name: test
         run: make test
+
+      - name: badges
+        run: make badges
+
+      - name: commit reports and badges
+        if: github.event_name == 'push'
+        uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+        with:
+          add: 'reports'
 
     #from https://mestrak.com/blog/semantic-release-with-python-poetry-github-actions-20nn
     release:
