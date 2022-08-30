@@ -6,14 +6,8 @@ authors = ["Mauro Del Rio <mauro@crs4.it>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "^2.25.1"
 anytree = "2.8.0"
-deepdiff = "^5.5.0"
-tqdm = "^4.62.3"
-clize = "^4.2.1"
 pipe = "^2.0"
-Pynject = "^0.4.1"
-pydantic = "1.9.0"
 lxml = "^4.9.0"
 Jinja2 = "^3.1.2"
 jq = "^1.2.2"
@@ -25,7 +19,6 @@ pyaml = "^21.10.1"
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
 coverage = "^6.3.3"
-datamodel-code-generator = "^0.13.0"
 genbadge = {extras = ["all"], version = "^1.1.0"}
 
 [build-system]
