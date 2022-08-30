@@ -9,6 +9,9 @@
   jobs:
     test:
       runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          python-version: [ "3.8", "3.9", "3.10"]
       env:
         POETRY_VIRTUALENVS_CREATE: false
 
@@ -16,14 +19,13 @@
       - name: workaround
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-
       - uses: actions/checkout@v3.0.1
         with:
           fetch-depth: '0'
 
       - uses: actions/setup-python@v2
         with:
-          python-version: '3.8' 
+          python-version: '${{ matrix.python-version }}'
 
       - name: install deps
         run: pip install poetry
@@ -33,6 +35,36 @@
 
       - name: test
         run: make test
+
+    badges:
+      runs-on: ubuntu-latest
+      if: github.event_name == 'push'
+      needs: test
+      env:
+        POETRY_VIRTUALENVS_CREATE: false
+
+      steps:
+        - name: workaround
+          run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+        - uses: actions/checkout@v3.0.1
+          with:
+            fetch-depth: '0'
+
+        - uses: actions/setup-python@v2
+          with:
+            python-version: '3.8'
+
+        - name: install deps
+          run: pip install poetry
+
+        - name: badges
+          run: make badges
+
+        - name: commit reports and badges
+          uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+          with:
+            add: docs/reports
 
     #from https://mestrak.com/blog/semantic-release-with-python-poetry-github-actions-20nn
     release:

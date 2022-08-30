@@ -1,0 +1,58 @@
+flatehr/build.py:2:1: F401 'json' imported but unused
+flatehr/build.py:14:1: F401 'flatehr.factory.template_factory' imported but unused
+flatehr/build.py:37:80: E501 line too long (80 > 79 characters)
+flatehr/build.py:43:80: E501 line too long (85 > 79 characters)
+flatehr/build.py:75:80: E501 line too long (83 > 79 characters)
+flatehr/build.py:87:80: E501 line too long (82 > 79 characters)
+flatehr/build.py:139:80: E501 line too long (82 > 79 characters)
+flatehr/build.py:198:80: E501 line too long (81 > 79 characters)
+flatehr/build.py:218:80: E501 line too long (82 > 79 characters)
+flatehr/build.py:254:17: F821 undefined name 'from_file'
+flatehr/core.py:20:80: E501 line too long (90 > 79 characters)
+flatehr/core.py:168:80: E501 line too long (86 > 79 characters)
+flatehr/core.py:171:80: E501 line too long (88 > 79 characters)
+flatehr/core.py:210:26: W605 invalid escape sequence '\/'
+flatehr/core.py:240:80: E501 line too long (85 > 79 characters)
+flatehr/__init__.py:1:1: F401 'flatehr.impl.anytree_core' imported but unused
+flatehr/__init__.py:2:1: F401 'flatehr.factory.composition_factory' imported but unused
+flatehr/__init__.py:2:1: F401 'flatehr.factory.template_factory' imported but unused
+flatehr/sources/xml.py:44:80: E501 line too long (80 > 79 characters)
+flatehr/sources/xml.py:65:80: E501 line too long (83 > 79 characters)
+flatehr/sources/xml.py:80:80: E501 line too long (85 > 79 characters)
+flatehr/sources/json.py:22:80: E501 line too long (85 > 79 characters)
+flatehr/impl/anytree_core.py:8:1: F401 'pipe.tee' imported but unused
+flatehr/impl/anytree_core.py:8:1: F401 'pipe.traverse' imported but unused
+flatehr/impl/anytree_core.py:48:80: E501 line too long (87 > 79 characters)
+flatehr/impl/anytree_core.py:121:80: E501 line too long (80 > 79 characters)
+flatehr/impl/anytree_core.py:140:80: E501 line too long (86 > 79 characters)
+flatehr/impl/anytree_core.py:150:80: E501 line too long (81 > 79 characters)
+flatehr/impl/anytree_core.py:173:80: E501 line too long (88 > 79 characters)
+flatehr/impl/anytree_core.py:179:80: E501 line too long (85 > 79 characters)
+flatehr/impl/anytree_core.py:196:80: E501 line too long (86 > 79 characters)
+flatehr/impl/anytree_core.py:220:80: E501 line too long (86 > 79 characters)
+flatehr/impl/anytree_core.py:224:80: E501 line too long (86 > 79 characters)
+flatehr/impl/anytree_core.py:228:48: E713 test for membership should be 'not in'
+flatehr/impl/anytree_core.py:235:80: E501 line too long (83 > 79 characters)
+flatehr/impl/anytree_core.py:237:80: E501 line too long (111 > 79 characters)
+flatehr/impl/anytree_core.py:256:80: E501 line too long (88 > 79 characters)
+flatehr/impl/anytree_core.py:269:80: E501 line too long (86 > 79 characters)
+flatehr/impl/anytree_core.py:272:80: E501 line too long (81 > 79 characters)
+flatehr/impl/anytree_core.py:282:80: E501 line too long (81 > 79 characters)
+flatehr/impl/anytree_core.py:290:17: F841 local variable 'ex' is assigned to but never used
+flatehr/cli/generate.py:28:80: E501 line too long (100 > 79 characters)
+flatehr/cli/generate.py:29:80: E501 line too long (116 > 79 characters)
+flatehr/cli/generate.py:43:80: E501 line too long (88 > 79 characters)
+flatehr/cli/generate.py:64:80: E501 line too long (85 > 79 characters)
+flatehr/cli/generate.py:76:80: E501 line too long (83 > 79 characters)
+flatehr/cli/generate.py:95:80: E501 line too long (85 > 79 characters)
+flatehr/cli/generate.py:99:80: E501 line too long (82 > 79 characters)
+flatehr/cli/generate.py:117:80: E501 line too long (85 > 79 characters)
+flatehr/cli/inspect_template.py:15:80: E501 line too long (107 > 79 characters)
+flatehr/cli/inspect_template.py:18:80: E501 line too long (82 > 79 characters)
+flatehr/cli/inspect_template.py:20:80: E501 line too long (88 > 79 characters)
+41    E501 line too long (80 > 79 characters)
+1     E713 test for membership should be 'not in'
+7     F401 'flatehr.impl.anytree_core' imported but unused
+1     F821 undefined name 'from_file'
+1     F841 local variable 'ex' is assigned to but never used
+1     W605 invalid escape sequence '\/'

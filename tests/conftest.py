@@ -50,3 +50,15 @@ def conf():
 @pytest.fixture
 def source_kvs():
     return iter([("//ns:Dataelement_3_1/text()", "10")])
+
+
+@pytest.fixture
+def expected_composition():
+    with open("tests/resources/expected_composition.json") as f:
+        return json.load(f)
+
+
+@pytest.fixture
+def expected_inspect():
+    with open("tests/resources/expected_inspect.txt") as f:
+        return f.read()
