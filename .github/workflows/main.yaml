@@ -12,8 +12,6 @@
       strategy:
         matrix:
           python-version: [ "3.8", "3.9", "3.10"]
-      env:
-        POETRY_VIRTUALENVS_CREATE: false
 
       steps:
       - name: workaround
@@ -27,21 +25,34 @@
         with:
           python-version: '${{ matrix.python-version }}'
 
-      - name: install deps
-        run: pip install poetry
+
+      - name: Install poetry
+        uses: Gr1N/setup-poetry@v7
+        # with:
+        #   virtualenvs-create: true
+        #   virtualenvs-in-project: true
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: install
         run: make install
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
 
       - name: test
-        run: make test
+        run: poetry run make test
 
     badges:
       runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          python-version: [ "3.8" ]
       if: github.event_name == 'push'
       needs: test
-      env:
-        POETRY_VIRTUALENVS_CREATE: false
 
       steps:
         - name: workaround
@@ -53,13 +64,23 @@
 
         - uses: actions/setup-python@v2
           with:
-            python-version: '3.8'
+            python-version: '${{ matrix.python-version }}'
 
-        - name: install deps
-          run: pip install poetry
+        - name: Install poetry
+          uses: Gr1N/setup-poetry@v7
+          # with:
+          #   virtualenvs-create: true
+          #   virtualenvs-in-project: true
+
+        - name: Load cached venv
+          id: cached-poetry-dependencies
+          uses: actions/cache@v2
+          with:
+            path: ~/.cache/pypoetry/virtualenvs
+            key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
         - name: badges
-          run: make clean badges
+          run: poetry run make clean badges
 
         - name: commit reports and badges
           uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
