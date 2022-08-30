@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from flatehr import template_factory, composition_factory
+from flatehr.factory import template_factory, composition_factory
 from flatehr.cli.generate import conf_from_file
 
 

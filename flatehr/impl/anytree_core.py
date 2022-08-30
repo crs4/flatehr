@@ -5,14 +5,13 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Union, cast
 
 import anytree
-from pipe import chain, filter, map, tee, traverse
+from pipe import chain, filter, map
 
 from flatehr.core import Composition
 from flatehr.core import CompositionNode as BaseCompositionNode
 from flatehr.core import InvalidDefault, Template
 from flatehr.core import TemplateNode as BaseTemplateNode
 from flatehr.core import WebTemplate, remove_cardinality, to_string
-from flatehr.factory import composition_factory, template_factory
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,6 @@ class Node(anytree.NodeMixin):
         return anytree.search.findall(self, filter_=lambda n: n._id == _id)
 
 
-@template_factory.register("anytree")
 class TemplateFactory:
     def __init__(self, web_template: WebTemplate):
         self._web_template = web_template
@@ -105,7 +103,6 @@ class TemplateNode(Node, BaseTemplateNode):
         return {"inputs": self.inputs}
 
 
-@composition_factory.register("anytree")
 class CompositionFactory:
     def __init__(self, template: Template):
         self._template = template
@@ -225,7 +222,7 @@ class CompositionNode(Node, BaseCompositionNode):
         #      )
         #      return
 
-        nodes = self._get_or_create_node(path, not "*" in path)
+        nodes = self._get_or_create_node(path, "*" not in path)
         if not isinstance(nodes, list):
             nodes = [nodes]
         for node in nodes:
@@ -287,7 +284,7 @@ class CompositionNode(Node, BaseCompositionNode):
                 remaining_path = path[slash_after_wildcard_idx:].strip("/")
                 try:
                     wildcard_nodes = self._resolver.glob(self, _path)
-                except anytree.ChildResolverError as ex:
+                except anytree.ChildResolverError:
                     wildcard_nodes = []
 
                 nodes = [

@@ -2,6 +2,7 @@ import abc
 from typing import Generic, List, TypeVar
 
 from flatehr.core import Composition, Template
+from flatehr.impl.anytree_core import CompositionFactory, TemplateFactory
 
 T = TypeVar("T", Template, Composition)
 
@@ -24,12 +25,8 @@ class MetaFactory:
         except KeyError as ex:
             raise UnsupportedBackend(backend) from ex
 
-    def register(self, backend):
-        def _inner(func, *args, **kwargs):
-            self._registry[backend] = func
-            return func
-
-        return _inner
+    def register(self, backend, func):
+        self._registry[backend] = func
 
     def backends(
         self,
@@ -43,3 +40,6 @@ class UnsupportedBackend(Exception):
 
 template_factory = MetaFactory()
 composition_factory = MetaFactory()
+
+template_factory.register("anytree", TemplateFactory)
+composition_factory.register("anytree", CompositionFactory)

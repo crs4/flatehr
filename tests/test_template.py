@@ -3,7 +3,7 @@
 
 import pytest
 
-from flatehr import template_factory
+from flatehr.factory import template_factory
 from flatehr.core import Template
 
 
