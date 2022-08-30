@@ -6,6 +6,13 @@ from flatehr.factory import template_factory
 
 
 def main(template_file: str, *, aql_path: bool = False, inputs: bool = False):
+    """Shows the template tree, with info about type, cardinality,
+    requiredness and optionally aql path and expected inputs.
+
+    :param template_file: path to the web template (json)
+    :param aql_path: flag, if true shows the aql path for each node
+    :param inputs: flag, if true shows the inputs for each node
+    """
     with open(template_file, "r") as f_obj:
         template_dict = json.load(f_obj)
 

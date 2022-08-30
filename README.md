@@ -15,33 +15,60 @@ See the [examples section](#Examples) for more details.
 
 ## Installation
 Dependencies:
- * [Poetry](https://python-poetry.org/)
+ * [Poetry](https://python-poetry.org/): pip install poetry
 
-For installing run:
+ For installing FLATEHR, first enable virtualenv:
 
 ```
-make install
+$ poetry shell
+```
+
+Then run:
+
+```
+$ make install
 ```
 
 ## CLI
 Main command:
 
-```bash
-$ poetry run flatehr -h
+```
+$ flatehr -h
+usage: flatehr [-h] [--version] {generate,inspect} ...
+
+positional arguments:
+  {generate,inspect}
+    inspect           Shows the template tree, with info about type, cardinality,
+                      requiredness and optionally aql path and expected inputs.
+
+optional arguments:
+  -h, --help          show this help message and exit
+  --version           show program's version number and exit
+
 ```
 
-### Configuration Generation
+### Generating Configuration
 
 For generating the configuration skeleton from a template, run:
 ```
-$ flatehr generate skeleton path/to/web_template
+$ flatehr generate skeleton -h
+usage: flatehr generate skeleton [-h] template_file
+
+Generate a configuration skeleton for the given template.
+
+positional arguments:
+  template_file  the path to the web template (json)
+
+optional arguments:
+  -h, --help     show this help message and exit
+
 ```
 
-### Composition Generation
+### Generating a Composition
 
 For generating a composition, use this subcommand:
 ```
-$ poetry run flatehr generate from-file -h
+$ flatehr generate from-file -h
 usage: flatehr generate from-file [-h] -t TEMPLATE_FILE -c CONF_FILE [-r RELATIVE_ROOT] [-s | --skip-ehr-id | --no-skip-ehr-id] input_file
 
 Generates composition(s) from a file. xml and json sources supported.
@@ -68,14 +95,34 @@ optional arguments:
 
 For an example, try:
 ```bash
-$ poetry run flatehr generate from-file -t tests/resources/web_template.json -c tests/resources/xml_conf.yaml --skip-ehr-id tests/resources/source.xml
+$ flatehr generate from-file -t tests/resources/web_template.json -c tests/resources/xml_conf.yaml --skip-ehr-id tests/resources/source.xml
 ```
 
-To avoid the initial ```poetry run```, enable the virtualenv using:
+### Inspecting a template
 
-```bash
-$ poetry shell
+For inspecting a template, run:
 ```
+$ flatehr inspect -h
+usage: flatehr inspect [-h] [-a | --aql-path | --no-aql-path] [-i | --inputs | --no-inputs] template_file
+
+Shows the template tree, with info about type, cardinality,
+requiredness and optionally aql path and expected inputs.
+
+positional arguments:
+  template_file         path to the web template (json)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -a, --aql-path, --no-aql-path
+                        flag, if true shows the aql path for each node
+                        (default: False)
+  -i, --inputs, --no-inputs
+                        flag, if true shows the inputs for each node
+                        (default: False)
+
+```
+
+
 
 ## Features
  * N:N mappings between source keys and flat paths
@@ -86,6 +133,7 @@ $ poetry shell
  * set null flavour when some mapping is missing
  * set missing required values to the default value (defined in the web template)
  * automatic configuration skeleton generation
+ * inspect a template
 
 ## Architecture
 ![architecture](./docs/architecture.png)
