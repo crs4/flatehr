@@ -1,5 +1,4 @@
 import dataclasses
-import json
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
@@ -11,7 +10,7 @@ from jinja2 import Environment
 from pyaml import yaml
 
 from flatehr.core import Composition, NullFlavour, Template, TemplatePath
-from flatehr.factory import composition_factory, template_factory
+from flatehr.factory import composition_factory
 
 SourceKey = str
 Suffix = str
@@ -246,9 +245,3 @@ def _get_conf(conf_file: str) -> Config:
             "set_missing_required_to_default", True
         ),
     )
-
-
-if __name__ == "__main__":
-    import defopt
-
-    defopt.run([from_file])
