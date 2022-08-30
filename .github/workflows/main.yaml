@@ -2,7 +2,7 @@
 
   on:
     push:
-      branches: [ master, develop, test/test_cli ]
+      branches: [ master, develop ]
     pull_request:
       branches: [ master, develop ]
 
