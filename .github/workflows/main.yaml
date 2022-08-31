@@ -37,7 +37,7 @@
         uses: actions/cache@v2
         with:
           path: ~/.cache/pypoetry/virtualenvs
-          key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-cache-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: install
         run: make install
@@ -46,60 +46,46 @@
       - name: test
         run: poetry run make test
 
-    badges:
-      runs-on: ubuntu-latest
-      strategy:
-        matrix:
-          python-version: [ "3.8" ]
-      if: github.event_name == 'push'
-      needs: test
-
-      steps:
-        - name: workaround
-          run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
-
-        - uses: actions/checkout@v3.0.1
-          with:
-            fetch-depth: '0'
-
-        - uses: actions/setup-python@v2
-          with:
-            python-version: '${{ matrix.python-version }}'
-
-        - name: Install poetry
-          uses: Gr1N/setup-poetry@v7
-          # with:
-          #   virtualenvs-create: true
-          #   virtualenvs-in-project: true
-
-        - name: Load cached venv
-          id: cached-poetry-dependencies
-          uses: actions/cache@v2
-          with:
-            path: ~/.cache/pypoetry/virtualenvs
-            key: poetry-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
-        - name: badges
-          run: poetry run make clean badges
-
-        - name: commit reports and badges
-          uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
-          with:
-            add: docs/reports
 
     #from https://mestrak.com/blog/semantic-release-with-python-poetry-github-actions-20nn
-    release:
+    badge-n-release:
       needs: test
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'chore(release):')
+      if: github.event_name == 'push'
+      env:
+        PYTHON_VERSION: 3.8  
+
       runs-on: ubuntu-latest
       steps:
+      - name: workaround
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: ${{ env.PYTHON_VERSION }}
       - uses: actions/checkout@v3.0.1
         with:
           fetch-depth: '0'
+
+      - name: Install poetry
+        uses: Gr1N/setup-poetry@v7
+
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pypoetry/virtualenvs
+          key: poetry-cache-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+      - name: badges
+        run: poetry run make clean badges
+
+      - name: commit reports and badges
+        uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+        with:
+          add: docs/reports
+
       - name: publish release
+        if: github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'chore(release):')
         uses: relekang/python-semantic-release@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
