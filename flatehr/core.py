@@ -110,6 +110,29 @@ class Template:
         path = os.path.relpath(path, self.root._id)
         return cast(TemplateNode, self.root.get(path))
 
+    def get_conf_skeleton(self) -> str:
+        conf_skeleton = set()
+        indent = "  "
+        for leaf in self.root.leaves:
+            if leaf.in_context:
+                path = f"{indent}ctx/{leaf._id}:"
+            else:
+                path = f"{indent}{str(leaf)}:"
+            path += f" # {'NOT' if not leaf.required else ''} required"
+            path += f"\n{indent}{indent}maps_to: []"
+            suffixes = []
+            if leaf.inputs:
+                for _input in leaf.inputs:
+                    if "suffix" in _input:
+                        suffixes.append(f"|{_input['suffix']}:")
+            if suffixes:
+                path += f"\n{indent}{indent}{indent}".join(
+                    [f"\n{indent}{indent}suffixes:"] + suffixes
+                )
+
+            conf_skeleton.add(path)
+        return "\n".join(["paths:"] + sorted(list(conf_skeleton)))
+
 
 @dataclass
 class TemplateNode(_Node, abc.ABC):
