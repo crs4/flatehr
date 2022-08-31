@@ -114,6 +114,10 @@ def _print_output(composition, ctx, ehr_id=None):
 
 
 def skeleton(template_file: str):
+    """Generate a configuration skeleton for the given template.
+
+    :param template_file: the path to the web template (json)
+    """
     template = template_factory("anytree", json.load(open(template_file, "r"))).get()
     print(template.get_conf_skeleton())
 
