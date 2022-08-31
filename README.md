@@ -15,6 +15,10 @@ See the [examples section](#Examples) for more details.
 
 ## Architecture
 ![architecture](./docs/architecture.png)
+FLATEHR extracts an **ordered list of key-value tuples** from a source according to a [configuration file](#configuration). 
+Keys are identified by XPATH or [JSONPATH](https://github.com/h2non/jsonpath-ng) strings, depending on the type of the source.
+A **flat composition** and optionally an **external ehr id** are then generated according to the configured mappings, 
+and can be submitted to an openEHR server suppporting the simSDT syntax.
 
 ## Features
  * N:N mappings between source keys and flat paths
@@ -45,7 +49,7 @@ $ make install
 
 ## Configuration
 
-The configuration for generating a composition (see [this](#generating-configuration) 
+The configuration for generating a composition (see [this](#generating-a-configuration-file) 
 and [this](#generating-a-composition)) is written in YAML file.
 For a quick overview, take a look at the [examples section](#examples).
 
@@ -265,7 +269,7 @@ optional arguments:
 
 ```
 
-### Generating Configuration
+### Generating a Configuration File
 
 For generating the configuration skeleton from a template, run:
 ```
