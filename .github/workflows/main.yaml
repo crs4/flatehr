@@ -90,8 +90,7 @@
     #from https://mestrak.com/blog/semantic-release-with-python-poetry-github-actions-20nn
     release:
       needs: test
-      # https://github.community/t/how-do-i-specify-job-dependency-running-in-another-workflow/16482
-      if: "!contains(github.event.head_commit.message, 'chore(release):')"
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'chore(release):')
       runs-on: ubuntu-latest
       steps:
       - uses: actions/setup-python@v2
@@ -101,14 +100,13 @@
         with:
           fetch-depth: '0'
       - name: publish release
-        if: github.ref == 'refs/heads/master' &&  github.event_name == 'push'
         uses: relekang/python-semantic-release@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: publish prerelease
-        if: github.event_name == 'pull_request' && github.base_ref == 'master'
-        uses: relekang/python-semantic-release@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          additional_options: --prerelease
+      # - name: publish prerelease
+      #   if: github.event_name == 'pull_request' && github.base_ref == 'master'
+      #   uses: relekang/python-semantic-release@master
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     additional_options: --prerelease
