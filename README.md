@@ -1,9 +1,9 @@
 # FLATEHR
 ![Python](https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue)
 [![CI](https://github.com/crs4/flatehr/actions/workflows/main.yaml/badge.svg)](https://github.com/crs4/flatehr/actions/workflows/main.yaml)
-![test](./docs/reports/tests-badge.svg)
-![coverage](./docs/reports/coverage-badge.svg)
-![flake8](./docs/reports/flake8-badge.svg)
+![test](https://github.com/crs4/flatehr/raw/master/docs/reports/tests-badge.svg)
+![coverage](https://github.com/crs4/flatehr/raw/master/docs/reports/coverage-badge.svg)
+![flake8](https://github.com/crs4/flatehr/raw/master/docs/reports/flake8-badge.svg)
 
 **FLATEHR** is a *low-code* Python tool for creating [openEHR](https://www.openehr.org/) **compositions** from different kind of sources. At the moment, **xml** and **json** sources are supported.
 Generated compositions are formatted according to the [flat (simSDT) format](https://specifications.openehr.org/releases/ITS-REST/latest/simplified_data_template.html). 
@@ -14,7 +14,7 @@ The mapping is configured via a **yaml** file.
 See the [examples section](#Examples) for more details.
 
 ## Architecture
-![architecture](./docs/architecture.png)
+![architecture](https://github.com/crs4/flatehr/raw/master/docs/architecture.png)
 FLATEHR extracts an **ordered list of key-value tuples** from a source according to a [configuration file](#configuration). 
 Keys are identified by XPATH or [JSONPATH](https://github.com/h2non/jsonpath-ng) strings, depending on the type of the source.
 A **flat composition** and optionally an **external ehr id** are then generated according to the configured mappings, 
