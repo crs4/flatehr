@@ -13,13 +13,6 @@ Generated compositions are formatted according to the [flat (simSDT) format](htt
 The mapping is configured via a **yaml** file.
 See the [examples section](#Examples) for more details.
 
-## Architecture
-![architecture](https://github.com/crs4/flatehr/raw/master/docs/architecture.png)
-FLATEHR extracts an **ordered list of key-value tuples** from a source according to a [configuration file](#configuration). 
-Keys are identified by XPATH or [JSONPATH](https://github.com/h2non/jsonpath-ng) strings, depending on the type of the source.
-A **flat composition** and optionally an **external ehr id** are then generated according to the configured mappings, 
-and can be submitted to an openEHR server suppporting the simSDT syntax.
-
 ## Features
  * N:N mappings between source keys and flat paths
  * source keys order preserved, helpful for properly managed multiple cardinality RM objects
@@ -32,6 +25,16 @@ and can be submitted to an openEHR server suppporting the simSDT syntax.
  * inspect a template
 
 ## Installation
+### From pip
+
+Run:
+```
+pip install flatehr
+
+```
+
+### From sources:
+
 Dependencies:
  * [Poetry](https://python-poetry.org/): ```pip install poetry```
 
@@ -46,6 +49,14 @@ Then run:
 ```
 $ make install
 ```
+
+## Architecture
+![architecture](https://github.com/crs4/flatehr/raw/master/docs/architecture.png)
+FLATEHR extracts an **ordered list of key-value tuples** from a source according to a [configuration file](#configuration). 
+Keys are identified by XPATH or [JSONPATH](https://github.com/h2non/jsonpath-ng) strings, depending on the type of the source.
+A **flat composition** and optionally an **external ehr id** are then generated according to the configured mappings, 
+and can be submitted to an openEHR server suppporting the simSDT syntax.
+
 
 ## Configuration
 
