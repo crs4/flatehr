@@ -102,7 +102,7 @@ class ValueDict(dict):
 
     def __getitem__(self, key):
         if not self.completed():
-            if self.null_flavor:
+            if self.null_flavor is not None:
                 return self.null_flavor[key]
             raise ValuesNotReady()
 
@@ -120,14 +120,14 @@ class ValueDict(dict):
 
     def values(self):
         if not self.completed():
-            if self.null_flavor:
+            if self.null_flavor is not None:
                 return self.null_flavor.values()
             raise ValuesNotReady()
         return self._dict.values()
 
     def items(self):
         if not self.completed():
-            if self.null_flavor:
+            if self.null_flavor is not None:
                 return self.null_flavor.items()
             raise ValuesNotReady()
         return self._dict.items()
@@ -199,7 +199,12 @@ def build_composition(
                     value_dicts = pending_value_dicts.pop((source_key, path._id))
                 except KeyError:
                     value_dicts = [
-                        ValueDict(composition.template, path, path.value_map)
+                        ValueDict(
+                            composition.template,
+                            path,
+                            path.value_map,
+                            null_flavor=path.null_flavor,
+                        )
                     ]
 
                     for k in path.maps_to:
