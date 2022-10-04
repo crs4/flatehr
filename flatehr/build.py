@@ -35,6 +35,7 @@ class Config:
                 v.get("suffixes", {}),
                 v.get("value_map", {}),
                 NullFlavour(**v["null_flavor"]) if "null_flavor" in v else None,
+                v.get("optional", False),
             )
             if isinstance(v, dict)
             else Path(k, [], {"": v})
@@ -75,6 +76,7 @@ class Path:
     suffixes: Dict[Suffix, CodeStr] = dataclasses.field(default_factory=lambda: {})
     value_map: Dict = dataclasses.field(default_factory=lambda: {})
     null_flavor: Optional[NullFlavour] = None
+    optional: bool = False
 
     def __hash__(self) -> int:
         return hash(self._id)
@@ -115,21 +117,24 @@ class ValueDict(dict):
         if not self.completed():
             if self.null_flavor:
                 return self.null_flavor.keys()
-            raise ValuesNotReady()
+            elif not self.path.optional:
+                raise ValuesNotReady()
         return self._dict.keys()
 
     def values(self):
         if not self.completed():
             if self.null_flavor is not None:
                 return self.null_flavor.values()
-            raise ValuesNotReady()
+            elif not self.path.optional:
+                raise ValuesNotReady()
         return self._dict.values()
 
     def items(self):
         if not self.completed():
             if self.null_flavor is not None:
                 return self.null_flavor.items()
-            raise ValuesNotReady()
+            elif not self.path.optional:
+                raise ValuesNotReady()
         return self._dict.items()
 
     def _populate_dict(self):
@@ -140,13 +145,17 @@ class ValueDict(dict):
         ]
 
         for k, v in self.path.suffixes.items():
-            if isinstance(v, str):
+            if not isinstance(v, dict):
                 v = {"value": v, "jq": False}
             env = Environment()
             env.globals["date_isoformat"] = date_isoformat
             env.globals.update(get_udf())
-            t = env.from_string(v["value"])
-            value = t.render(maps_to=maps_to, value_map=self.value_map)
+            try:
+                t = env.from_string(v["value"])
+                value = t.render(maps_to=maps_to, value_map=self.value_map)
+            except TypeError:
+                value = v["value"]
+
             if v["jq"]:
                 tpl = self.template[self.path._id].json()
                 value = jq.first(value, tpl)
@@ -173,7 +182,10 @@ def build_composition(
     for path in conf.paths:
         if not path.maps_to:
             value_dict = ValueDict(
-                composition.template, path, path.value_map, path.null_flavor
+                composition.template,
+                path,
+                path.value_map,
+                path.null_flavor,
             )
             if path._id.startswith("ctx/"):
                 ctx[path._id] = value_dict
@@ -224,7 +236,7 @@ def build_composition(
     for path in set([p for p in conf.paths if not p._id.startswith("ctx")]) - set(
         consumed_paths
     ):
-        if path.null_flavor is not None:
+        if path.null_flavor is not None and not path.optional:
             composition[path._id] = path.null_flavor
         elif not path.maps_to:
             composition[path._id] = {k: v for k, v in path.suffixes.items()}
