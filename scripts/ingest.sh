@@ -8,6 +8,7 @@ parser.add_argument('-l', '--login', type=str, help='user:password', default='eh
 parser.add_argument('-t', '--template', type=str, help='web template', required=True)
 parser.add_argument('-c', '--conf', type=str, help='composition generation conf', required=True)
 parser.add_argument('-p', '--processes', type=int, help='Parallel processes used', default=1)
+parser.add_argument('-n', '--namespace', type=str, help='namespace for ehr creation', required=True)
 EOF
 # set -xeuo
 
@@ -20,7 +21,7 @@ ls $INFILE  | xargs -n1 -P $PROCESSES   flatehr generate from-file -c $CONF -t $
   tqdm --total $(ls $INFILE | wc -l)  | \
   while read ext_id  comp ; do    
     # echoerr $ext_id
-    ehr_payload="{ \"_type\": \"EHR_STATUS\", \"archetype_node_id\": \"openEHR-EHR-EHR_STATUS.generic.v1\", \"name\": { \"value\": \"EHR Status\" }, \"subject\": { \"external_ref\": { \"id\": { \"_type\": \"GENERIC_ID\", \"value\": \"$ext_id\", \"scheme\": \"id_scheme\" }, \"namespace\": \"examples\", \"type\": \"PERSON\" } }, \"is_modifiable\": true, \"is_queryable\": true }"
+    ehr_payload="{ \"_type\": \"EHR_STATUS\", \"archetype_node_id\": \"openEHR-EHR-EHR_STATUS.generic.v1\", \"name\": { \"value\": \"EHR Status\" }, \"subject\": { \"external_ref\": { \"id\": { \"_type\": \"GENERIC_ID\", \"value\": \"$ext_id\", \"scheme\": \"id_scheme\" }, \"namespace\": \"$NAMESPACE\", \"type\": \"PERSON\" } }, \"is_modifiable\": true, \"is_queryable\": true }"
     ehr_id=$(curl -s -X POST -d "$ehr_payload"  -u ehrbase-user:SuperSecretPassword -H 'Prefer: return=representation' -H 'Content-type: application/json '  $SERVER/ehrbase/rest/openehr/v1/ehr  | jq -r .ehr_id.value)
     echo $comp > compositions/${ehr_id}.json
     # set -xeuo
