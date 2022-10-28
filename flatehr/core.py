@@ -124,14 +124,14 @@ class Template:
             if leaf.inputs:
                 for _input in leaf.inputs:
                     if "suffix" in _input:
-                        suffixes.append(f"|{_input['suffix']}:")
+                        suffixes.append(f'"|{_input["suffix"]}": ""')
             if suffixes:
                 path += f"\n{indent}{indent}{indent}".join(
                     [f"\n{indent}{indent}suffixes:"] + suffixes
                 )
 
             conf_skeleton.add(path)
-        return "\n".join(["paths:"] + sorted(list(conf_skeleton)))
+        return "\n".join(["paths:"] + sorted(list(conf_skeleton))) + "\n"
 
 
 @dataclass
