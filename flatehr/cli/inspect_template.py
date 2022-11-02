@@ -22,7 +22,9 @@ def main(template_file: str, *, aql_path: bool = False, inputs: bool = False):
         try:
             cardinality = f"[{'0' if not node.required else '1'}..{'1' if not node.inf_cardinality else '-1'}]"
             ctx = " , CTX" if node.in_context else ""
-            _aql_path = ", " + node.aql_path if aql_path else ""
+
+            _aql_path = ", " + str(node.aql_path) if aql_path else ""
+
             _inputs = ", " + json.dumps(node.inputs) if inputs and node.inputs else ""
             print(
                 f"{pre}{str(node)} ({node.rm_type}, {cardinality}{ctx}{_aql_path}{_inputs})"
@@ -35,3 +37,9 @@ class RenderException(Exception):
     def __init__(self, node, *args: object) -> None:
         self.node = node
         super().__init__(*args)
+
+
+if __name__ == "__main__":
+    import defopt
+
+    defopt.run(main)

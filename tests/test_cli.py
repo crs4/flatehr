@@ -44,3 +44,7 @@ def test_inspect(template_file, expected_inspect):
         inspect(template_file, aql_path=True, inputs=True)
     stdout = f.getvalue()
     assert stdout == expected_inspect
+
+
+def test_missing_aql_path(missing_aql_path_webtemplate):
+    inspect(missing_aql_path_webtemplate, aql_path=True)
