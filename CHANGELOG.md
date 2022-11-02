@@ -2,6 +2,12 @@
 
 <!--next-version-placeholder-->
 
+## v1.1.1 (2022-11-02)
+### Documentation
+* Add installation from pip, move sections around. [skip ci] ([`b6410f9`](https://github.com/crs4/flatehr/commit/b6410f9d181c2d3f7fa10f6c208dbd0a2e49feb5))
+* Add description, [skip ci] ([`82475f8`](https://github.com/crs4/flatehr/commit/82475f82c0f7d049c87dc47e984ef16401a749b3))
+* Use raw github url for images in README.md (so they are visible in pypi) ([`59838f4`](https://github.com/crs4/flatehr/commit/59838f416fbc4c4795764257926a9182b710592a))
+
 ## v1.1.0 (2022-09-30)
 ### Feature
 * Add conf skeleton generation from template ([`1abc3dc`](https://github.com/crs4/flatehr/commit/1abc3dc487717036fbe7748232cfe5a2c6f1a5e6))
