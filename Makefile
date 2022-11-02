@@ -59,6 +59,7 @@ $(DOCKER_STAMP): flatehr poetry.lock docker/Dockerfile
 	cp README.md docker/.docker-context
 	$(eval version=$(shell semantic-release print-version))
 	docker build -f docker/Dockerfile docker/.docker-context -t flatehr:$(version)
+	docker tag flatehr:$(version) flatehr
 	touch $(DOCKER_STAMP)
 
 .PHONY: docker
