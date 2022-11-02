@@ -68,6 +68,9 @@
 
       - name: Install poetry
         uses: Gr1N/setup-poetry@v7
+        with:
+          virtualenvs-create: false
+          virtualenvs-in-project: false
 
       - name: Load cached venv
         id: cached-poetry-dependencies
