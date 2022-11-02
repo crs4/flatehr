@@ -85,7 +85,7 @@
           add: docs/reports
 
       - name: publish release
-        if: github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'chore(release):')
+        if: github.ref == 'refs/heads/develop' && contains(github.event.head_commit.message, 'chore(trigger-release)')
         uses: relekang/python-semantic-release@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
