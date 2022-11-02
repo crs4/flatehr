@@ -1,6 +1,8 @@
 INSTALL_STAMP := .install.stamp
 TEST_STAMP := .test.stamp
 REPORTS := docs/reports
+DOCKER_STAMP := .docker_stamp
+DOCKER_CONTEXT := docker/.docker-context
 
 
 .PHONY: install
@@ -35,6 +37,8 @@ clean:
 	rm -rf $(INSTALL_STAMP)
 	rm -rf $(TEST_STAMP)
 	rm -rf $(REPORTS)
+	rm -rf $(DOCKER_STAMP)
+	rm -rf $(DOCKER_CONTEXT)
 
 .PHONY: coverage
 coverage: $(REPORTS)/coverage.xml
@@ -46,3 +50,30 @@ $(REPORTS)/coverage/coverage.xml:
 
 docs/reports/flake8stats.txt:
 	flake8 flatehr/ --exit-zero  --statistics --tee --output-file $(REPORTS)/flake8stats.txt
+
+$(DOCKER_STAMP): flatehr poetry.lock docker/Dockerfile
+	mkdir -p $(DOCKER_CONTEXT)
+	cp -r flatehr  docker/.docker-context
+	cp poetry.lock docker/.docker-context
+	cp pyproject.toml docker/.docker-context
+	cp README.md docker/.docker-context
+	$(eval version=$(shell semantic-release print-version))
+	docker build -f docker/Dockerfile docker/.docker-context -t flatehr:$(version)
+	docker tag flatehr:$(version) flatehr
+	touch $(DOCKER_STAMP)
+
+.PHONY: docker
+docker: $(DOCKER_STAMP)
+
+.PHONY: docker-test tests/test_docker.sh
+docker-test: docker
+	tests/test_docker.sh
+
+
+.PHONY: docker-push
+docker-push: docker-test
+	docker tag flatehr:$(shell semantic-release print-version) crs4/flatehr:$(shell semantic-release print-version)
+	docker tag flatehr crs4/flatehr
+
+	docker push crs4/flatehr:$(shell semantic-release print-version)
+	docker push crs4/flatehr
