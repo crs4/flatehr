@@ -1,0 +1,51 @@
+{
+  "templateId": "test",
+  "semVer": "28.0.0",
+  "version": "2.3",
+  "defaultLanguage": "en",
+  "languages": [
+    "en"
+  ],
+  "tree": {
+    "id": "test",
+    "name": "test",
+    "localizedName": "test",
+    "rmType": "COMPOSITION",
+    "nodeId": "openEHR-EHR-COMPOSITION.report.v1",
+    "min": 1,
+    "max": 1,
+    "localizedNames": {
+      "en": "test"
+    },
+    "localizedDescriptions": {
+      "en": "Document to communicate information to others, commonly in response to a request from another party."
+    },
+    "children": [
+      {
+        "id": "category",
+        "rmType": "DV_CODED_TEXT",
+        "nodeId": "",
+        "min": 1,
+        "max": 1,
+        "aqlPath": "/category",
+        "inputs": [
+          {
+            "suffix": "code",
+            "type": "CODED_TEXT",
+            "list": [
+              {
+                "value": "433",
+                "label": "event",
+                "localizedLabels": {
+                  "en": "event"
+                }
+              }
+            ],
+            "terminology": "openehr"
+          }
+        ],
+        "inContext": true
+      }
+    ]
+  }
+}

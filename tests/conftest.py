@@ -62,3 +62,8 @@ def expected_composition():
 def expected_inspect():
     with open("tests/resources/expected_inspect.txt") as f:
         return f.read()
+
+
+@pytest.fixture
+def missing_aql_path_webtemplate():
+    return "tests/resources/aql_path_missing_webtemplate.json"
