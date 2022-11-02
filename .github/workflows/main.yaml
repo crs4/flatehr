@@ -76,6 +76,10 @@
           path: ~/.cache/pypoetry/virtualenvs
           key: poetry-cache-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
 
+      - name: install
+        run: make install
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+
       - name: badges
         run: poetry run make clean badges
 
