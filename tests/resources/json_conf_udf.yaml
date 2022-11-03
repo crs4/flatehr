@@ -1,0 +1,12 @@
+
+ehr_id:
+  maps_to: []
+  value : "{{ random_ehr_id() }}"
+
+paths:
+  ctx/subject:
+    maps_to:
+      - "$..Identifier.#text"
+    suffixes:
+      "|name": "{{ fake_anonymizer(maps_to[0]) }}"
+

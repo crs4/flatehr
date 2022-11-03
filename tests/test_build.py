@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import sys
 import pytest
 
 from flatehr.build import build_composition
@@ -27,3 +28,13 @@ def test_build_composition(conf, template, source_kvs):
         "ctx/encoding|code": "UTF-8",
         "ctx/encoding|terminology": "IANA_character-sets",
     }
+
+
+@pytest.mark.parametrize("backend", template_factory.backends())
+@pytest.mark.parametrize("web_template_path", ["./tests/resources/web_template.json"])
+def test_user_defined_function(conf_udf, template, source_kvs_json_udf):
+    sys.path.append("tests/")
+    composition, ctx, _ = build_composition(conf_udf, template, source_kvs_json_udf)
+    flat_composition = flat(composition, ctx)
+    assert flat_composition == {"ctx/subject|name": "fake_1"}
+    sys.path.remove("tests/")
