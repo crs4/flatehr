@@ -44,7 +44,6 @@ version_variable = [
     "flatehr/__init__.py:__version__",
     "pyproject.toml:version"
 ]
-branch = "master"
-upload_to_pypi = false
+branch = "develop"
 upload_to_release = true
 build_command = "pip install poetry && poetry build"
