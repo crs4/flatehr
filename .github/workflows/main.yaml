@@ -93,7 +93,7 @@
 
       - name: publish release
         if: github.ref == 'refs/heads/develop' && contains(github.event.head_commit.message, 'chore(trigger-release)')
-        uses: relekang/python-semantic-release@master
+        uses: relekang/python-semantic-release@v7.31.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           repository_username: __token__
