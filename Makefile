@@ -72,7 +72,7 @@ docker-test: docker
 
 .PHONY: docker-push
 docker-push: docker-test
-	docker tag flatehr:$(shell semantic-release print-version) crs4/flatehr:$(shell semantic-release print-version)
+	docker tag flatehr:$(shell poetry run flatehr --version) crs4/flatehr:$(shell poetry run flatehr --version)
 	docker tag flatehr crs4/flatehr
-	docker push crs4/flatehr:$(shell semantic-release print-version)
+	docker push crs4/flatehr:$(shell poetry run flatehr --version)
 	docker push crs4/flatehr
