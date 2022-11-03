@@ -3,6 +3,7 @@ TEST_STAMP := .test.stamp
 REPORTS := docs/reports
 DOCKER_STAMP := .docker_stamp
 DOCKER_CONTEXT := docker/.docker-context
+VERSION := $(shell poetry run flatehr --version)
 
 
 .PHONY: install
@@ -57,8 +58,8 @@ $(DOCKER_STAMP): flatehr poetry.lock docker/Dockerfile
 	cp poetry.lock docker/.docker-context
 	cp pyproject.toml docker/.docker-context
 	cp README.md docker/.docker-context
-	docker build -f docker/Dockerfile docker/.docker-context -t flatehr:$(shell poetry run flatehr --version)
-	docker tag flatehr:$(version) flatehr
+	docker build -f docker/Dockerfile docker/.docker-context -t flatehr:$(VERSION)
+	docker tag flatehr:$(VERSION) flatehr
 	touch $(DOCKER_STAMP)
 
 .PHONY: docker
@@ -71,7 +72,7 @@ docker-test: docker
 
 .PHONY: docker-push
 docker-push: docker-test
-	docker tag flatehr:$(shell poetry run flatehr --version) crs4/flatehr:$(shell poetry run flatehr --version)
+	docker tag flatehr:$(VERSION) crs4/flatehr:$(VERSION)
 	docker tag flatehr crs4/flatehr
-	docker push crs4/flatehr:$(shell poetry run flatehr --version)
+	docker push crs4/flatehr:$(VERSION)
 	docker push crs4/flatehr
