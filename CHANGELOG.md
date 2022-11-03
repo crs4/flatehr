@@ -2,6 +2,20 @@
 
 <!--next-version-placeholder-->
 
+## v1.2.0 (2022-11-03)
+### Feature
+* Allow to use user defined functions ([`cf3fabe`](https://github.com/crs4/flatehr/commit/cf3fabe7f7349daadfab38cbb9d3ed39bcc23886))
+
+### Fix
+* Docker push ([`ad83014`](https://github.com/crs4/flatehr/commit/ad8301441e0a10f5c1502f072d1fa9b49448d0b7))
+* Exception management for templates with missing aql paths ([`8b44549`](https://github.com/crs4/flatehr/commit/8b4454977b4b4d9fa24b49d90f85b4bc67644f46))
+* Generate skeleton now produces a valid yaml, closes #46 ([`880f388`](https://github.com/crs4/flatehr/commit/880f3886f741a3bb2068dc8499373dd29819727b))
+
+### Documentation
+* Add installation from pip, move sections around. [skip ci] ([`b6410f9`](https://github.com/crs4/flatehr/commit/b6410f9d181c2d3f7fa10f6c208dbd0a2e49feb5))
+* Add description, [skip ci] ([`82475f8`](https://github.com/crs4/flatehr/commit/82475f82c0f7d049c87dc47e984ef16401a749b3))
+* Use raw github url for images in README.md (so they are visible in pypi) ([`59838f4`](https://github.com/crs4/flatehr/commit/59838f416fbc4c4795764257926a9182b710592a))
+
 ## v1.1.0 (2022-09-30)
 ### Feature
 * Add conf skeleton generation from template ([`1abc3dc`](https://github.com/crs4/flatehr/commit/1abc3dc487717036fbe7748232cfe5a2c6f1a5e6))
