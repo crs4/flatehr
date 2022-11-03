@@ -48,8 +48,18 @@ def conf():
 
 
 @pytest.fixture
+def conf_udf():
+    return conf_from_file("tests/resources/json_conf_udf.yaml")
+
+
+@pytest.fixture
 def source_kvs():
     return iter([("//ns:Dataelement_3_1/text()", "10")])
+
+
+@pytest.fixture
+def source_kvs_json_udf():
+    return iter([("$..Identifier.#text", "1")])
 
 
 @pytest.fixture

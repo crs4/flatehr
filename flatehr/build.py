@@ -1,7 +1,8 @@
 import dataclasses
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterator, List, Optional, Sequence, Set, Tuple
+from inspect import getmembers
+from typing import Callable, Dict, Iterator, List, Optional, Sequence, Set, Tuple
 from uuid import uuid4
 
 import jq
@@ -143,6 +144,7 @@ class ValueDict(dict):
                 v = {"value": v, "jq": False}
             env = Environment()
             env.globals["date_isoformat"] = date_isoformat
+            env.globals.update(get_udf())
             t = env.from_string(v["value"])
             value = t.render(maps_to=maps_to, value_map=self.value_map)
             if v["jq"]:
@@ -227,6 +229,7 @@ def build_composition(
 
     env = Environment()
     env.globals["random_ehr_id"] = uuid4
+    env.globals.update(get_udf())
     t = env.from_string(conf._ehr_id.value)
     ehr_id = t.render(maps_to=conf.ehr_id.maps_to)
     return composition, ctx, ehr_id
@@ -245,3 +248,14 @@ def _get_conf(conf_file: str) -> Config:
             "set_missing_required_to_default", True
         ),
     )
+
+
+def get_udf() -> Dict[str, Callable]:
+    try:
+        import flatehr_udf
+
+        return dict(
+            filter(lambda x: not x[0].startswith("__"), getmembers(flatehr_udf))
+        )
+    except ImportError:
+        return {}

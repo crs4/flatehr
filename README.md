@@ -23,6 +23,7 @@ See the [examples section](#Examples) for more details.
  * set missing required values to the default value (defined in the web template)
  * automatic configuration skeleton generation
  * inspect a template
+ * user defined functions
 
 ## Installation
 ### From pip
@@ -261,6 +262,11 @@ See [here](#paths.\<path\>.maps_to)
 #### ehr_id.value
 -------------------
 A jinja template, similiar to suffixes. A random_ehr_id function is available.
+
+### User defined functions
+It is possible to use user defined functions inside the jinja templates. 
+Functions must be defined in module called ```flatehr_udf.py``` that has to be in the PYTHONPATH.
+
 
 ## CLI
 Main command:
