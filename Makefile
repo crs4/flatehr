@@ -57,8 +57,7 @@ $(DOCKER_STAMP): flatehr poetry.lock docker/Dockerfile
 	cp poetry.lock docker/.docker-context
 	cp pyproject.toml docker/.docker-context
 	cp README.md docker/.docker-context
-	$(eval version=$(shell semantic-release print-version))
-	docker build -f docker/Dockerfile docker/.docker-context -t flatehr:$(version)
+	docker build -f docker/Dockerfile docker/.docker-context -t flatehr:$(shell poetry run flatehr --version)
 	docker tag flatehr:$(version) flatehr
 	touch $(DOCKER_STAMP)
 
