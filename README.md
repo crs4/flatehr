@@ -51,6 +51,15 @@ Then run:
 $ make install
 ```
 
+### Docker
+
+You can also use the docker image:
+```
+docker run crs4/flatehr -h
+```
+
+
+
 ## Architecture
 ![architecture](https://github.com/crs4/flatehr/raw/master/docs/architecture.png)
 FLATEHR extracts an **ordered list of key-value tuples** from a source according to a [configuration file](#configuration). 
