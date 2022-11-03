@@ -109,9 +109,7 @@
       - name: push  docker images
         if: github.ref == 'refs/heads/develop' && (contains(github.event.head_commit.message, 'chore(trigger-release)') || contains(github.event.head_commit.message, 'chore(trigger-docker)'))
         # workaround, issues wit poetry / virtualenv? -> semanti-release not found
-        run: |
-          pip install python-semantic-release==7.31.4
-          make docker-push
+        run: make docker-push
 
 
 
