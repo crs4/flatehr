@@ -182,39 +182,39 @@ def build_composition(
 
     consumed_paths = []
     ehr_id_kvs = {}
-    for source_key, source_value in source_kvs:
+    for source_key, source_values in source_kvs:
+        for source_value in source_values:
+            if source_key in conf.ehr_id.maps_to:
+                ehr_id_kvs[source_key] = source_value
 
-        if source_key in conf.ehr_id.maps_to:
-            ehr_id_kvs[source_key] = source_value
+            _paths = conf.inverse_mappings[source_key]
+            for path in _paths:
+                if "*" in path._id:
+                    continue
 
-        _paths = conf.inverse_mappings[source_key]
-        for path in _paths:
-            if "*" in path._id:
-                continue
+                if not path.suffixes:
+                    composition.add(path._id)
+                else:
+                    try:
+                        value_dicts = pending_value_dicts.pop((source_key, path._id))
+                    except KeyError:
+                        value_dicts = [
+                            ValueDict(composition.template, path, path.value_map)
+                        ]
 
-            if not path.suffixes:
-                composition.add(path._id)
-            else:
-                try:
-                    value_dicts = pending_value_dicts.pop((source_key, path._id))
-                except KeyError:
-                    value_dicts = [
-                        ValueDict(composition.template, path, path.value_map)
-                    ]
+                        for k in path.maps_to:
+                            if k != source_key:
+                                pending_value_dicts[(k, path._id)] += value_dicts
 
-                    for k in path.maps_to:
-                        if k != source_key:
-                            pending_value_dicts[(k, path._id)] += value_dicts
+                        if path._id.startswith("ctx/"):
+                            ctx[path._id] = value_dicts[0]
+                        else:
+                            composition[path._id] = value_dicts[0]
 
-                    if path._id.startswith("ctx/"):
-                        ctx[path._id] = value_dicts[0]
-                    else:
-                        composition[path._id] = value_dicts[0]
-
-                for vd in value_dicts:
-                    if source_value:
-                        vd.add_source_key_value(source_key, source_value)
-            consumed_paths.append(path)
+                    for vd in value_dicts:
+                        if source_value:
+                            vd.add_source_key_value(source_key, source_value)
+                consumed_paths.append(path)
 
     for path in set([p for p in conf.paths if not p._id.startswith("ctx")]) - set(
         consumed_paths
