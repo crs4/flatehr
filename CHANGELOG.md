@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v1.2.1-beta.1 (2024-02-08)
+### Documentation
+* Update with docker info, [skip ci] ([`3820cc9`](https://github.com/crs4/flatehr/commit/3820cc99f1676a25379ae52559c2b7fb801a3cd9))
+
 ## v1.2.0 (2022-11-03)
 ### Feature
 * Allow to use user defined functions ([`cf3fabe`](https://github.com/crs4/flatehr/commit/cf3fabe7f7349daadfab38cbb9d3ed39bcc23886))
