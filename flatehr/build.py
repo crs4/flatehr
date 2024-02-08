@@ -24,7 +24,7 @@ class Config:
         self,
         paths: Dict,
         ehr_id: Dict,
-        set_missing_required_to_default: bool = True,
+        set_missing_required_to_default: bool = False,
     ):
         self._ehr_id = EhrId(set(ehr_id.get("maps_to", [])), ehr_id["value"])
         self._set_missing_required_to_default = set_missing_required_to_default
@@ -245,7 +245,7 @@ def _get_conf(conf_file: str) -> Config:
         paths=conf_kwargs["paths"],
         ehr_id=conf_kwargs["ehr_id"],
         set_missing_required_to_default=conf_kwargs.get(
-            "set_missing_required_to_default", True
+            "set_missing_required_to_default", False
         ),
     )
 
