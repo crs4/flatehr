@@ -419,6 +419,12 @@ For more exaustive examples, see *tests/test_cli.sh*.
 ## Ingesting
 From parallel ingesting multiple sources to an openEHR istance, take a look at *scripts/ingest.sh*.
 
+# Acknowledgments
+This work has been partially funded by the following sources:
+
+* The EOSC-Life European project (H2020, grant agreement N. 824087), within the EOSC-Life WP1 Demonstrator “Cloudification of BBMRI-ERIC CRC-Cohort and its Digital Pathology Imaging” (APPID 1228);
+ * The “Piattaforma avanzata per Analisi massiva e Medicina digitale” project (grant by Sardegna Ricerche, ex art 9 L.R. 20/2015-year 2020).
+
 
 
 
