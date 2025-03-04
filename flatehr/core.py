@@ -286,5 +286,6 @@ def flat(
     value_dicts.update(ctx or {})
     for _id, suffixes in value_dicts.items():
         for suffix, value in suffixes.items():
-            dct[_id + suffix] = value
+            if value:
+                dct[_id + suffix] = value
     return dct

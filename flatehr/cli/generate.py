@@ -132,7 +132,7 @@ def conf_from_file(conf_file: str) -> Config:
         paths=conf_kwargs["paths"],
         ehr_id=conf_kwargs["ehr_id"],
         set_missing_required_to_default=conf_kwargs.get(
-            "set_missing_required_to_default", True
+            "set_missing_required_to_default", False
         ),
     )
 
